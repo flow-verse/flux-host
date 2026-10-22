@@ -13,3 +13,8 @@ Guidance for AI coding assistants working in `flux-host`.
 - License is GPL-3.0-or-later; keep new files compatible.
 - Keep changes small and tested.
 - Audio thread code (`rt/`) must not allocate, lock, or do I/O. Hand off to it only via lock-free SPSC queues.
+
+## Git workflow
+- Work directly on `main`: commit there and push without asking for permission.
+- Exception: if another agent or session is currently working on `main` in this repo, use a short-lived branch instead.
+- Force-pushes and history rewrites still need explicit confirmation.
