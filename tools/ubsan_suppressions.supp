@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: FSFAP
+
+# dbus: intentional C polymorphism in _dbus_list_clear_full
+function:*dbus-list*
+
+# Qt: function type mismatches from QML attached properties, signal dispatch, and QVariant interpolation
+function:*qqml*
+function:*qquickanimation*
+
+# Qt: type-erased function pointers in FreeType rasterizer wrappers
+function:*qpaintengine_raster*
+
+# Qt: JavaScript division by zero is valid (produces Infinity) in QV4 runtime
+float-divide-by-zero:*qv4runtime*
+
+# Qt: scene graph rectangle geometry divides by zero when dimensions are zero,
+# producing inf that gets cast to int in qFastCos
+float-divide-by-zero:*qsgbasicinternalrectanglenode*
+float-divide-by-zero:*qquicksmoothedanimation*
+float-cast-overflow:*qmath*
+
+# Qt: intentional null pointer arithmetic in QString
+pointer-overflow:*qstring*
+pointer-overflow:*qmetaobjectbuilder*
+
+# Qt: misaligned accesses in QML JIT assembler (MASM from WebKit)
+alignment:*masm*
+
+# fontconfig: null pointer passed to nonnull-parameter stdlib function
+nonnull-attribute:*fcxml*

@@ -1,0 +1,123 @@
+# SPDX-FileCopyrightText: © 2019-2020, 2024-2025 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+add_subdirectory(backward-cpp)
+add_subdirectory(dirent)
+add_subdirectory(moodycamel)
+
+set(JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED ON)
+# We only consume JUCE modules (hosting + utilities)
+set(JUCE_MODULES_ONLY ON)
+add_library(juce_lib STATIC)
+
+# some versions of cmake require at least 1 source file for static libs...
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/empty.cpp"
+  CONTENT "// Empty file\n"
+)
+target_sources(juce_lib PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/empty.cpp")
+
+CPMGetPackage(juce)
+
+target_link_libraries(juce_lib
+  PRIVATE
+    juce::juce_audio_basics
+    juce::juce_audio_devices
+    juce::juce_audio_formats
+    juce::juce_audio_processors
+    juce::juce_audio_utils
+    juce::juce_core
+    juce::juce_data_structures
+    juce::juce_dsp
+  PUBLIC
+    juce::juce_recommended_config_flags
+    # juce::juce_recommended_warning_flags
+)
+if(APPLE)
+  find_library(AUDIO_UNIT_LIB CoreAudioKit REQUIRED)
+  target_link_libraries(juce_lib INTERFACE ${AUDIO_UNIT_LIB})
+endif()
+
+# JUCE bundles harfbuzz and freetype. These symbols must not be exported
+# from executables linking this archive statically: dlopened plugin UIs
+# (e.g. pango-based ones) would resolve their harfbuzz/freetype calls
+# against these copies instead of the system libraries and crash on the
+# internal version mismatches. Hidden visibility keeps them out of the
+# dynamic symbol table in every link configuration.
+set_target_properties(juce_lib PROPERTIES
+  C_VISIBILITY_PRESET hidden
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN YES
+)
+if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+  target_link_libraries(juce_lib
+    PUBLIC juce::juce_recommended_lto_flags
+  )
+endif()
+target_include_directories(juce_lib
+  SYSTEM
+  INTERFACE "${juce_SOURCE_DIR}/modules"
+  # FIXME should be private
+  PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/ladspa"
+)
+
+target_compile_definitions(juce_lib
+  PUBLIC
+    JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1
+    JUCE_USE_MP3AUDIOFORMAT=1
+    JUCE_WEB_BROWSER=0
+    # VST3 hosting is done natively via the VST3 SDK
+    JUCE_PLUGINHOST_VST3=0
+    # LV2 hosting is done natively via lilv
+    JUCE_PLUGINHOST_LV2=0
+    JUCE_PLUGINHOST_LADSPA=1
+    JUCE_PLUGINHOST_AU=1
+    JUCE_USE_CURL=0
+    JUCE_DISABLE_JUCE_VERSION_PRINTING=1
+    # This is only needed for tests, but we're enabling it everywhere for
+    # simplicity. If it causes issues, create a separate juce library target
+    # for tests only.
+    JUCE_MODAL_LOOPS_PERMITTED=1
+)
+if(ZRYTHM_WITH_ASIO)
+  target_compile_definitions(juce_lib PUBLIC JUCE_ASIO=1)
+  target_include_directories(juce_lib PRIVATE "${ZRYTHM_ASIO_SDK_PATH}\\common")
+endif()
+
+target_compile_definitions(juce_lib
+  PUBLIC
+    $<IF:$<CONFIG:Debug>,JUCE_DEBUG=1;_DEBUG=1;DEBUG=1,JUCE_DEBUG=0;_NDEBUG=1;NDEBUG=1>
+)
+if(OS_GNU)
+  find_package(Freetype REQUIRED)
+  find_package(Fontconfig REQUIRED)
+  add_library(_juce_dependencies INTERFACE)
+  target_link_libraries(_juce_dependencies INTERFACE
+   Freetype::Freetype Fontconfig::Fontconfig)
+  target_link_libraries(juce_lib PRIVATE _juce_dependencies)
+endif()
+# sord/serd don't play well with UBSan
+if(ZRYTHM_ENABLE_SANITIZER_UNDEFINED_BEHAVIOR)
+  if(TARGET juce_lib)
+    target_compile_options(juce_lib PRIVATE -fno-sanitize=undefined)
+    target_link_options(juce_lib PRIVATE -fno-sanitize=undefined)
+  endif()
+endif()
+
+add_library(_juce_libs INTERFACE)
+target_link_libraries(_juce_libs INTERFACE juce_lib)
+
+add_library(zrythm::juce_libs ALIAS _juce_libs)
+
+add_subdirectory(kissfft)
+add_subdirectory(midilib)
+add_subdirectory(qm-dsp)
+add_subdirectory(rubberband)
+
+set(WITH_OPENMP OFF)
+set(BUILD_TESTS OFF)
+set(BUILD_LSR_TESTS OFF)
+add_subdirectory(soxr EXCLUDE_FROM_ALL)
+add_library(zrythm::soxr ALIAS soxr)
+
+add_subdirectory(weakjack)
+add_subdirectory(zita-resampler)

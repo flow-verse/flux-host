@@ -1,0 +1,601 @@
+// SPDX-FileCopyrightText: © 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+import QtQuick.Layouts
+import Zrythm
+import ZrythmStyle
+import "config.js" as Config
+
+ApplicationWindow {
+  id: root
+
+  readonly property ZrythmApplication app: GlobalState.application
+  readonly property AppSettings appSettings: app?.appSettings ?? null
+  property ProjectWindow currentProjectWindow: null
+  readonly property DeviceManager deviceManager: app?.deviceManager ?? null
+  readonly property string pendingProjectPath: app?.pendingProjectFile ?? ""
+  readonly property NotificationCenter notificationCenter: app?.notificationCenter ?? null
+  readonly property PluginManager pluginManager: app?.pluginManager ?? null
+  readonly property PluginScanManager pluginScanner: pluginManager?.scanner ?? null
+  readonly property ProjectManager projectManager: app?.projectManager ?? null
+
+  function openProjectWindow(session) {
+    let newWindow = projectWindowComponent.createObject(session, {
+      "session": session,
+      "deviceManager": deviceManager,
+      "appSettings": appSettings,
+      "chordPresetManager": app.chordPresetManager,
+      "controlRoom": app.controlRoom,
+      "notificationCenter": notificationCenter
+    }) as ProjectWindow;
+    newWindow.closing.connect(function () {
+      root.show();
+      root.currentProjectWindow = null;
+    });
+    newWindow.show();
+    currentProjectWindow = newWindow;
+    stack.push(projectSelectorPage);
+    root.hide();
+  }
+
+  font.family: ZrythmTheme.fontFamily
+  font.pointSize: ZrythmTheme.fontPointSize
+  height: 420
+  minimumWidth: 256
+  title: "Zrythm"
+  visible: true
+  width: 640
+
+  onCurrentProjectWindowChanged: {
+    // Trigger project cleanup when the project window closes
+    if (currentProjectWindow === null) {
+      Qt.callLater(function () {
+        projectManager.activeSession = null;
+      });
+    }
+  }
+
+  AboutDialog {
+    id: aboutDialog
+  }
+
+  NotificationArea {
+    notificationCenter: root.notificationCenter
+
+    onCriticalNotification: (notification) => {
+      alertDialog.text = notification.title;
+      alertDialog.informativeText = notification.detail;
+      alertDialog.open();
+    }
+  }
+
+  LoadController {
+    id: loadController
+  }
+
+  Component {
+    id: projectWindowComponent
+
+    ProjectWindow {
+    }
+  }
+
+  Item {
+    id: flatpakPage
+
+    PlaceholderPage {
+      description: qsTr("Only audio plugins installed via Flatpak are supported.")
+      icon.source: ResourceManager.getIconUrl("gnome-icon-library", "flatpak-symbolic.svg")
+      title: qsTr("About Flatpak")
+    }
+  }
+
+  Item {
+    id: donationPage
+
+    PlaceholderPage {
+      description: qsTr("Zrythm relies on donations and purchases to sustain development. If you enjoy the software, please consider %1donating%2 or %3buying an installer%2.").arg("<a href=\"" + Config.DONATION_URL + "\">").arg("</a>").arg("<a href=\"" + Config.PURCHASE_URL + "\">")
+      icon.source: ResourceManager.getIconUrl("gnome-icon-library", "credit-card-symbolic.svg")
+      title: qsTr("Donate")
+    }
+  }
+
+  Item {
+    id: proceedToConfigPage
+
+    PlaceholderPage {
+      title: qsTr("All Ready!")
+
+      action: Action {
+        text: qsTr("Proceed to Configuration")
+
+        onTriggered: stack.push(configPage)
+      }
+    }
+  }
+
+  StackView {
+    id: stack
+
+    anchors.fill: parent
+    initialItem: (root.appSettings?.first_run && root.pendingProjectPath.length === 0) ? firstRunPage : progressPage
+
+    popExit: Transition {
+      PropertyAnimation {
+        duration: 200
+        from: 1
+        property: "opacity"
+        to: 0
+      }
+    }
+    pushEnter: Transition {
+      PropertyAnimation {
+        duration: 200
+        from: 0
+        property: "opacity"
+        to: 1
+      }
+    }
+
+    Component {
+      id: firstRunPage
+
+      Page {
+        title: qsTr("Welcome")
+
+        SwipeView {
+          id: welcomeCarousel
+
+          anchors.fill: parent
+          clip: true
+
+          Component.onCompleted: {
+            if (!Config.IS_INSTALLER_VER || Config.IS_TRIAL_VER)
+              addItem(donationPage);
+
+            if (Config.FLATPAK_BUILD)
+              addItem(flatpakPage);
+
+            addItem(proceedToConfigPage);
+          }
+
+          Item {
+            PlaceholderPage {
+              description: qsTr("Welcome to the Zrythm digital audio workstation. Move to the next page to get started.")
+              icon.source: ResourceManager.getIconUrl("zrythm-dark", "zrythm.svg")
+              title: qsTr("Welcome")
+            }
+          }
+
+          Item {
+            PlaceholderPage {
+              description: qsTr("If this is your first time using Zrythm, we suggest going through the 'Getting Started' section in the %1user manual%2.").arg("<a href=\"" + Config.USER_MANUAL_URL + "\">").arg("</a>")
+              icon.source: ResourceManager.getIconUrl("gnome-icon-library", "open-book-symbolic.svg")
+              title: qsTr("Read the Manual")
+            }
+          }
+        }
+
+        // Add left navigation button
+        RoundButton {
+          id: leftNavButton
+
+          readonly property real squareSize: 48
+
+          anchors.left: parent.left
+          anchors.verticalCenter: parent.verticalCenter
+          font.bold: true
+          font.pixelSize: 18
+          height: squareSize
+          text: "<"
+          visible: welcomeCarousel.currentIndex > 0
+          width: squareSize
+
+          onClicked: welcomeCarousel.decrementCurrentIndex()
+        }
+
+        // Add right navigation button
+        RoundButton {
+          anchors.right: parent.right
+          anchors.verticalCenter: parent.verticalCenter
+          font.bold: true
+          font.pixelSize: 18
+          height: leftNavButton.squareSize
+          text: ">"
+          visible: welcomeCarousel.currentIndex < welcomeCarousel.count - 1
+          width: leftNavButton.squareSize
+
+          onClicked: welcomeCarousel.incrementCurrentIndex()
+        }
+
+        PageIndicator {
+          id: indicator
+
+          anchors.bottom: welcomeCarousel.bottom
+          anchors.horizontalCenter: parent.horizontalCenter
+          count: welcomeCarousel.count
+          currentIndex: welcomeCarousel.currentIndex
+          interactive: true
+
+          onCurrentIndexChanged: welcomeCarousel.currentIndex = currentIndex
+        }
+      }
+    }
+
+    Component {
+      id: configPage
+
+      NavigatablePage {
+        notificationCenter: root.notificationCenter
+        title: qsTr("Configuration")
+
+        footer: DialogButtonBox {
+          defaultButton: continueButton
+          horizontalPadding: 10
+          standardButtons: DialogButtonBox.Reset
+
+          onReset: {
+            console.log("Resetting settings...");
+          }
+
+          Button {
+            id: continueButton
+
+            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            text: qsTr("Continue")
+
+            onClicked: {
+              console.log("Proceeding to next page...");
+              root.appSettings.first_run = false;
+              stack.push(progressPage);
+            }
+          }
+        }
+
+        ZrythmPreferencesPage {
+          anchors.fill: parent
+          title: qsTr("Initial Configuration")
+
+          ActionRow {
+            subtitle: "Preferred language"
+            title: "Language"
+
+            ComboBox {
+              model: ["English", "Spanish", "French"]
+            }
+          }
+
+          ActionRow {
+            subtitle: "Location to save user files"
+            title: "User Path"
+
+            ZrythmFilePicker {
+            }
+          }
+        }
+      }
+    }
+
+    Component {
+      id: progressPage
+
+      Page {
+        id: progressPagePage
+
+        title: qsTr("Progress")
+
+        StackView.onActivated: {
+          // start the scan in the background
+          root.pluginManager.beginScan();
+
+          if (root.pendingProjectPath.length > 0) {
+            // open the project requested on the command line or via a
+            // file-open request from the OS
+            loadController.loadProject(root.pendingProjectPath);
+          } else {
+            // move on to project selection page immediately
+            stack.push(projectSelectorPage);
+          }
+        }
+
+        PlaceholderPage {
+          icon.source: ResourceManager.getIconUrl("zrythm-dark", "zrythm-monochrome.svg")
+          title: qsTr("Scanning Plugins")
+        }
+
+        ColumnLayout {
+          spacing: 12
+
+          anchors {
+            bottom: parent.bottom
+            left: parent.left
+            margins: 26
+            right: parent.right
+          }
+
+          Text {
+            id: scanProgressLabel
+
+            Layout.fillWidth: true
+            color: palette.text
+            font.pointSize: 8
+            horizontalAlignment: Qt.AlignHCenter
+            opacity: 0.6
+            text: qsTr("Scanning:") + " " + root.pluginManager?.currentlyScanningPlugin
+            verticalAlignment: Qt.AlignVCenter
+          }
+
+          ProgressBar {
+            id: scanProgressBar
+
+            Layout.fillWidth: true
+            indeterminate: true
+          }
+        }
+      }
+    }
+
+    Component {
+      id: projectSelectorPage
+
+      NavigatablePage {
+        // Distinguishes this page when inspecting the StackView's current item
+        readonly property bool isProjectSelectorPage: true
+
+        notificationCenter: root.notificationCenter
+        showBackButton: false
+        title: qsTr("Open a Project")
+
+        footer: DialogButtonBox {
+          horizontalPadding: 10
+
+          Button {
+            text: qsTr("Create New Project...")
+
+            onClicked: stack.push(createProjectPageComponent)
+          }
+
+          Button {
+            text: qsTr("Open From Path...")
+
+            onClicked: loadController.openLoadDialog()
+          }
+        }
+        rightActions: ToolButton {
+          icon.source: ResourceManager.getIconUrl("gnome-icon-library", "settings-symbolic.svg")
+
+          onClicked: menu.open()
+
+          Menu {
+            id: menu
+
+            Action {
+              text: qsTr("Device Selector")
+
+              onTriggered: {
+                root.deviceManager.showDeviceSelector();
+              }
+            }
+
+            MenuItem {
+              // Handle about action
+
+              text: qsTr("About Zrythm")
+
+              onTriggered: aboutDialog.open()
+            }
+          }
+        }
+
+        ListView {
+          id: recentProjectsListView
+
+          readonly property RecentProjectsModel recentProjects: root.projectManager?.recentProjects
+
+          anchors.fill: parent
+          anchors.margins: 16
+          model: recentProjects
+
+          delegate: ActionRow {
+            id: projectItem
+
+            required property string name
+            required property string path
+
+            interactive: true
+            subtitle: projectItem.path
+            title: projectItem.name
+            width: recentProjectsListView.width
+
+            onClicked: loadController.loadProject (projectItem.path)
+
+            resources: [
+              Action {
+                id: revealAction
+
+                text: qsTr ("Show in File Manager")
+
+                onTriggered: QmlUtils.revealInFileManager (projectItem.path)
+              },
+              Action {
+                id: removeAction
+
+                text: qsTr ("Remove From List")
+
+                onTriggered: recentProjectsListView.recentProjects.removeRecentProject (
+                  projectItem.path)
+              }
+            ]
+
+            overflowActions: [revealAction, removeAction]
+          }
+
+          Component.onCompleted: {
+            recentProjects.clearNonExistingProjects();
+          }
+        }
+      }
+    }
+
+    Component {
+      id: createProjectPageComponent
+
+      NavigatablePage {
+        id: createProjectPage
+
+        notificationCenter: root.notificationCenter
+        title: qsTr("Create New Project")
+
+        ColumnLayout {
+          anchors.fill: parent
+          spacing: 10
+
+          TextField {
+            id: projectNameField
+
+            Layout.fillWidth: true
+            placeholderText: qsTr("Project Name")
+            text: qsTr("Untitled Project")
+          }
+
+          Binding {
+            property: "text"
+            target: projectNameField
+            value: root.projectManager?.getNextAvailableProjectName(projectDirectoryField.selectedUrl, projectNameField.text)
+            when: projectDirectoryField.selectedUrl.toString().length > 0
+          }
+
+          ZrythmFilePicker {
+            id: projectDirectoryField
+
+            Layout.fillWidth: true
+            // placeholderText: qsTr("Parent Directory")
+            initialPath: root.appSettings?.newProjectDirectory ?? ""
+          }
+
+          ComboBox {
+            id: projectTemplateField
+
+            Layout.fillWidth: true
+            textRole: "name"
+            valueRole: "path"
+
+            model: ProjectTemplatesModel {
+            }
+          }
+
+          Button {
+            Layout.alignment: Qt.AlignHCenter
+            text: qsTr("Create Project")
+
+            onClicked: {
+              // start the project creation process asynchronusly
+              root.projectManager.createNewProject(projectDirectoryField.selectedUrl, projectNameField.text, projectTemplateField.currentValue);
+              stack.push(projectCreationProgressPage);
+            }
+          }
+        }
+      }
+    }
+
+    Component {
+      id: projectCreationProgressPage
+
+      NavigatablePage {
+        notificationCenter: root.notificationCenter
+        title: qsTr("Creating Project")
+
+        ColumnLayout {
+          spacing: 10
+
+          anchors {
+            centerIn: parent
+          }
+
+          Label {
+            Layout.alignment: Qt.AlignHCenter
+            font.bold: true
+            font.pointSize: 16
+            text: qsTr("Creating Project...")
+          }
+
+          BusyIndicator {
+            Layout.alignment: Qt.AlignHCenter
+            running: true
+          }
+        }
+      }
+    }
+
+    Connections {
+      function onProjectLoaded(session: ProjectSession) {
+        // ProjectManager already set the active session and updated the
+        // recent projects list before emitting this signal
+        console.log("Project loaded: ", session.title);
+        root.openProjectWindow(session);
+      }
+
+      function onProjectLoadingFailed(errorMessage: string) {
+        console.log("Project loading failed: ", errorMessage);
+        if (!stack.currentItem?.isProjectSelectorPage) {
+          stack.push(projectSelectorPage);
+        }
+      }
+
+      target: root.projectManager
+    }
+
+    MessageDialog {
+      id: alertDialog
+
+      buttons: MessageDialog.Ok
+    }
+  }
+
+  // Inline component for pages with standard navigation header
+  component NavigatablePage: Page {
+    id: navigatablePage
+
+    // Public API
+    property NotificationCenter notificationCenter: null
+    property alias rightActions: rightActionsRow.data
+    property bool showBackButton: navigatablePage.StackView.view && navigatablePage.StackView.view.depth > 1
+
+    header: ToolBar {
+      RowLayout {
+        anchors.fill: parent
+
+        ToolButton {
+          text: "‹"
+          visible: navigatablePage.showBackButton
+
+          onClicked: navigatablePage.StackView.view.pop()
+        }
+
+        Label {
+          Layout.fillWidth: true
+          elide: Text.ElideRight
+          font.bold: true
+          horizontalAlignment: Qt.AlignHCenter
+          text: navigatablePage.title
+          verticalAlignment: Qt.AlignVCenter
+        }
+
+        RowLayout {
+          id: rightActionsRow
+
+          spacing: 4
+        }
+
+        NotificationCenterButton {
+          notificationCenter: navigatablePage.notificationCenter
+        }
+      }
+    }
+  }
+}

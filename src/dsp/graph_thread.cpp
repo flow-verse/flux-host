@@ -1,0 +1,360 @@
+// SPDX-FileCopyrightText: © 2019-2022, 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+/*
+ * This file incorporates work covered by the following copyright and
+ * permission notices:
+ *
+ * ---
+ *
+ * Copyright (C) 2017, 2019 Robin Gareus <robin@gareus.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * ---
+ *
+ * Copyright (C) 2017, 2019 Robin Gareus <robin@gareus.org>
+ * Copyright (C) 2002-2015 Paul Davis <paul@linuxaudiosystems.com>
+ * Copyright (C) 2007-2009 David Robillard <d@drobilla.net>
+ * Copyright (C) 2015-2018 Robin Gareus <robin@gareus.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * ---
+ *
+ * Copyright (C) 2001 Paul Davis
+ * Copyright (C) 2004-2008 Grame
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
+ * ---
+ */
+
+#include <utility>
+
+#include "utils/dsp_context.h"
+#include "utils/logger.h"
+#include "utils/threads.h"
+#include "utils/tracy.h"
+
+#include <fmt/format.h>
+
+#ifndef _WIN32
+#  include <sys/resource.h>
+#endif
+
+#include "dsp/graph_scheduler.h"
+#include "dsp/graph_thread.h"
+#include "utils/rt_thread_id.h"
+
+#if defined(__has_feature) && __has_feature(realtime_sanitizer)
+#  include <sanitizer/rtsan_interface.h>
+#endif
+
+namespace zrythm::dsp::graph
+{
+
+constexpr bool DEBUG_THREADS = false;
+
+#ifdef __APPLE__
+constexpr auto THREAD_STACK_SIZE = 0x80000; // 512kB
+#else
+constexpr auto THREAD_STACK_SIZE = 0x20000; // 128kB
+#endif
+
+void
+GraphThread::on_reached_terminal_node ()
+{
+  assert (scheduler_.terminal_refcnt_.load () >= 0);
+  if (scheduler_.terminal_refcnt_.fetch_sub (1) == 1)
+    {
+      /* all terminal nodes have completed, we're done with this cycle. */
+
+      /* Notify caller */
+      scheduler_.callback_done_sem_.signal ();
+
+      /* Ensure that all background threads are idle.
+       * When freewheeling there may be an immediate restart:
+       * If there are more threads than CPU cores, some worker- threads may only
+       * be "on the way" to become idle. */
+      while (
+        scheduler_.idle_thread_cnt_.load ()
+        != static_cast<int> (scheduler_.num_threads ()))
+        {
+#if defined(__has_feature) && __has_feature(realtime_sanitizer)
+          __rtsan::ScopedDisabler d;
+#endif
+          yield ();
+        }
+
+      if (threadShouldExit ())
+        return;
+
+      /* now wait for the next cycle to begin */
+      scheduler_.callback_start_sem_.wait ();
+
+      if (threadShouldExit ())
+        return;
+
+      /* reset terminal reference count */
+      scheduler_.terminal_refcnt_.store (
+        static_cast<int> (scheduler_.graph_nodes_.terminal_nodes_.size ()));
+
+      /* and start the initial nodes */
+      for (auto node : scheduler_.graph_nodes_.trigger_nodes_)
+        {
+          const bool pushed [[maybe_unused]] =
+            scheduler_.trigger_queue_->try_push (std::addressof (node.get ()));
+          assert (pushed);
+        }
+      /* continue in worker-thread */
+    }
+}
+
+void
+GraphThread::run_worker () noexcept
+{
+  auto * scheduler = &scheduler_;
+
+  for (;;)
+    {
+      GraphNode * to_run = nullptr;
+
+      if (threadShouldExit ()) [[unlikely]]
+        {
+          return;
+        }
+
+      /* Wake up idle threads, but at most as many as there's work in the
+       * trigger queue that can be processed by other threads */
+      if (scheduler->trigger_queue_->try_pop (to_run))
+        {
+          assert (to_run != nullptr);
+          if constexpr (DEBUG_THREADS)
+            {
+              z_debug (
+                "[{}]: dequeued node below\n{}", id_,
+                to_run->print_node_to_str ());
+              z_debug (
+                "[{}]: Waking up an idle thread (idle count {})", id_,
+                scheduler->idle_thread_cnt_.load ());
+            }
+
+          scheduler->trigger_sem_.signal ();
+        }
+
+      while (to_run == nullptr)
+        {
+          /* wait for work, fall asleep */
+          scheduler->idle_thread_cnt_.fetch_add (1);
+
+          if constexpr (DEBUG_THREADS)
+            {
+              int idle_thread_cnt = scheduler->idle_thread_cnt_;
+              z_debug (
+                "[{}]: no node to run. just increased idle thread count and waiting for work "
+                "(current idle threads {})",
+                id_, idle_thread_cnt);
+              if (idle_thread_cnt > static_cast<int> (scheduler->num_threads ()))
+                [[unlikely]]
+                {
+                  z_error (
+                    "[{}]: idle thread count {} is greater than the number of threads "
+                    "{}. this should never occur",
+                    id_, idle_thread_cnt, scheduler->num_threads ());
+                }
+            }
+
+          scheduler->trigger_sem_.wait ();
+
+          if (threadShouldExit ()) [[unlikely]]
+            {
+              return;
+            }
+
+          /* not idle anymore - decrease idle thread count */
+          scheduler->idle_thread_cnt_.fetch_sub (1);
+          if constexpr (DEBUG_THREADS)
+            {
+              z_info (
+                "[{}]: work found, decremented idle thread count (current count %d) and "
+                "dequeuing node to process",
+                id_, scheduler->idle_thread_cnt_.load ());
+            }
+
+          /* If a rechain is pending, the trigger queue may be replaced at
+           * any moment (the idle count cannot see woken workers), so go
+           * back to sleep without touching the queue */
+          if (scheduler->rechain_pending_.load (std::memory_order_acquire))
+            [[unlikely]]
+            {
+              continue;
+            }
+
+          /* try to find some work to do */
+          scheduler->trigger_queue_->try_pop (to_run);
+        }
+
+      /* this thread has now claimed the graph node for processing - process it */
+      if constexpr (DEBUG_THREADS)
+        {
+          z_info ("[{}]: running node", id_);
+        }
+
+      to_run->process (
+        scheduler_.get_time_nfo (), scheduler_.get_remaining_preroll_frames (),
+        scheduler_.get_transport_for_this_cycle (),
+        scheduler_.get_tempo_map_for_this_cycle ());
+
+      /* if there are no outgoing edges, this is a terminal node */
+      if (to_run->feeds ().empty ())
+        {
+          /* notify parent graph */
+          on_reached_terminal_node ();
+        }
+      else
+        {
+          /* notify downstream nodes that depend on this node */
+          for (const auto child_node : to_run->feeds ())
+            {
+              scheduler->trigger_node (child_node);
+            }
+        }
+    }
+}
+
+void
+GraphThread::run ()
+{
+  /* pre-create the unique identifier of this thread */
+  rt_thread_id_.store (current_thread_id.get ());
+
+  // join a workgroup if any
+  juce::WorkgroupToken workgroup_token;
+  if (audio_workgroup_.has_value ())
+    {
+      audio_workgroup_->join (workgroup_token);
+    }
+
+  if (is_main_)
+    {
+      auto graph = &scheduler_;
+
+      /* Wait until all worker threads are active */
+      while (
+        graph->idle_thread_cnt_.load ()
+        != static_cast<int> (graph->num_threads ()))
+        {
+          yield ();
+        }
+
+      /* wait for initial process callback */
+      graph->callback_start_sem_.wait ();
+
+      /* first time setup */
+
+      /* bootstrap trigger-list.
+       * (later this is done by Graph.reached_terminal_node())*/
+      for (const auto node : graph->graph_nodes_.trigger_nodes_)
+        {
+          /*z_info ("[main] pushing back node {} during bootstrap", i);*/
+          const bool pushed [[maybe_unused]] =
+            graph->trigger_queue_->try_push (std::addressof (node.get ()));
+          assert (pushed);
+        }
+
+      /* after setup, the main-thread just becomes a normal worker */
+    }
+
+  DspContextRAII dsp_context_raii;
+
+  zrythm::utils::set_thread_name (
+    id_ == -1 ? "DSP main" : fmt::format ("DSP worker {}", id_), 1780889180);
+
+  z_info (
+    "Worker thread {} created (num threads {})", id_, scheduler_.num_threads ());
+
+  /* wait for all threads to get created */
+  if (id_ < static_cast<int> (scheduler_.num_threads ()) - 1)
+    {
+      yield ();
+    }
+
+  run_worker ();
+
+  if (id_ == -1)
+    {
+      z_info ("terminating main thread");
+    }
+  else
+    {
+      z_info ("[{}]: terminating thread", id_);
+    }
+
+  /* Mark that this thread has completely finished execution */
+  thread_finished_.store (true);
+}
+
+GraphThread::GraphThread (
+  const int                           id,
+  const bool                          is_main,
+  GraphScheduler                     &scheduler,
+  std::optional<juce::AudioWorkgroup> workgroup)
+    : juce::Thread (
+        is_main ? "GraphWorkerMain" : fmt::format ("GraphWorker{}", id),
+        utils::rt_worker_stack_size (THREAD_STACK_SIZE)),
+      id_ (id), is_main_ (is_main), scheduler_ (scheduler),
+      audio_workgroup_ (std::move (workgroup))
+{
+}
+
+GraphThread::~GraphThread ()
+{
+  /* Wait for the thread to completely finish before destruction */
+  if (!thread_finished_.load ())
+    {
+      /* If the thread is still running, wait for it to finish */
+      waitForThreadToExit (-1);
+    }
+}
+
+} // namespace zrythm::dsp::graph

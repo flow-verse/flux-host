@@ -1,0 +1,220 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "plugins/plugin_group.h"
+#include "utils/logger.h"
+#include "utils/serialization.h"
+
+namespace zrythm::plugins
+{
+
+struct PluginGroup::DeviceGroupImpl
+{
+  DeviceGroupImpl (PluginGroup &owner) : owner_ (owner) { }
+
+  PluginGroup &owner_;
+  std::vector<std::variant<
+    utils::QObjectUniquePtr<PluginGroup>,
+    plugins::PluginUuidReference>>
+    devices_;
+};
+
+PluginGroup::PluginGroup (
+  utils::IObjectRegistry &registry,
+  DeviceGroupType         type,
+  ProcessingTypeHint      processing_type,
+  QObject *               parent)
+    : QAbstractListModel (parent), registry_ (registry),
+      processing_type_ (processing_type), type_ (type),
+      pimpl_ (std::make_unique<DeviceGroupImpl> (*this))
+{
+  fader_ = utils::make_qobject_unique<dsp::Fader> (
+    registry,
+    type == DeviceGroupType::MIDI ? dsp::PortType::Midi : dsp::PortType::Audio,
+    false, false, [] () { return u8"Device Group"; },
+    [] (bool fader_solo_status) { return false; }, this);
+}
+
+// ============================================================================
+// QML Interface
+// ============================================================================
+void
+PluginGroup::setName (const QString &name)
+{
+  if (name == name_)
+    return;
+
+  name_ = name;
+  Q_EMIT nameChanged (name);
+}
+
+QHash<int, QByteArray>
+PluginGroup::roleNames () const
+{
+  QHash<int, QByteArray> roles;
+  roles[DeviceGroupPtrRole] = "deviceGroupOrPlugin";
+  roles[PluginUuidStringRole] = "pluginUuidString";
+  return roles;
+}
+int
+PluginGroup::rowCount (const QModelIndex &parent) const
+{
+  return static_cast<int> (pimpl_->devices_.size ());
+}
+QVariant
+PluginGroup::data (const QModelIndex &index, int role) const
+{
+  const auto index_int = index.row ();
+  if (
+    !index.isValid ()
+    || index_int >= static_cast<int> (pimpl_->devices_.size ()))
+    return {};
+
+  if (role == DeviceGroupPtrRole)
+    {
+      const auto &var = pimpl_->devices_.at (index_int);
+      if (var.index () == 0)
+        {
+          return QVariant::fromValue (std::get<0> (var).get ());
+        }
+      if (var.index () == 1)
+        {
+          return QVariant::fromValue (std::get<1> (var).get_object_base ());
+        }
+    }
+
+  if (role == PluginUuidStringRole)
+    {
+      const auto &var = pimpl_->devices_.at (index_int);
+      if (var.index () == 1)
+        {
+          return type_safe::get (std::get<1> (var).id ())
+            .toString (QUuid::WithoutBraces);
+        }
+      return QString ();
+    }
+
+  return {};
+}
+// ============================================================================
+
+void
+PluginGroup::insert_plugin (plugins::PluginUuidReference plugin_ref, int index)
+{
+  index = std::clamp (index, -1, rowCount ());
+
+  if (index == -1)
+    {
+      beginInsertRows ({}, rowCount (), rowCount ());
+      pimpl_->devices_.emplace_back (plugin_ref);
+    }
+  else
+    {
+      beginInsertRows ({}, index, index);
+      pimpl_->devices_.insert (
+        std::ranges::next (pimpl_->devices_.begin (), index), plugin_ref);
+    }
+  endInsertRows ();
+}
+
+plugins::PluginUuidReference
+PluginGroup::remove_plugin (const plugins::Plugin::Uuid &plugin_id)
+{
+  auto it =
+    std::ranges::find_if (pimpl_->devices_, [plugin_id] (const auto &element) {
+      return element.index () == 1 && std::get<1> (element).id () == plugin_id;
+    });
+  if (it == pimpl_->devices_.end ())
+    throw std::invalid_argument ("Plugin ID not found");
+
+  const auto index = std::ranges::distance (pimpl_->devices_.begin (), it);
+  auto       ret = std::get<1> (*it);
+
+  auto * plugin = ret.get ();
+  // Apply any plugin-reported values the periodic flush hasn't applied
+  // yet: the plugin leaves the tracklist with this removal
+  plugin->flush_plugin_values ();
+  if (plugin->uiVisible ())
+    {
+      plugin->setUiVisible (false);
+    }
+
+  beginRemoveRows ({}, static_cast<int> (index), static_cast<int> (index));
+  pimpl_->devices_.erase (it);
+  endRemoveRows ();
+
+  return ret;
+}
+
+QVariant
+PluginGroup::element_at_idx (size_t idx) const
+{
+  return data (index (static_cast<int> (idx)), DeviceGroupPtrRole);
+}
+
+void
+PluginGroup::get_plugins (
+  std::vector<plugins::PluginUuidReference> &plugins,
+  bool                                       recursive) const
+{
+  for (const auto &var : pimpl_->devices_)
+    {
+      if (var.index () == 0)
+        {
+          if (recursive)
+            {
+              std::get<0> (var)->get_plugins (plugins, recursive);
+            }
+        }
+      else
+        {
+          plugins.push_back (std::get<1> (var));
+        }
+    }
+}
+
+void
+to_json (nlohmann::json &j, const PluginGroup &l)
+{
+  auto device_groups_json = nlohmann::json::array ();
+  for (const auto &device_or_group : l.pimpl_->devices_)
+    {
+      if (device_or_group.index () == 0)
+        {
+          nlohmann::json group_json = std::get<0> (device_or_group);
+          device_groups_json.push_back (group_json);
+        }
+      else
+        {
+          device_groups_json.push_back (std::get<1> (device_or_group));
+        }
+    }
+  j[PluginGroup::kDeviceGroupsKey] = device_groups_json;
+  j[PluginGroup::kFaderKey] = *l.fader_;
+}
+void
+from_json (const nlohmann::json &j, PluginGroup &l)
+{
+  for (const auto &device_group_json : j.at (PluginGroup::kDeviceGroupsKey))
+    {
+      if (device_group_json.is_string ())
+        {
+          plugins::PluginUuidReference plugin_id{
+            device_group_json.get<plugins::Plugin::Uuid> (), l.registry_
+          };
+          l.pimpl_->devices_.emplace_back (std::move (plugin_id));
+        }
+      else
+        {
+          auto group = utils::make_qobject_unique<PluginGroup> (
+            l.registry_, PluginGroup::DeviceGroupType::Audio,
+            PluginGroup::ProcessingTypeHint::Parallel);
+          device_group_json.get_to (*group);
+          l.pimpl_->devices_.emplace_back (std::move (group));
+        }
+    }
+  j.at (PluginGroup::kFaderKey).get_to (*l.fader_);
+}
+
+PluginGroup::~PluginGroup () = default;
+}

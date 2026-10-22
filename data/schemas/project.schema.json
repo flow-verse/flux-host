@@ -1,0 +1,496 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "schema:project",
+  "title": "Zrythm Project File",
+  "description": "Schema for Zrythm project files (UNSTABLE - v2.alpha under active development)",
+  "type": "object",
+  "required": [
+    "documentType",
+    "schemaVersion",
+    "appVersion",
+    "datetime",
+    "title",
+    "projectData"
+  ],
+  "properties": {
+    "documentType": {
+      "type": "string",
+      "const": "ZrythmProject",
+      "description": "Document type identifier"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/definitions/version",
+      "description": "Schema format version"
+    },
+    "appVersion": {
+      "$ref": "common.schema.json#/definitions/version",
+      "description": "Zrythm version that created this file"
+    },
+    "datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 datetime when project was saved"
+    },
+    "title": {
+      "type": "string",
+      "description": "Project title"
+    },
+    "uiState": {
+      "type": "object",
+      "description": "UI-specific state (snap grids, editor settings, etc.)",
+      "properties": {
+        "snapGridTimeline": {
+          "$ref": "common.schema.json#/definitions/snapGrid",
+          "description": "Timeline snap/grid settings"
+        },
+        "snapGridEditor": {
+          "$ref": "common.schema.json#/definitions/snapGrid",
+          "description": "Editor (piano roll, chord editor, etc.) snap/grid settings"
+        },
+        "audioInputSelections": {
+          "type": "array",
+          "description": "Audio hardware input selections per track (pruned to live tracks on save)",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "common.schema.json#/definitions/uuid",
+                "description": "Track UUID"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "deviceName": {
+                    "type": "string",
+                    "description": "Audio device name (empty = no input)"
+                  },
+                  "firstChannel": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255,
+                    "description": "0-based index of the first audio channel"
+                  },
+                  "stereo": {
+                    "type": "boolean",
+                    "description": "Whether to use stereo (true) or mono (false)"
+                  }
+                },
+                "required": [
+                  "deviceName",
+                  "firstChannel",
+                  "stereo"
+                ]
+              }
+            ],
+            "additionalItems": false
+          }
+        },
+        "chordPadBank": {
+          "type": "object",
+          "description": "Chord pad bank - variable-length list of chord descriptors for the pad panel",
+          "properties": {
+            "chords": {
+              "type": "array",
+              "items": {
+                "$ref": "common.schema.json#/definitions/chordDescriptor"
+              }
+            }
+          }
+        },
+        "midiInputSelections": {
+          "type": "array",
+          "description": "MIDI hardware input selections per track (pruned to live tracks on save)",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "common.schema.json#/definitions/uuid",
+                "description": "Track UUID"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "deviceIdentifier": {
+                    "type": "string",
+                    "description": "MIDI device identifier (empty = no input)"
+                  },
+                  "midiChannel": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 16,
+                    "description": "MIDI channel (0 = all channels, 1-16 = specific channel)"
+                  }
+                },
+                "required": [
+                  "deviceIdentifier",
+                  "midiChannel"
+                ]
+              }
+            ],
+            "additionalItems": false
+          }
+        }
+      }
+    },
+    "undoHistory": {
+      "type": "object",
+      "description": "Undo/redo history (commands that can be undone/redone) - TODO: structure to be defined when serialization is implemented"
+    },
+    "projectData": {
+      "type": "object",
+      "description": "Project data",
+      "required": [
+        "projectId",
+        "tempoMap",
+        "transport",
+        "tracklist",
+        "registry"
+      ],
+      "properties": {
+        "projectId": {
+          "$ref": "common.schema.json#/definitions/uuid",
+          "description": "Persistent identity of this project instance (regenerated on Save As)"
+        },
+        "tempoMap": {
+          "type": "object",
+          "description": "Tempo and time signature map",
+          "properties": {
+            "baseBpm": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 1000,
+              "description": "Base tempo (BPM) anchored at tick 0; governs the region from tick 0 up to the first inserted tempo event"
+            },
+            "baseTimeSignature": {
+              "$ref": "common.schema.json#/definitions/timeSignature",
+              "description": "Base time signature anchored at tick 0"
+            },
+            "timeSignatures": {
+              "type": "array",
+              "description": "Time signature events",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/definitions/timeSignature"
+                  }
+                ],
+                "properties": {
+                  "tickPosition": {
+                    "type": "number",
+                    "description": "Position in ticks"
+                  }
+                },
+                "required": [
+                  "tickPosition",
+                  "numerator",
+                  "denominator"
+                ]
+              }
+            },
+            "tempoChanges": {
+              "type": "array",
+              "description": "Tempo change events",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "tickPosition": {
+                    "type": "number",
+                    "description": "Position in ticks"
+                  },
+                  "bpm": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 1000
+                  }
+                },
+                "required": [
+                  "tickPosition",
+                  "bpm"
+                ]
+              }
+            }
+          }
+        },
+        "transport": {
+          "type": "object",
+          "description": "Transport state (playhead, loop, etc.)",
+          "properties": {
+            "playheadPosition": {
+              "$ref": "common.schema.json#/definitions/position"
+            },
+            "cuePosition": {
+              "$ref": "common.schema.json#/definitions/position"
+            },
+            "loopStartPosition": {
+              "$ref": "common.schema.json#/definitions/position"
+            },
+            "loopEndPosition": {
+              "$ref": "common.schema.json#/definitions/position"
+            },
+            "punchInPosition": {
+              "$ref": "common.schema.json#/definitions/position"
+            },
+            "punchOutPosition": {
+              "$ref": "common.schema.json#/definitions/position"
+            }
+          }
+        },
+        "tracklist": {
+          "type": "object",
+          "description": "Track list and track data",
+          "required": [
+            "tracks",
+            "pinnedTracksCutoff",
+            "trackRoutes"
+          ],
+          "properties": {
+            "tracks": {
+              "type": "array",
+              "description": "UUID references to tracks in registry.tracks (ordered)",
+              "items": {
+                "$ref": "common.schema.json#/definitions/uuid"
+              }
+            },
+            "pinnedTracksCutoff": {
+              "type": "integer",
+              "description": "Index separating pinned tracks from normal tracks"
+            },
+            "trackRoutes": {
+              "type": "array",
+              "description": "Routes between tracks (source-destination mappings)",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "common.schema.json#/definitions/uuid",
+                    "description": "Source track UUID"
+                  },
+                  {
+                    "$ref": "common.schema.json#/definitions/uuid",
+                    "description": "Destination track UUID"
+                  }
+                ],
+                "additionalItems": false
+              }
+            },
+            "folderParents": {
+              "type": "array",
+              "description": "Parent folder for each track: [childUuid, parentUuid] pairs",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "common.schema.json#/definitions/uuid",
+                    "description": "Child track UUID"
+                  },
+                  {
+                    "$ref": "common.schema.json#/definitions/uuid",
+                    "description": "Parent folder track UUID"
+                  }
+                ],
+                "additionalItems": false
+              }
+            },
+            "expandedTracks": {
+              "type": "array",
+              "description": "UUIDs of expanded folder tracks (absent from list = collapsed)",
+              "items": {
+                "$ref": "common.schema.json#/definitions/uuid"
+              }
+            }
+          }
+        },
+        "audioPool": {
+          "type": "object",
+          "description": "References to audio files used in the project",
+          "properties": {
+            "fileHashes": {
+              "type": "array",
+              "description": "File hashes used for checking if an audio file is already written to the pool",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "common.schema.json#/definitions/uuid",
+                    "description": "File audio source ID from registry.fileAudioSources"
+                  },
+                  {
+                    "type": "integer",
+                    "description": "File hash"
+                  }
+                ],
+                "additionalItems": false
+              }
+            }
+          }
+        },
+        "portConnectionsManager": {
+          "type": "object",
+          "description": "Manual port connections (user routing)",
+          "properties": {
+            "connections": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "sourcePortId": {
+                    "type": "string",
+                    "description": "UUID of source port"
+                  },
+                  "destPortId": {
+                    "type": "string",
+                    "description": "UUID of destination port"
+                  },
+                  "multiplier": {
+                    "type": "number",
+                    "description": "Connection strength/gain multiplier"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "audioBusChannelRouting": {
+                    "type": "object",
+                    "description": "Per-connection audio bus channel matrix. Absent 'routes' means the routing is derived from the two ports' speaker arrangements.",
+                    "properties": {
+                      "routes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "sourceChannel": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "destinationChannel": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "gain": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "sourceChannel",
+                            "destinationChannel",
+                            "gain"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tempoObjectManager": {
+          "type": "object",
+          "description": "Tempo and time signature objects in arranger",
+          "properties": {
+            "tempoObjects": {
+              "$ref": "common.schema.json#/definitions/uuidArray",
+              "description": "UUID references to tempoObject objects in registry.arrangerObjects"
+            },
+            "timeSignatureObjects": {
+              "$ref": "common.schema.json#/definitions/uuidArray",
+              "description": "UUID references to timeSignatureObject objects in registry.arrangerObjects"
+            }
+          }
+        },
+        "clipLauncher": {
+          "type": "object",
+          "description": "Clip launcher with scenes and clip slots",
+          "properties": {
+            "scenes": {
+              "type": "array",
+              "description": "Scenes in the clip launcher (each scene has clip slots per track)",
+              "items": {
+                "$ref": "common.schema.json#/definitions/scene"
+              }
+            }
+          }
+        },
+        "registry": {
+          "type": "object",
+          "description": "All UUID-indexed objects (deserialized first, then referenced)",
+          "required": [
+            "ports",
+            "parameters",
+            "plugins",
+            "tracks",
+            "automationTracks",
+            "lanes",
+            "clipSlots",
+            "arrangerObjects",
+            "fileAudioSources"
+          ],
+          "properties": {
+            "ports": {
+              "type": "array",
+              "description": "All audio/MIDI ports",
+              "items": {
+                "$ref": "common.schema.json#/definitions/knownPort"
+              }
+            },
+            "parameters": {
+              "type": "array",
+              "description": "All processor parameters",
+              "items": {
+                "$ref": "common.schema.json#/definitions/parameter"
+              }
+            },
+            "plugins": {
+              "type": "array",
+              "description": "All plugin instances",
+              "items": {
+                "$ref": "common.schema.json#/definitions/plugin"
+              }
+            },
+            "tracks": {
+              "type": "array",
+              "description": "All tracks with full data",
+              "items": {
+                "$ref": "common.schema.json#/definitions/knownTrack"
+              }
+            },
+            "lanes": {
+              "type": "array",
+              "description": "All track lanes (referenced by tracks' laneIds)",
+              "items": {
+                "$ref": "common.schema.json#/definitions/trackLane"
+              }
+            },
+            "automationTracks": {
+              "type": "array",
+              "description": "All automation tracks (referenced by tracks' automationTracklists)",
+              "items": {
+                "$ref": "common.schema.json#/definitions/automationTrack"
+              }
+            },
+            "clipSlots": {
+              "type": "array",
+              "description": "All clip slots (referenced by scenes' clipSlotIds)",
+              "items": {
+                "$ref": "common.schema.json#/definitions/clipSlot"
+              }
+            },
+            "arrangerObjects": {
+              "type": "array",
+              "description": "All arranger objects (clips, notes, automation, markers, etc.)",
+              "items": {
+                "$ref": "common.schema.json#/definitions/knownArrangerObject"
+              }
+            },
+            "fileAudioSources": {
+              "type": "array",
+              "description": "All audio file references",
+              "items": {
+                "$ref": "common.schema.json#/definitions/fileAudioSource"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

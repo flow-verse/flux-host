@@ -1,0 +1,39 @@
+// SPDX-FileCopyrightText: © 2019, 2024-2025 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+/**
+ * @file
+ *
+ * Date and time utils.
+ */
+
+#pragma once
+
+#include "utils/utf8_string.h"
+
+namespace zrythm::utils::datetime
+{
+
+/**
+ * Returns the current datetime as a string.
+ */
+Utf8String
+get_current_as_string ();
+
+/**
+ * Returns the current datetime as an ISO 8601 string (e.g.,
+ * "2026-01-28T12:00:00Z").
+ */
+Utf8String
+get_current_as_iso8601_string ();
+
+Utf8String
+epoch_to_str (qint64 epoch, const Utf8String &format = u8"yyyy-MM-dd hh:mm:ss");
+
+/**
+ * Get the current datetime to be used in filenames, eg, for the log file.
+ */
+Utf8String
+get_for_filename ();
+
+}; // zrythm::utils::datetime

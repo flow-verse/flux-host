@@ -1,0 +1,43 @@
+SPDX-FileCopyrightText: © 2020 Alexandros Theodotou <alex@zrythm.org>
+SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+[description]
+Zrythm is a digital audio workstation designed to be
+featureful and easy to use.  It offers unlimited automation options, LV2
+plugin support, JACK support and chord assistance.
+
+[environment]
+.TP
+.BR LV2_PATH
+Specify custom path for scanning LV2 plugins
+.TP
+.BR ZRYTHM_DSP_THREADS
+Number of threads to use for DSP, including the main one
+.TP
+.BR ZRYTHM_SKIP_PLUGIN_SCAN
+Disable plugin scanning
+.TP
+.BR ZRYTHM_DEBUG
+Show additional debug info about objects
+
+[files]
+.TP
+.R \fI<zrythm_path>/log\fR
+Log files for each Zrythm run
+.TP
+.R \fI<zrythm_path>/templates\fR
+Project templates
+.TP
+.R \fI<zrythm_path>/themes\fR
+User themes
+.TP
+.R \fI<zrythm_path>/cached_vst_descriptors.yaml\fR
+Cached VST plugin descriptors
+
+[author]
+Alexandros Theodotou
+
+[copyright]
+Copyright (C) @copyright_years@ @copyright_name@
+This is free software; see the source for copying conditions.
+There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

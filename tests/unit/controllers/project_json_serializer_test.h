@@ -1,0 +1,287 @@
+// SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include <functional>
+#include <memory>
+#include <regex>
+#include <set>
+#include <string>
+
+#include "controllers/project_json_serializer.h"
+#include "structure/project/project.h"
+#include "structure/project/project_ui_state.h"
+#include "undo/undo_stack.h"
+#include "utils/app_settings.h"
+#include "utils/io_utils.h"
+#include "utils/object_registry.h"
+
+#include "helpers/mock_hardware_audio_interface.h"
+#include "helpers/mock_hardware_midi_interface.h"
+#include "helpers/mock_settings_backend.h"
+#include "helpers/project_json_comparators.h"
+#include "helpers/scoped_juce_qapplication.h"
+
+#include <gtest/gtest.h>
+#include <juce_audio_processors/juce_audio_processors.h>
+#include <nlohmann/json.hpp>
+
+namespace zrythm::controllers
+{
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/// Creates a minimal valid project JSON matching the current schema
+inline nlohmann::json
+create_minimal_valid_project_json ()
+{
+  nlohmann::json j;
+
+  // Top-level required fields
+  j["documentType"] = "ZrythmProject";
+  j["schemaVersion"] = nlohmann::json::object ();
+  j["schemaVersion"]["major"] = 2;
+  j["schemaVersion"]["minor"] = 1;
+  j["appVersion"] = nlohmann::json::object ();
+  j["appVersion"]["major"] = 2;
+  j["appVersion"]["minor"] = 0;
+  j["appVersion"]["patch"] = 0;
+  j["datetime"] = "2026-02-16T12:00:00Z";
+  j["title"] = "Test Project";
+
+  // projectData section
+  auto &pd = j["projectData"];
+
+  // projectId (required)
+  pd["projectId"] = "0d2ac709-75f5-4a3b-93af-1cbb4f1d1f10";
+
+  // tempoMap (required)
+  pd["tempoMap"] = nlohmann::json::object ();
+  pd["tempoMap"]["timeSignatures"] = nlohmann::json::array ();
+  pd["tempoMap"]["tempoChanges"] = nlohmann::json::array ();
+
+  // transport (required)
+  pd["transport"] = nlohmann::json::object ();
+
+  // tracklist (required)
+  pd["tracklist"] = nlohmann::json::object ();
+  pd["tracklist"]["tracks"] = nlohmann::json::array ();
+  pd["tracklist"]["pinnedTracksCutoff"] = 0;
+  pd["tracklist"]["trackRoutes"] = nlohmann::json::array ();
+
+  // registry (required)
+  pd["registry"] = nlohmann::json::object ();
+  pd["registry"]["ports"] = nlohmann::json::array ();
+  pd["registry"]["parameters"] = nlohmann::json::array ();
+  pd["registry"]["plugins"] = nlohmann::json::array ();
+  pd["registry"]["tracks"] = nlohmann::json::array ();
+  pd["registry"]["automationTracks"] = nlohmann::json::array ();
+  pd["registry"]["lanes"] = nlohmann::json::array ();
+  pd["registry"]["clipSlots"] = nlohmann::json::array ();
+  pd["registry"]["arrangerObjects"] = nlohmann::json::array ();
+  pd["registry"]["fileAudioSources"] = nlohmann::json::array ();
+
+  return j;
+}
+
+/// Recursively extracts all UUID values from "id" fields in a JSON structure
+inline std::set<std::string>
+extract_all_uuids (const nlohmann::json &j)
+{
+  std::set<std::string> uuids;
+
+  const auto extract = [&] (auto &&self, const nlohmann::json &obj) -> void {
+    if (obj.is_object ())
+      {
+        if (obj.contains ("id") && obj["id"].is_string ())
+          {
+            uuids.insert (obj["id"].get<std::string> ());
+          }
+        for (const auto &[key, val] : obj.items ())
+          {
+            self (self, val);
+          }
+      }
+    else if (obj.is_array ())
+      {
+        for (const auto &elem : obj)
+          {
+            self (self, elem);
+          }
+      }
+  };
+
+  extract (extract, j);
+  return uuids;
+}
+
+/// Counts the total number of objects in a JSON structure
+inline size_t
+count_objects (const nlohmann::json &j)
+{
+  size_t count = 0;
+
+  const auto count_fn = [&] (auto &&self, const nlohmann::json &obj) -> void {
+    if (obj.is_object ())
+      {
+        ++count;
+        for (const auto &[key, val] : obj.items ())
+          {
+            self (self, val);
+          }
+      }
+    else if (obj.is_array ())
+      {
+        for (const auto &elem : obj)
+          {
+            self (self, elem);
+          }
+      }
+  };
+
+  count_fn (count_fn, j);
+  return count;
+}
+
+// ============================================================================
+// Test Fixture
+// ============================================================================
+
+/// Fixture for testing Project serialization with a minimal Project setup
+class ProjectSerializationTest
+    : public ::testing::Test,
+      public test_helpers::ScopedJuceQApplication
+{
+protected:
+  void SetUp () override
+  {
+    // Create a temporary directory for the project
+    temp_dir_obj = utils::io::make_tmp_dir ();
+    project_dir =
+      utils::Utf8String::from_qstring (temp_dir_obj->path ()).to_path ();
+
+    hw_interface = std::make_unique<test_helpers::MockHardwareAudioInterface> ();
+
+    plugin_format_manager = std::make_shared<juce::AudioPluginFormatManager> ();
+    juce::addDefaultFormatsToManager (*plugin_format_manager);
+
+    // Create a mock settings backend
+    auto mock_backend = std::make_unique<test_helpers::MockSettingsBackend> ();
+    mock_backend_ptr = mock_backend.get ();
+
+    // Set up default expectations for common settings
+    ON_CALL (*mock_backend_ptr, value (testing::_, testing::_))
+      .WillByDefault (testing::Return (QVariant ()));
+
+    app_settings =
+      std::make_unique<utils::AppSettings> (std::move (mock_backend));
+
+    // Create registry, monitor fader and metronome
+    monitor_fader = utils::make_qobject_unique<dsp::Fader> (
+      registry_, dsp::PortType::Audio,
+      true,  // hard_limit_output
+      false, // make_params_automatable
+      [] () -> utils::Utf8String { return u8"Test Control Room"; },
+      [] (bool fader_solo_status) { return false; });
+
+    // Create metronome with test samples
+    juce::AudioSampleBuffer emphasis_sample (2, 512);
+    juce::AudioSampleBuffer normal_sample (2, 512);
+    metronome = utils::make_qobject_unique<dsp::Metronome> (
+      registry_, emphasis_sample, normal_sample, true, 1.0f, nullptr);
+  }
+
+  void TearDown () override
+  {
+    undo_stack.reset ();
+    ui_state.reset ();
+    metronome.reset ();
+    monitor_fader.reset ();
+    app_settings.reset ();
+    plugin_format_manager.reset ();
+    hw_interface.reset ();
+  }
+
+  std::unique_ptr<structure::project::Project> create_minimal_project ()
+  {
+    structure::project::Project::ProjectDirectoryPathProvider path_provider =
+      [this] (bool for_backup) {
+        if (for_backup)
+          {
+            return project_dir / "backups";
+          }
+        return project_dir;
+      };
+
+    plugins::PluginHostWindowFactory window_factory =
+      [] (plugins::Plugin &) -> std::unique_ptr<plugins::PluginHostWindow> {
+      return nullptr;
+    };
+
+    auto project = std::make_unique<structure::project::Project> (
+      *app_settings, path_provider, *hw_interface, midi_interface_,
+      plugin_format_manager, window_factory, *metronome, *monitor_fader);
+
+    project->install_recording_callback (
+      [] (
+        const structure::tracks::Track::Uuid &, units::sample_t,
+        const dsp::ITransport &, const dsp::MidiEventBuffer *,
+        std::optional<structure::tracks::TrackProcessor::ConstStereoPortPair>,
+        units::sample_u32_t) { });
+
+    return project;
+  }
+
+  void create_ui_state_and_undo_stack (structure::project::Project &project)
+  {
+    ui_state = utils::make_qobject_unique<structure::project::ProjectUiState> (
+      project, *app_settings);
+
+    undo_stack = utils::make_qobject_unique<undo::UndoStack> (
+      [&project] (const std::function<void ()> &action, bool recalculate_graph) {
+        project.engine ()->execute_function_with_paused_processing_synchronously (
+          action, recalculate_graph);
+      },
+      nullptr);
+  }
+
+  // Helper to verify a UUID string format
+  static void assert_valid_uuid (const std::string &uuid_str)
+  {
+    // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    static const std::regex uuid_regex (
+      R"([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})",
+      std::regex_constants::icase);
+    EXPECT_TRUE (std::regex_match (uuid_str, uuid_regex))
+      << "Invalid UUID format: " << uuid_str;
+  }
+
+  // Helper to verify a hex color format (#RRGGBB)
+  static void assert_valid_color (const std::string &color_str)
+  {
+    static const std::regex color_regex (R"(#[0-9A-Fa-f]{6})");
+    EXPECT_TRUE (std::regex_match (color_str, color_regex))
+      << "Invalid color format: " << color_str;
+  }
+
+  static constexpr utils::Version TEST_APP_VERSION{ 2, 0, {} };
+  static constexpr utils::Version TEST_APP_VERSION_WITH_PATCH{ 2, 0, 1 };
+
+  std::unique_ptr<QTemporaryDir>                  temp_dir_obj;
+  std::filesystem::path                           project_dir;
+  std::unique_ptr<dsp::IHardwareAudioInterface>   hw_interface;
+  test_helpers::MockHardwareMidiInterface         midi_interface_;
+  std::shared_ptr<juce::AudioPluginFormatManager> plugin_format_manager;
+  test_helpers::MockSettingsBackend *             mock_backend_ptr{};
+  std::unique_ptr<utils::AppSettings>             app_settings;
+  utils::ObjectRegistry                           registry_;
+  utils::QObjectUniquePtr<dsp::Fader>             monitor_fader;
+  utils::QObjectUniquePtr<dsp::Metronome>         metronome;
+  utils::QObjectUniquePtr<structure::project::ProjectUiState> ui_state;
+  utils::QObjectUniquePtr<undo::UndoStack>                    undo_stack;
+};
+
+} // namespace zrythm::controllers

@@ -1,0 +1,48 @@
+# SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: FSFAP
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+fail_fast: true
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.2.0
+  hooks:
+  - id: trailing-whitespace
+    # patch context lines and generated cpp must keep their whitespace verbatim
+    exclude: ^(data/plugins/generated-cpp/.*\.cpp|cmake/patches/.*\.patch)$
+  - id: end-of-file-fixer
+    exclude: ^(data/plugins/generated-cpp/.*\.cpp|cmake/patches/.*\.patch)$
+  - id: check-yaml
+    args: [--unsafe]
+  - id: check-added-large-files
+    exclude: src/gui/resources/fonts/Noto_Sans_Symbols_2/NotoSansSymbols2-Regular\.ttf
+- repo: local
+  hooks:
+  - id: clang-format
+    name: clang-format
+    entry: clang-format --dry-run --Werror -style=file
+    language: system
+    types_or: [c++, c]
+    pass_filenames: true
+  - id: validate-json-schemas
+    name: validate-json-schemas
+    description: Validate the JSON schema files against their $schema.
+    entry: python3 scripts/validate_json_schemas.py
+    language: system
+    pass_filenames: false
+    files: ^data/schemas/.*\.schema\.json$
+  - id: gitlab-ci-lint
+    name: gitlab-ci-lint
+    description: >-
+      Validate .gitlab-ci.yml against the GitLab CI schema.
+      Requires glab auth for gitlab.zrythm.org.
+    entry: >-
+      glab ci lint --dry-run --include-jobs
+      -R https://gitlab.zrythm.org/zrythm/zrythm
+    language: system
+    pass_filenames: false
+    files: ^\.gitlab-ci\.yml$
+- repo: https://github.com/fsfe/reuse-tool
+  rev: v6.2.0
+  hooks:
+  - id: reuse-lint-file

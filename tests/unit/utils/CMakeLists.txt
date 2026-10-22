@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: © 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+add_executable(zrythm_utils_unit_tests
+  algorithms_test.cpp
+  app_settings_test.cpp
+  audio_file_test.cpp
+  audio_file_writer_test.cpp
+  audio_test.cpp
+  compression_test.cpp
+  concurrency_test.cpp
+  datetime_test.cpp
+  debouncer_test.cpp
+  enum_utils_test.cpp
+  directory_manager_test.cpp
+  expandable_tick_range_test.cpp
+  exceptions_test.cpp
+  float_ranges_test.cpp
+  hash_test.cpp
+  icloneable_test.cpp
+  inplace_function_test.cpp
+  io_test.cpp
+  logger_test.cpp
+  main_thread_dispatcher_test.cpp
+  serialization_test.cpp
+  math_test.cpp
+  midi_test.cpp
+  monotonic_time_provider_test.cpp
+  playback_cache_scheduler_test.cpp
+  qt_test.cpp
+  raii_utils_test.cpp
+  ranges_test.cpp
+  ring_buffer_test.cpp
+  rt_logger_test.cpp
+  string_test.cpp
+  test_uuid_identifiable_qobjects.h
+  units_test.cpp
+  uuid_identifiable_object_test.cpp
+  uuid_reference_test.h
+  uuid_reference_test.cpp
+  variant_helpers_test.h
+  variant_helpers_test.cpp
+  version_test.cpp
+  views_test.cpp
+  zip_utils_test.cpp
+)
+
+set_target_properties(zrythm_utils_unit_tests PROPERTIES
+  AUTOMOC ON
+  UNITY_BUILD ${ZRYTHM_UNITY_BUILD}
+)
+
+target_link_libraries(zrythm_utils_unit_tests PRIVATE
+  GTest::gmock_main
+  zrythm::utils_lib
+  zrythm_test_helpers_lib
+)
+
+zrythm_discover_tests(zrythm_utils_unit_tests)

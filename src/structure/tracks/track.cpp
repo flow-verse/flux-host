@@ -1,0 +1,764 @@
+// SPDX-FileCopyrightText: © 2018-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "utils/format_qt.h"
+
+#include "dsp/tempo_map_qml_adapter.h"
+#include "structure/tracks/track.h"
+#include "utils/tracy.h"
+#include "utils/views.h"
+
+DEFINE_ENUM_FORMATTER (
+  zrythm::structure::tracks::Track::Type,
+  Track_Type,
+  QT_TR_NOOP_UTF8 ("Instrument"),
+  QT_TR_NOOP_UTF8 ("Audio"),
+  QT_TR_NOOP_UTF8 ("Master"),
+  QT_TR_NOOP_UTF8 ("Chord"),
+  QT_TR_NOOP_UTF8 ("Marker"),
+  QT_TR_NOOP_UTF8 ("Modulator"),
+  QT_TR_NOOP_UTF8 ("Audio FX"),
+  QT_TR_NOOP_UTF8 ("Audio Group"),
+  QT_TR_NOOP_UTF8 ("MIDI"),
+  QT_TR_NOOP_UTF8 ("MIDI FX"),
+  QT_TR_NOOP_UTF8 ("MIDI Group"),
+  QT_TR_NOOP_UTF8 ("Folder"));
+
+namespace zrythm::structure::tracks
+{
+Track::~Track () = default;
+
+Track::Track (
+  Type                    type,
+  std::optional<PortType> in_signal_type,
+  std::optional<PortType> out_signal_type,
+  TrackFeatures           enabled_features,
+  BaseTrackDependencies   dependencies)
+    : base_dependencies_ (std::move (dependencies)), type_ (type),
+      features_ (enabled_features), in_signal_type_ (in_signal_type),
+      out_signal_type_ (out_signal_type)
+{
+  z_debug ("creating {} track", type);
+
+  timebase_provider_ = utils::make_qobject_unique<dsp::TimebaseProvider> (this);
+  timebase_provider_->setOverride (dsp::Timebase::Musical);
+
+  if (
+    out_signal_type == dsp::PortType::Audio
+    || out_signal_type == dsp::PortType::Midi)
+    {
+      channel_ = make_channel ();
+    }
+  if (ENUM_BITSET_TEST (enabled_features, TrackFeatures::Modulators))
+    {
+      modulators_ = make_modulators ();
+    }
+  if (ENUM_BITSET_TEST (enabled_features, TrackFeatures::Automation))
+    {
+      automation_tracklist_ = make_automation_tracklist ();
+      generate_basic_automation_tracks ();
+    }
+  if (ENUM_BITSET_TEST (enabled_features, TrackFeatures::Lanes))
+    {
+      lanes_ = make_lanes ();
+    }
+  if (ENUM_BITSET_TEST (enabled_features, TrackFeatures::PianoRoll))
+    {
+      piano_roll_track_mixin_ = make_piano_roll_track_mixin ();
+    }
+
+  // Listen to height changes
+  QObject::connect (
+    this, &Track::heightChanged, this, &Track::fullVisibleHeightChanged);
+}
+
+void
+init_from (Track &obj, const Track &other, utils::ObjectCloneType clone_type)
+{
+  init_from (
+    static_cast<Track::UuidIdentifiableObject &> (obj),
+    static_cast<const Track::UuidIdentifiableObject &> (other), clone_type);
+  obj.type_ = other.type_;
+  obj.name_ = other.name_;
+  obj.icon_name_ = other.icon_name_;
+  obj.visible_ = other.visible_;
+  obj.main_height_ = other.main_height_;
+  obj.enabled_ = other.enabled_;
+  obj.color_ = other.color_;
+  obj.in_signal_type_ = other.in_signal_type_;
+  obj.out_signal_type_ = other.out_signal_type_;
+  obj.comment_ = other.comment_;
+  obj.frozen_clip_id_ = other.frozen_clip_id_;
+  if (other.timebase_provider_->hasOverride ())
+    obj.timebase_provider_->setOverride (
+      *other.timebase_provider_->overrideValue ());
+  init_from (*obj.processor_, *other.processor_, clone_type);
+  init_from (
+    *obj.automation_tracklist_, *other.automation_tracklist_, clone_type);
+  utils::clone_unique_ptr_container (
+    obj.modulator_macro_processors_, other.modulator_macro_processors_);
+}
+
+utils::Utf8String
+Track::get_full_designation_for_port (const dsp::Port &port) const
+{
+  return utils::Utf8String::from_utf8_encoded_string (
+    fmt::format ("{}/{}", get_name (), port.get_label ()));
+}
+
+Track::Type
+Track::type_get_from_plugin_descriptor (
+  const zrythm::plugins::PluginDescriptor &descr)
+{
+  if (descr.isInstrument ())
+    return Track::Type::Instrument;
+  else if (descr.isMidiModifier ())
+    return Track::Type::Midi;
+  else
+    return Track::Type::AudioBus;
+}
+
+uint8_t
+Track::get_midi_ch (const arrangement::MidiClip &midi_clip) const
+{
+  assert (lanes_);
+  assert (piano_roll_track_mixin_);
+
+  // return lane MIDI channel if set
+  for (const auto &lane : lanes_->lanes_view ())
+    {
+      auto midi_clips = lane->arrangement::ArrangerObjectOwner<
+        arrangement::MidiClip>::get_children_view ();
+      auto it = std::ranges::find (midi_clips, &midi_clip);
+      if (it != midi_clips.end () && lane->midiChannel () > 0)
+        {
+          return lane->midiChannel ();
+        }
+    }
+
+  // otherwise return piano roll's channel
+  return piano_roll_track_mixin_->midiChannel ();
+}
+
+utils::QObjectUniquePtr<TrackProcessor>
+Track::make_track_processor (
+  std::optional<TrackProcessor::FillEventsCallback> fill_events_cb,
+  std::optional<TrackProcessor::TransformMidiInputsFunc>
+    transform_midi_inputs_func,
+  std::optional<TrackProcessor::AppendMidiInputsToOutputsFunc>
+    append_midi_inputs_to_outputs_func)
+{
+  auto caps = TrackProcessor::Capabilities{};
+  if (has_piano_roll () || is_chord ())
+    caps |= TrackProcessor::Capabilities::PianoRoll;
+  if (is_audio ())
+    caps |= TrackProcessor::Capabilities::AudioTrack;
+  if (ENUM_BITSET_TEST (features_, TrackFeatures::Recording))
+    caps |= TrackProcessor::Capabilities::Recording;
+
+  TrackProcessor::RecordingCallbackRT internal_recording_cb;
+  if (base_dependencies_.track_recording_callback)
+    {
+      auto cb = base_dependencies_.track_recording_callback;
+      internal_recording_cb =
+        [this, cb] (
+          units::sample_t timeline_position, const dsp::ITransport &transport_ref,
+          const dsp::MidiEventBuffer *                       midi_events,
+          std::optional<TrackProcessor::ConstStereoPortPair> stereo_ports,
+          units::sample_u32_t                                nframes) {
+          cb (
+            get_uuid (), timeline_position, transport_ref, midi_events,
+            std::move (stereo_ports), nframes);
+        };
+    }
+
+  auto tp = utils::make_qobject_unique<TrackProcessor> (
+    base_dependencies_.tempo_map_.get_tempo_map (), in_signal_type_.value (),
+    [this] () { return get_name (); }, [this] () { return enabled (); }, caps,
+    base_dependencies_.registry_, fill_events_cb, transform_midi_inputs_func,
+    append_midi_inputs_to_outputs_func, internal_recording_cb, this);
+
+  init_cache_scheduler ();
+  init_playback_cache_activity_tracker (*tp);
+
+  return tp;
+}
+
+dsp::ProcessorParameter *
+Track::recordingParam () const
+{
+  if (!ENUM_BITSET_TEST (features_, TrackFeatures::Recording))
+    return nullptr;
+  assert (processor_ != nullptr);
+  return &processor_->get_recording_param ();
+}
+
+dsp::ProcessorParameter *
+Track::monitorParam () const
+{
+  if (type_ != Type::Audio)
+    return nullptr;
+  assert (processor_ != nullptr);
+  return &processor_->get_monitor_audio_param ();
+}
+
+utils::QObjectUniquePtr<AutomationTracklist>
+Track::make_automation_tracklist ()
+{
+  auto atl = utils::make_qobject_unique<AutomationTracklist> (
+    AutomationTrackHolder::Dependencies{
+      .tempo_map_ = base_dependencies_.tempo_map_,
+      .registry_ = base_dependencies_.registry_,
+      .timebase_provider_ = timebaseProvider () },
+    this);
+
+  // Listen to automation visibility and data changes
+  QObject::connect (
+    atl.get (), &AutomationTracklist::automationVisibleChanged, this,
+    &Track::fullVisibleHeightChanged);
+  QObject::connect (
+    atl.get (), &AutomationTracklist::dataChanged, this,
+    &Track::fullVisibleHeightChanged);
+  QObject::connect (
+    atl.get (), &AutomationTracklist::rowsInserted, this,
+    &Track::fullVisibleHeightChanged);
+  QObject::connect (
+    atl.get (), &AutomationTracklist::rowsRemoved, this,
+    &Track::fullVisibleHeightChanged);
+  QObject::connect (
+    atl.get (), &AutomationTracklist::modelReset, this,
+    &Track::fullVisibleHeightChanged);
+
+  return atl;
+}
+
+utils::QObjectUniquePtr<Channel>
+Track::make_channel ()
+{
+  return utils::make_qobject_unique<Channel> (
+    base_dependencies_.registry_, out_signal_type_.value (),
+    [&] () { return get_name (); }, is_master (),
+    [this] (bool fader_solo_status) {
+      // Effectively muted if other track(s) is soloed and this isn't
+      return base_dependencies_.soloed_tracks_exist_getter_ ()
+             && !fader_solo_status && !is_master ();
+    },
+    this);
+}
+
+utils::QObjectUniquePtr<plugins::PluginGroup>
+Track::make_modulators ()
+{
+  return utils::make_qobject_unique<plugins::PluginGroup> (
+    base_dependencies_.registry_, plugins::PluginGroup::DeviceGroupType::CV,
+    plugins::PluginGroup::ProcessingTypeHint::Custom, this);
+}
+
+utils::QObjectUniquePtr<TrackLaneList>
+Track::make_lanes ()
+{
+  auto ret = utils::make_qobject_unique<TrackLaneList> (
+    base_dependencies_.registry_, timebaseProvider (), this);
+
+  QObject::connect (
+    ret.get (), &TrackLaneList::totalHeightChanged, this,
+    &Track::fullVisibleHeightChanged);
+
+  ret->create_missing_lanes (0);
+
+  return ret;
+}
+
+void
+Track::init_cache_scheduler ()
+{
+  assert (playable_content_cache_request_debouncer_ == nullptr);
+
+  playable_content_cache_request_debouncer_ =
+    utils::make_qobject_unique<utils::PlaybackCacheScheduler> (this);
+
+  if (lanes_)
+    {
+      QObject::connect (
+        lanes_.get (), &TrackLaneList::laneObjectsNeedRecache,
+        playable_content_cache_request_debouncer_.get (),
+        &utils::PlaybackCacheScheduler::queueCacheRequest);
+
+      // Attaching or detaching a lane changes which clips the track
+      // plays back, independent of any clip content change, so lane
+      // row changes need a full rebuild
+      const auto queue_full_rebuild = [this] () {
+        playable_content_cache_request_debouncer_->queueCacheRequest ({});
+      };
+      QObject::connect (
+        lanes_.get (), &QAbstractListModel::rowsInserted,
+        playable_content_cache_request_debouncer_.get (), queue_full_rebuild);
+      QObject::connect (
+        lanes_.get (), &QAbstractListModel::rowsRemoved,
+        playable_content_cache_request_debouncer_.get (), queue_full_rebuild);
+    }
+
+  if (
+    auto * chord_owner = dynamic_cast<
+      arrangement::ArrangerObjectOwner<arrangement::ChordClip> *> (this))
+    {
+      QObject::connect (
+        chord_owner->get_model (),
+        &arrangement::ArrangerObjectListModel::contentChanged,
+        playable_content_cache_request_debouncer_.get (),
+        &utils::PlaybackCacheScheduler::queueCacheRequest);
+    }
+
+  QObject::connect (
+    &base_dependencies_.tempo_map_, &dsp::TempoMapWrapper::tempoEventsChanged,
+    playable_content_cache_request_debouncer_.get (), [this] () {
+      playable_content_cache_request_debouncer_->queueCacheRequest ({});
+    });
+
+  QObject::connect (
+    playable_content_cache_request_debouncer_.get (),
+    &utils::PlaybackCacheScheduler::cacheRequested, this,
+    &Track::regeneratePlaybackCaches);
+}
+
+void
+Track::init_playback_cache_activity_tracker (TrackProcessor &proc)
+{
+  assert (playable_content_cache_request_debouncer_ != nullptr);
+
+  const auto * cache = [&proc] () -> const dsp::TimelineDataCache * {
+    if (proc.is_midi ())
+      {
+        const auto &provider = proc.timeline_midi_data_provider ();
+        return provider.get_base_cache ();
+      }
+    if (proc.is_audio ())
+      {
+        const auto &provider = proc.timeline_audio_data_provider ();
+        return provider.get_base_cache ();
+      }
+    return nullptr;
+  }();
+
+  if (cache != nullptr)
+    {
+      const auto &tm = base_dependencies_.tempo_map_.get_tempo_map ();
+      playback_cache_activity_tracker_ = utils::make_qobject_unique<
+        PlaybackCacheActivityTracker> (
+        playable_content_cache_request_debouncer_.get (), *cache,
+        [&tm] (units::sample_t sample) {
+          return tm.samples_to_tick (sample).asDouble ();
+        },
+        this);
+    }
+}
+
+utils::QObjectUniquePtr<PianoRollTrackMixin>
+Track::make_piano_roll_track_mixin ()
+{
+  return utils::make_qobject_unique<PianoRollTrackMixin> (this);
+}
+
+void
+Track::generate_basic_automation_tracks ()
+{
+  if (!automation_tracklist_)
+    return;
+
+  std::vector<AutomationTrackUuidReference> ats;
+
+  const auto gen = [&] (const dsp::ProcessorBase &processor) {
+    generate_automation_tracks_for_processor (ats, processor);
+  };
+
+  if (channel_)
+    {
+      gen (*channel_->fader ());
+    }
+
+  if (processor_)
+    {
+      gen (*processor_);
+    }
+
+  // insert the generated automation tracks
+  auto * atl = automationTracklist ();
+  for (const auto &at : ats)
+    {
+      atl->add_automation_track (at);
+    }
+
+  // mark first automation track as created & visible
+  auto * ath = atl->get_first_invisible_automation_track_holder ();
+  if (ath != nullptr)
+    {
+      ath->setCreatedByUser (true);
+      ath->setVisible (true);
+    }
+
+  z_debug ("generated automation tracks for '{}'", name ());
+}
+
+double
+Track::get_full_visible_height () const
+{
+  if (!visible_)
+    {
+      return 0.0;
+    }
+
+  double height = main_height_;
+
+  if (lanes_)
+    {
+      height += lanes_->get_visible_lane_heights ();
+    }
+  if (automation_tracklist_)
+    {
+      if (automation_tracklist_->automationVisible ())
+        {
+          for (
+            const auto &at_holder :
+            const_cast<const AutomationTracklist &> (*automation_tracklist_)
+              .automation_track_holders ())
+            {
+              if (at_holder->visible ())
+                height += at_holder->height ();
+            }
+        }
+    }
+  return height;
+}
+
+bool
+Track::multiply_heights (double multiplier, bool visible_only, bool check_only)
+{
+  if (main_height_ * multiplier < MIN_HEIGHT)
+    return false;
+
+  if (!check_only)
+    {
+      main_height_ *= multiplier;
+    }
+
+  if (lanes_)
+    {
+      if (!visible_only || lanes_->lanesVisible ())
+        {
+          for (const auto &lane : lanes_->lanes_view ())
+            {
+              if (lane->height () * multiplier < MIN_HEIGHT)
+                {
+                  return false;
+                }
+
+              if (!check_only)
+                {
+                  lane->setHeight (lane->height () * multiplier);
+                }
+            }
+        }
+    }
+  if (automation_tracklist_)
+    {
+      if (!visible_only || automation_tracklist_->automationVisible ())
+        {
+          for (
+            const auto &ath :
+            const_cast<const AutomationTracklist &> (*automation_tracklist_)
+              .automation_track_holders ())
+            {
+              if (visible_only && !ath->visible ())
+                continue;
+
+              if (ath->height () * multiplier < MIN_HEIGHT)
+                {
+                  return false;
+                }
+
+              if (!check_only)
+                {
+                  ath->setHeight (ath->height () * multiplier);
+                }
+            }
+        }
+    }
+
+  return true;
+}
+
+bool
+Track::contains_uninstantiated_plugin () const
+{
+  std::vector<plugins::PluginUuidReference> plugins;
+  collect_plugins (plugins);
+  return std::ranges::any_of (plugins, [] (const auto &pl_ref) {
+    return pl_ref.get ()->instantiationStatus ()
+           != plugins::Plugin::InstantiationStatus::Successful;
+  });
+}
+
+void
+Track::setClipLauncherMode (bool mode)
+{
+  if (mode == clip_launcher_mode_)
+    return;
+
+  auto * processor = get_track_processor ();
+  if (processor == nullptr)
+    return;
+
+  processor->set_midi_providers_active (
+    tracks::TrackProcessor::ActiveMidiEventProviders::Timeline, !mode);
+  processor->set_audio_providers_active (
+    tracks::TrackProcessor::ActiveAudioProviders::Timeline, !mode);
+  processor->set_midi_providers_active (
+    tracks::TrackProcessor::ActiveMidiEventProviders::ClipLauncher, mode);
+  processor->set_audio_providers_active (
+    tracks::TrackProcessor::ActiveAudioProviders::ClipLauncher, mode);
+  clip_launcher_mode_ = mode;
+  Q_EMIT clipLauncherModeChanged (mode);
+}
+
+void
+Track::regeneratePlaybackCaches (utils::ExpandableTickRange affectedRange)
+{
+  ZoneScoped;
+  const auto generate_events_for_clip_type = [&]<arrangement::ClipObject ClipT> () {
+    z_debug (
+      "Arranger object contents changed for track '{}' - regenerating caches for range [{}]",
+      name (), affectedRange);
+
+    auto get_all_lane_clips = [this] () {
+      return lanes_->lanes ()
+             | std::views::transform ([] (auto &uptr) -> const TrackLane * {
+                 return uptr.get ();
+               })
+             | std::views::transform ([] (const TrackLane * lane) {
+                 return lane->arrangement::ArrangerObjectOwner<
+                   ClipT>::get_children_view ();
+               })
+             | std::views::join;
+    };
+
+    if constexpr (std::is_same_v<ClipT, arrangement::MidiClip>)
+      {
+        if (processor_->is_midi () && lanes_)
+          {
+            auto all_clips = get_all_lane_clips ();
+            processor_->timeline_midi_data_provider ().generate_midi_events (
+              base_dependencies_.tempo_map_.get_tempo_map (), all_clips,
+              affectedRange);
+          }
+      }
+    else if constexpr (std::is_same_v<ClipT, arrangement::AudioClip>)
+      {
+        if (processor_->is_audio () && lanes_)
+          {
+            auto all_clips = get_all_lane_clips ();
+            processor_->timeline_audio_data_provider ().generate_audio_events (
+              base_dependencies_.tempo_map_.get_tempo_map (), all_clips,
+              affectedRange);
+          }
+      }
+  };
+  generate_events_for_clip_type.operator()<arrangement::MidiClip> ();
+  generate_events_for_clip_type.operator()<arrangement::AudioClip> ();
+
+  if (
+    auto * chord_owner = dynamic_cast<
+      arrangement::ArrangerObjectOwner<arrangement::ChordClip> *> (this))
+    {
+      if (processor_->is_midi ())
+        {
+          auto chord_clips = chord_owner->get_children_view ();
+          processor_->timeline_midi_data_provider ().generate_midi_events (
+            base_dependencies_.tempo_map_.get_tempo_map (), chord_clips,
+            affectedRange);
+        }
+    }
+
+  if (playback_cache_activity_tracker_)
+    playback_cache_activity_tracker_->onRegenerationComplete (affectedRange);
+}
+
+void
+Track::collect_plugins (std::vector<plugins::PluginUuidReference> &plugins) const
+{
+  if (channel_)
+    {
+      channel_->get_plugins (plugins);
+    }
+
+  if (modulators_)
+    {
+      modulators_->get_plugins (plugins);
+    }
+}
+
+#if 0
+bool
+Track::is_plugin_descriptor_valid_for_slot_type (
+  const plugins::PluginDescriptor &descr,
+  zrythm::plugins::PluginSlotType  slot_type,
+  Track::Type                      track_type)
+{
+  switch (slot_type)
+    {
+    case zrythm::plugins::PluginSlotType::Insert:
+      if (track_type == Track::Type::Midi)
+        {
+          return descr.num_midi_outs_ > 0;
+        }
+      else
+        {
+          return descr.num_audio_outs_ > 0;
+        }
+    case zrythm::plugins::PluginSlotType::MidiFx:
+      return descr.num_midi_outs_ > 0;
+      break;
+    case zrythm::plugins::PluginSlotType::Instrument:
+      return track_type == Track::Type::Instrument && descr.isInstrument ();
+    default:
+      break;
+    }
+
+  z_return_val_if_reached (false);
+}
+#endif
+
+void
+Track::set_default_name ()
+{
+
+  setName (format_qstr (QObject::tr ("{} Track"), type ()));
+}
+
+void
+Track::collect_timeline_objects (
+  std::vector<ArrangerObjectPtrVariant> &objects) const
+{
+  if (automation_tracklist_)
+    {
+      // TODO
+    }
+  if (lanes_)
+    {
+      // TODO
+    }
+  collect_additional_timeline_objects (objects);
+}
+
+void
+to_json (nlohmann::json &j, const Track &track)
+{
+  to_json (j, static_cast<const Track::UuidIdentifiableObject &> (track));
+  // Note: type_ is not serialized here - the variant serializer handles it
+  j[Track::kNameKey] = track.name_;
+  // j[Track::kIconNameKey] = track.icon_name_;
+  j[Track::kVisibleKey] = track.visible_;
+  j[Track::kMainHeightKey] = track.main_height_;
+  j[Track::kEnabledKey] = track.enabled_;
+  j[Track::kColorKey] = track.color_;
+  // j[Track::kInputSignalTypeKey] = track.in_signal_type_;
+  // j[Track::kOutputSignalTypeKey] = track.out_signal_type_;
+  j[Track::kCommentKey] = track.comment_;
+  // j[Track::kFrozenClipIdKey] = track.frozen_clip_id_;
+  if (track.processor_)
+    {
+      j[Track::kProcessorKey] = track.processor_;
+    }
+  if (track.automation_tracklist_)
+    {
+      j[Track::kAutomationTracklistKey] = track.automation_tracklist_;
+    }
+  if (track.channel_)
+    {
+      j[Track::kChannelKey] = track.channel_;
+    }
+  if (track.modulators_)
+    {
+      j[Track::kModulatorsKey] = track.modulators_;
+      j[Track::kModulatorMacroProcessorsKey] = track.modulator_macro_processors_;
+    }
+  if (track.lanes_)
+    {
+      to_json (j, *track.lanes_);
+    }
+  if (track.piano_roll_track_mixin_)
+    {
+      j[Track::kPianoRollKey] = track.piano_roll_track_mixin_;
+    }
+  j[Track::kClipLauncherModeKey] = track.clip_launcher_mode_;
+  if (track.timebase_provider_->hasOverride ())
+    {
+      j[Track::kTimebaseKey] = *track.timebase_provider_->overrideValue ();
+    }
+}
+
+void
+from_json (const nlohmann::json &j, Track &track)
+{
+  from_json (j, static_cast<Track::UuidIdentifiableObject &> (track));
+  // Note: type_ is not deserialized here - the variant deserializer handles it
+  j.at (Track::kNameKey).get_to (track.name_);
+  // j.at (Track::kIconNameKey).get_to (track.icon_name_);
+  j.at (Track::kVisibleKey).get_to (track.visible_);
+  j.at (Track::kMainHeightKey).get_to (track.main_height_);
+  j.at (Track::kEnabledKey).get_to (track.enabled_);
+  j.at (Track::kColorKey).get_to (track.color_);
+  // j.at (Track::kInputSignalTypeKey).get_to (track.in_signal_type_);
+  // j.at (Track::kOutputSignalTypeKey).get_to (track.out_signal_type_);
+  j.at (Track::kCommentKey).get_to (track.comment_);
+  // TODO
+  // j.at (Track::kFrozenClipIdKey).get_to (track.frozen_clip_id_);
+  if (track.channel_)
+    {
+      j.at (Track::kChannelKey).get_to (*track.channel_);
+    }
+  if (track.processor_)
+    {
+      j.at (Track::kProcessorKey).get_to (*track.processor_);
+    }
+  if (track.automation_tracklist_)
+    {
+      j.at (Track::kAutomationTracklistKey).get_to (*track.automation_tracklist_);
+    }
+  if (track.modulators_)
+    {
+      j.at (Track::kModulatorsKey).get_to (*track.modulators_);
+      const auto &macro_procs_json = j.at (Track::kModulatorMacroProcessorsKey);
+      const auto  count = std::min (
+        macro_procs_json.size (), track.modulator_macro_processors_.size ());
+      for (
+        const auto &[index, macro_proc_json] :
+        utils::views::enumerate (macro_procs_json | std::views::take (count)))
+        {
+          from_json (macro_proc_json, *track.modulator_macro_processors_[index]);
+        }
+    }
+  if (track.lanes_)
+    {
+      from_json (j, *track.lanes_);
+    }
+  if (track.piano_roll_track_mixin_)
+    {
+      j.at (Track::kPianoRollKey).get_to (*track.piano_roll_track_mixin_);
+    }
+  if (j.contains (Track::kTimebaseKey))
+    {
+      dsp::Timebase tb{};
+      j.at (Track::kTimebaseKey).get_to (tb);
+      track.timebase_provider_->setOverride (tb);
+    }
+}
+
+dsp::MidiPort *
+Track::trackProcessorMidiOut () const
+{
+  if (processor_ && processor_->is_midi ())
+    return &processor_->get_midi_out_port ();
+  return nullptr;
+}
+
+}

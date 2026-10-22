@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: FSFAP
+
+# Qt Core: global-static QFreeList<timerIdFreeList> teardown race
+# between main thread and QDBusConnection thread during early exit
+# (e.g., --version / --help).
+race:QFreeList
+
+# libdbus: lock-order-inversion between connection creation and
+# disconnection paths (M0->M1 vs M1->M0).
+deadlock:_dbus
+
+# Qt OpenGL: lock-order-inversion between texture cache cleanup and
+# OpenGL functions initialization on QSGRenderThread (M0->M1 vs M1->M0).
+deadlock:QOpenGLSharedResource
+
+# Qt Wayland: client-side decoration accessed from main thread and
+# QSGRenderThread without synchronization.
+race:QWaylandAbstractDecoration

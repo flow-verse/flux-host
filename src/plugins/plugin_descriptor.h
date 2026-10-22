@@ -1,0 +1,295 @@
+// SPDX-FileCopyrightText: © 2018-2021, 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include <filesystem>
+
+#include "plugins/plugin_protocol.h"
+#include "utils/icloneable.h"
+#include "utils/utf8_string.h"
+
+#include <QObject>
+
+#include <boost/describe.hpp>
+#include <juce_audio_processors_headless/juce_audio_processors_headless.h>
+#include <nlohmann/json_fwd.hpp>
+
+namespace zrythm::plugins
+{
+using namespace std::string_view_literals;
+
+/**
+ * Plugin category.
+ */
+enum class PluginCategory : std::uint8_t
+{
+  /** None specified. */
+  None,
+  Delay,
+  REVERB,
+  DISTORTION,
+  WAVESHAPER,
+  DYNAMICS,
+  AMPLIFIER,
+  COMPRESSOR,
+  ENVELOPE,
+  EXPANDER,
+  GATE,
+  LIMITER,
+  FILTER,
+  ALLPASS_FILTER,
+  BANDPASS_FILTER,
+  COMB_FILTER,
+  EQ,
+  MULTI_EQ,
+  PARA_EQ,
+  HIGHPASS_FILTER,
+  LOWPASS_FILTER,
+  GENERATOR,
+  CONSTANT,
+  Instrument,
+  OSCILLATOR,
+  MIDI,
+  MODULATOR,
+  CHORUS,
+  FLANGER,
+  PHASER,
+  SIMULATOR,
+  SIMULATOR_REVERB,
+  SPATIAL,
+  SPECTRAL,
+  PITCH,
+  UTILITY,
+  ANALYZER,
+  CONVERTER,
+  FUNCTION,
+  MIXER,
+};
+
+/**
+ * 32 or 64 bit.
+ */
+enum class PluginArchitecture : std::uint8_t
+{
+  ARCH_32_BIT,
+  ARCH_64_BIT
+};
+
+/**
+ * The PluginDescriptor class provides a set of static utility functions and
+ * member functions to work with plugin descriptors. It contains information
+ * about a plugin such as its name, author, category, protocol, and various port
+ * counts.
+ *
+ * The static utility functions are used to convert between different
+ * plugin-related enumerations and strings, as well as to determine if a plugin
+ * protocol is supported.
+ *
+ * The member functions provide information about the plugin, such as whether it
+ * is an instrument, effect, modulator, or MIDI modifier, whether it is valid
+ * for a given slot type and track type, whether it has a custom UI, the minimum
+ * required bridge mode, and whether it is whitelisted.
+ *
+ * The PluginDescriptor also contains various fields that store the plugin's
+ * metadata, such as its author, name, website, category, port counts,
+ * architecture, protocol, and unique ID (for VST plugins).
+ */
+class PluginDescriptor : public QObject
+{
+  Q_OBJECT
+  QML_ELEMENT
+  Q_PROPERTY (QString name READ name CONSTANT FINAL)
+  Q_PROPERTY (QString vendor READ vendor CONSTANT FINAL)
+  Q_PROPERTY (QString format READ format CONSTANT FINAL)
+  Q_PROPERTY (QString category READ category CONSTANT FINAL)
+  Q_PROPERTY (QString pathOrId READ pathOrId CONSTANT FINAL)
+  Q_PROPERTY (qint64 uniqueId READ uniqueId CONSTANT FINAL)
+  QML_UNCREATABLE ("")
+
+public:
+  static std::unique_ptr<PluginDescriptor>
+  from_juce_description (const juce::PluginDescription &juce_desc);
+
+  std::unique_ptr<juce::PluginDescription> to_juce_description () const;
+
+  static PluginCategory    string_to_category (const utils::Utf8String &str);
+  static utils::Utf8String category_to_string (PluginCategory category);
+
+  // =========================================================
+  // QML interface
+  // =========================================================
+
+  [[nodiscard]] QString name () const { return name_.to_qstring (); }
+  QString               format () const;
+  QString               vendor () const;
+  QString               category () const;
+
+  /**
+   * @brief File path of the plugin, for formats identified by a file.
+   *
+   * Empty when the plugin is identified by a URI/identifier instead (e.g.
+   * internal and AudioUnit plugins).
+   */
+  [[nodiscard]] QString pathOrId () const;
+  [[nodiscard]] qint64  uniqueId () const { return unique_id_; }
+
+  /**
+   * @brief Serializes the descriptor to a string.
+   *
+   * This is intended to be used in the UI for eg, drag n drop as a MIME type.
+   */
+  Q_INVOKABLE QString serializeToString () const;
+
+  Q_INVOKABLE bool isInstrument () const;
+  Q_INVOKABLE bool isEffect () const;
+  Q_INVOKABLE bool isModulator () const;
+  Q_INVOKABLE bool isMidiModifier () const;
+
+  // =========================================================
+
+  /**
+   * Returns whether the two descriptors describe the same plugin, ignoring
+   * irrelevant fields.
+   */
+  bool is_same_plugin (const PluginDescriptor &other) const;
+
+  /**
+   * Returns if the Plugin has a supported custom UI.
+   */
+  bool has_custom_ui () const;
+
+  /**
+   * Gets an appropriate icon name.
+   */
+  utils::Utf8String get_icon_name () const;
+
+  // GMenuModel * generate_context_menu () const;
+
+  friend void init_from (
+    PluginDescriptor       &obj,
+    const PluginDescriptor &other,
+    utils::ObjectCloneType  clone_type);
+
+private:
+  static constexpr auto kAuthorKey = "author"sv;
+  static constexpr auto kNameKey = "name"sv;
+  static constexpr auto kWebsiteKey = "website"sv;
+  static constexpr auto kCategoryKey = "category"sv;
+  static constexpr auto kCategoryStringKey = "categoryString"sv;
+  static constexpr auto kNumAudioInsKey = "numAudioIns"sv;
+  static constexpr auto kNumAudioOutsKey = "numAudioOuts"sv;
+  static constexpr auto kNumMidiInsKey = "numMidiIns"sv;
+  static constexpr auto kNumMidiOutsKey = "numMidiOuts"sv;
+  static constexpr auto kNumCtrlInsKey = "numCtrlIns"sv;
+  static constexpr auto kNumCtrlOutsKey = "numCtrlOuts"sv;
+  static constexpr auto kNumCvInsKey = "numCvIns"sv;
+  static constexpr auto kNumCvOutsKey = "numCvOuts"sv;
+  static constexpr auto kUniqueIdKey = "uniqueId"sv;
+  static constexpr auto kDeprecatedUniqueIdKey = "deprecatedUniqueId"sv;
+  static constexpr auto kArchitectureKey = "architecture"sv;
+  static constexpr auto kProtocolKey = "protocol"sv;
+  static constexpr auto kPathOrIdKey = "pathOrId"sv;
+  static constexpr auto kHasCustomUIKey = "hasCustomUI"sv;
+  friend void           to_json (nlohmann::json &j, const PluginDescriptor &p);
+  friend void from_json (const nlohmann::json &j, PluginDescriptor &p);
+
+  friend bool operator== (const PluginDescriptor &a, const PluginDescriptor &b)
+  {
+    constexpr auto tie = [] (const auto &p) {
+      return std::tie (
+        p.arch_, p.protocol_, p.path_or_id_, p.unique_id_,
+        p.juce_compat_deprecated_unique_id_, p.has_custom_ui_);
+    };
+    return tie (a) == tie (b);
+  }
+
+public:
+  utils::Utf8String author_;
+  utils::Utf8String name_;
+  utils::Utf8String website_;
+  PluginCategory    category_ = PluginCategory::None;
+  /** Lv2 plugin subcategory. */
+  utils::Utf8String category_str_;
+  /** Number of audio input ports. */
+  int num_audio_ins_ = 0;
+  /** Number of MIDI input ports. */
+  int num_midi_ins_ = 0;
+  /** Number of audio output ports. */
+  int num_audio_outs_ = 0;
+  /** Number of MIDI output ports. */
+  int num_midi_outs_ = 0;
+  /** Number of input control (plugin param) ports. */
+  int num_ctrl_ins_ = 0;
+  /** Number of output control (plugin param) ports. */
+  int num_ctrl_outs_ = 0;
+  /** Number of input CV ports. */
+  int num_cv_ins_ = 0;
+  /** Number of output CV ports. */
+  int num_cv_outs_ = 0;
+  /** Architecture (32/64bit). */
+  PluginArchitecture arch_ = PluginArchitecture::ARCH_64_BIT;
+  /** Plugin protocol (Lv2/DSSI/LADSPA/VST/etc.). */
+  Protocol::ProtocolType protocol_ = Protocol::ProtocolType::Internal;
+
+  /**
+   * @brief Identifier, for plugin formats that use unique identifiers, or path
+   * otherwise.
+   */
+  std::variant<std::filesystem::path, utils::Utf8String> path_or_id_;
+
+  /** Used by some plugin formats to uniquely identify the plugin. */
+  int64_t unique_id_{};
+
+  /** This is additionally needed by JUCE for some plugin formats. */
+  int juce_compat_deprecated_unique_id_{};
+
+  bool has_custom_ui_{};
+
+  BOOST_DESCRIBE_CLASS (
+    PluginDescriptor,
+    (),
+    (author_,
+     name_,
+     website_,
+     category_,
+     category_str_,
+     protocol_,
+     path_or_id_,
+     unique_id_,
+     juce_compat_deprecated_unique_id_,
+     num_cv_ins_,
+     num_cv_outs_,
+     arch_,
+     has_custom_ui_),
+    (),
+    ())
+};
+
+} // namespace zrythm::plugins
+
+namespace std
+{
+template <> struct hash<zrythm::plugins::PluginDescriptor>
+{
+  size_t operator() (const zrythm::plugins::PluginDescriptor &d) const
+  {
+    size_t h{};
+    h = h ^ qHash (d.protocol_);
+    h = h ^ qHash (d.arch_);
+    if (std::holds_alternative<std::filesystem::path> (d.path_or_id_))
+      {
+        h =
+          h ^ qHash (std::get<std::filesystem::path> (d.path_or_id_).string ());
+      }
+    else
+      {
+        h =
+          h ^ qHash (std::get<zrythm::utils::Utf8String> (d.path_or_id_).str ());
+      }
+    h = h ^ qHash (d.unique_id_);
+    h = h ^ qHash (d.juce_compat_deprecated_unique_id_);
+    return h;
+  }
+};
+}

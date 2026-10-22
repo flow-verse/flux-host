@@ -1,0 +1,360 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import QtQml.Models
+import Zrythm
+
+import Qt.labs.synchronizer
+
+// Note: ColumnLayout wasn't working correctly so we're using Item for now
+Item {
+  id: root
+
+  required property ClipLauncher clipLauncher
+  required property ClipPlaybackService clipPlaybackService
+  readonly property EditorSettings editorSettings: timeline
+  required property FileImporter fileImporter
+
+  // Synchronize horizontal scrolling
+  property real horizontalScrollPosition: 0
+  required property ArrangerObjectCreator objectCreator
+  readonly property url playIconSource: ResourceManager.getIconUrl("gnome-icon-library", "media-playback-start-symbolic.svg")
+  property int rulerHeight: 24
+  property int sceneWidth: 80
+  readonly property url stopIconSource: ResourceManager.getIconUrl("gnome-icon-library", "media-playback-stop-symbolic.svg")
+  readonly property url switchToTimelineIconSource: ResourceManager.getIconUrl("gnome-icon-library", "ruler-angled-symbolic.svg")
+  required property var timeline
+  required property TrackCollection trackCollection
+  required property Tracklist tracklist
+
+  SortFilterProxyModel {
+    id: pinnedTrackModel
+
+    model: root.trackCollection
+
+    filters: [
+      FunctionFilter {
+        function filter(data: TrackRoleData): bool {
+          return root.tracklist.shouldBeVisible(data.track) && root.tracklist.isTrackPinned(data.track);
+        }
+      }
+    ]
+  }
+
+  SortFilterProxyModel {
+    id: unpinnedTrackModel
+
+    model: root.trackCollection
+
+    filters: [
+      FunctionFilter {
+        function filter(data: TrackRoleData): bool {
+          return root.tracklist.shouldBeVisible(data.track) && !root.tracklist.isTrackPinned(data.track);
+        }
+      }
+    ]
+  }
+
+  Connections {
+    function onPinnedTracksCutoffChanged() {
+      pinnedTrackModel.invalidate();
+      unpinnedTrackModel.invalidate();
+    }
+
+    target: root.tracklist
+  }
+
+  RowLayout {
+    id: header
+
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: parent.top
+    height: root.rulerHeight
+
+    ToolButton {
+      icon.source: root.stopIconSource
+
+      onClicked: root.clipPlaybackService.stopAllClips()
+
+      ToolTip {
+        text: qsTr("Stop Scenes")
+      }
+    }
+
+    ScrollView {
+      id: sceneHeadersScrollView
+
+      Layout.fillWidth: true
+
+      // Only allow horizontal scrolling
+      ScrollBar.horizontal.policy: ScrollBar.AsNeeded
+      ScrollBar.vertical.policy: ScrollBar.AlwaysOff
+
+      RowLayout {
+        id: sceneHeaderColumns
+
+        Repeater {
+          model: root.clipLauncher.scenes
+
+          delegate: RowLayout {
+            id: sceneHeaderRow
+
+            required property int index
+            required property Scene scene
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: root.rulerHeight
+            Layout.preferredWidth: root.sceneWidth
+
+            ToolButton {
+              id: playSceneButton
+
+              icon.source: root.playIconSource
+
+              onClicked: root.clipPlaybackService.launchScene(sceneHeaderRow.scene)
+
+              ToolTip {
+                text: qsTr("Play Scene")
+              }
+            }
+
+            Label {
+              id: sceneHeaderLabel
+
+              text: "Scene " + (sceneHeaderRow.index + 1)
+            }
+          }
+        }
+
+        RowLayout {
+          Layout.preferredHeight: root.rulerHeight
+          Layout.preferredWidth: root.sceneWidth
+
+          Label {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            text: "+"
+            verticalAlignment: Text.AlignVCenter
+          }
+        }
+      }
+
+      Synchronizer {
+        sourceObject: root
+        sourceProperty: "horizontalScrollPosition"
+        targetObject: sceneHeadersScrollView.contentItem
+        targetProperty: "contentX"
+      }
+    }
+
+    ToolButton {
+      icon.source: root.switchToTimelineIconSource
+
+      ToolTip {
+        text: qsTr("Switch Playback to Timeline")
+      }
+    }
+  }
+
+  RowsForTrackModel {
+    id: pinnedTracksSection
+
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: header.bottom
+    anchors.topMargin: 2
+    // height: childrenRect.height
+    model: pinnedTrackModel
+  }
+
+  ScrollView {
+    id: unpinnedTracksScrollView
+
+    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+    ScrollBar.vertical.policy: ScrollBar.AlwaysOff
+    anchors.bottom: parent.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: pinnedTracksSection.bottom
+    anchors.topMargin: 2
+
+    Synchronizer {
+      sourceObject: root.editorSettings
+      sourceProperty: "y"
+      targetObject: unpinnedTracksScrollView.contentItem
+      targetProperty: "contentY"
+    }
+
+    RowsForTrackModel {
+      id: unpinnedTracksSection
+
+      model: unpinnedTrackModel
+      width: unpinnedTracksScrollView.width
+    }
+  }
+
+  component RowsForTrackModel: RowLayout {
+    id: rowsForTrackModel
+
+    required property SortFilterProxyModel model
+
+    TrackStopButtonListView {
+      Layout.preferredHeight: contentHeight
+      Layout.preferredWidth: contentWidth
+      model: rowsForTrackModel.model
+    }
+
+    ScrollView {
+      id: sceneColumnsHorizontalScrollView
+
+      Layout.fillWidth: true
+      Layout.preferredHeight: contentHeight // disable vertical scroll
+
+      ScrollBar.horizontal.policy: ScrollBar.AsNeeded
+      ScrollBar.vertical.policy: ScrollBar.AlwaysOff
+
+      RowLayout {
+        id: sceneColumnsForTrackModel
+
+        Repeater {
+          model: root.clipLauncher.scenes
+
+          delegate: TrackSceneClipSlotListView {
+            required property int index
+
+            Layout.preferredHeight: contentHeight
+            Layout.preferredWidth: root.sceneWidth
+            model: rowsForTrackModel.model
+          }
+        }
+
+        ListView {
+          id: phantomSceneClipSlots
+
+          Layout.preferredHeight: contentHeight
+          Layout.preferredWidth: root.sceneWidth
+          boundsBehavior: Flickable.StopAtBounds
+          model: rowsForTrackModel.model
+
+          delegate: Rectangle {
+            id: phantomClipSlot
+
+            required property Track track
+
+            color: palette.button
+            height: track.fullVisibleHeight
+            radius: ZrythmTheme.textFieldRadius
+            width: root.sceneWidth
+
+            DropArea {
+              anchors.fill: parent
+
+              onDropped: drop => {
+                let uniqueFilePaths = DragUtils.getUniqueFilePaths(drop);
+                if (uniqueFilePaths.length > 0) {
+                  const newScene = root.clipLauncher.addScene();
+                  const newClipSlot = newScene.clipSlots.clipSlotForTrack(phantomClipSlot.track);
+                  root.fileImporter.importFileToClipSlot(uniqueFilePaths[0], phantomClipSlot.track, newScene, newClipSlot);
+                }
+              }
+            }
+
+            TapHandler {
+              onDoubleTapped: {
+                const newScene = root.clipLauncher.addScene();
+                const newClipSlot = newScene.clipSlots.clipSlotForTrack(phantomClipSlot.track);
+                let midiRegion = root.objectCreator.addEmptyMidiClipToClip(phantomClipSlot.track, newClipSlot) as MidiClip;
+                root.objectCreator.addMidiNote(midiRegion, 0, 64);
+                root.objectCreator.addMidiNote(midiRegion, 120, 68);
+              }
+            }
+          }
+        }
+      }
+
+      Synchronizer {
+        sourceObject: root
+        sourceProperty: "horizontalScrollPosition"
+        targetObject: sceneColumnsHorizontalScrollView.contentItem
+        targetProperty: "contentX"
+      }
+    }
+
+    TrackSwitchPlaybackButtonListView {
+      Layout.preferredHeight: contentHeight
+      Layout.preferredWidth: contentWidth
+      Layout.rightMargin: 4
+      model: rowsForTrackModel.model
+    }
+  }
+  component TrackRoleData: QtObject {
+    required property Track track
+  }
+  component TrackSceneClipSlotListView: ListView {
+    id: clipSlotsListView
+
+    required property Scene scene
+
+    boundsBehavior: Flickable.StopAtBounds
+
+    delegate: ClipSlotView {
+      id: trackClipSlotForScene
+
+      clipPlaybackService: root.clipPlaybackService
+      clipSlot: clipSlotsListView.scene.clipSlots.clipSlotForTrack(track)
+      height: track.fullVisibleHeight
+      objectCreator: root.objectCreator
+      scene: clipSlotsListView.scene
+      width: root.sceneWidth
+
+      onFilesDropped: files => {
+        if (files.length > 0) {
+          root.fileImporter.importFileToClipSlot(files[0], track, scene, clipSlot);
+        }
+      }
+    }
+  }
+  component TrackStopButtonListView: ListView {
+    boundsBehavior: Flickable.StopAtBounds
+    implicitWidth: 20
+
+    delegate: ToolButton {
+      id: trackStopButton
+
+      required property Track track
+
+      icon.source: root.stopIconSource
+      implicitHeight: track.fullVisibleHeight
+
+      ToolTip {
+        text: "Stop " + trackStopButton.track.name
+      }
+    }
+  }
+  component TrackSwitchPlaybackButtonListView: ListView {
+    boundsBehavior: Flickable.StopAtBounds
+    implicitWidth: 20
+
+    delegate: ToolButton {
+      id: trackSwitchPlaybackButton
+
+      required property Track track
+
+      enabled: track.clipLauncherMode
+      icon.source: root.switchToTimelineIconSource
+      implicitHeight: track.fullVisibleHeight
+
+      onClicked: root.clipPlaybackService.setTrackToTimelineMode(track)
+
+      ToolTip {
+        text: "Switch Playback to Timeline"
+      }
+    }
+  }
+}

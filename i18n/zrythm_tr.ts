@@ -1,0 +1,11109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="tr" sourcelanguage="en">
+<context>
+    <name>AboutDialog</name>
+    <message>
+        <location filename="../src/gui/qml/components/AboutDialog.qml" line="20"/>
+        <location filename="../src/gui/qml/components/AboutDialog.qml" line="57"/>
+        <source>About Zrythm</source>
+        <translation type="unfinished">Zrythm Hakkında</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutDialog.qml" line="108"/>
+        <source>Licensed under the GNU AGPLv3 License.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutDialog.qml" line="117"/>
+        <source>View License</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutDialog.qml" line="127"/>
+        <source>Trademark Policy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutDialog.qml" line="137"/>
+        <source>Third-Party Licenses</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutDialog.qml" line="144"/>
+        <source>Copy System Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutDialog.qml" line="158"/>
+        <source>Zrythm and the Zrythm logo are trademarks of Alexandros Theodotou.</source>
+        <translation>Zrythm ve Zrythm logosu, Alexandros Theodotou&apos;nun ticari markalarıdır.</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutDialog.qml" line="213"/>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AboutThirdPartyLicensesPage</name>
+    <message>
+        <location filename="../src/gui/qml/components/AboutThirdPartyLicensesPage.qml" line="16"/>
+        <source>Third-Party Licenses</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutThirdPartyLicensesPage.qml" line="41"/>
+        <source>via %1 · </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutThirdPartyLicensesPage.qml" line="57"/>
+        <source>Search components…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutThirdPartyLicensesPage.qml" line="132"/>
+        <location filename="../src/gui/qml/components/AboutThirdPartyLicensesPage.qml" line="228"/>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutThirdPartyLicensesPage.qml" line="164"/>
+        <source>Required by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AboutThirdPartyLicensesPage.qml" line="200"/>
+        <source>License text not bundled; see the component homepage.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Arranger</name>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="657"/>
+        <source>Cut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="663"/>
+        <source>Copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="669"/>
+        <source>Paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="675"/>
+        <source>Duplicate</source>
+        <translation type="unfinished">Çoğalt</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="690"/>
+        <source>Toggle &amp;Mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="700"/>
+        <source>Timebase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="704"/>
+        <source>Inherit from Track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="710"/>
+        <source>Musical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="716"/>
+        <source>Absolute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="993"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="1166"/>
+        <source>Erase Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="1184"/>
+        <source>Paint Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="1285"/>
+        <source>Copy Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="1293"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="1295"/>
+        <source>Move Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="681"/>
+        <source>Delete</source>
+        <translation type="unfinished">Sil</translation>
+    </message>
+</context>
+<context>
+    <name>ArrangerObjectBaseView</name>
+    <message>
+        <source>Test</source>
+        <translation type="obsolete">Test</translation>
+    </message>
+</context>
+<context>
+    <name>AudioEditorPane</name>
+    <message>
+        <location filename="../src/gui/qml/components/editors/AudioEditorPane.qml" line="52"/>
+        <source>Zoom In</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AutomationEditorPane</name>
+    <message>
+        <location filename="../src/gui/qml/components/editors/AutomationEditorPane.qml" line="36"/>
+        <source>Drum Notation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/editors/AutomationEditorPane.qml" line="63"/>
+        <source>Zoom In</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AutomationTracksListView</name>
+    <message>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="78"/>
+        <source>Change automatable</source>
+        <translation>Otomasyonu değiştir</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="127"/>
+        <source>On</source>
+        <translation>Açık</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="141"/>
+        <source>Touch</source>
+        <translation>Dokunma</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="141"/>
+        <source>Latch</source>
+        <translation>Mandal</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="158"/>
+        <source>Off</source>
+        <translation>Kapalı</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="193"/>
+        <source>Hide automation lane</source>
+        <translation>Otomasyon çizgisini kapat</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="217"/>
+        <source>Add automation lane</source>
+        <translation>Otomasyon çizgisi ekle</translation>
+    </message>
+</context>
+<context>
+    <name>BalanceControl</name>
+    <message>
+        <location filename="../src/gui/qml/components/BalanceControl.qml" line="29"/>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/BalanceControl.qml" line="37"/>
+        <source>Bind MIDI CC</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BottomDock</name>
+    <message>
+        <location filename="../src/gui/qml/components/BottomDock.qml" line="43"/>
+        <source>Select a clip from the timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/BottomDock.qml" line="45"/>
+        <source>No clip selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/BottomDock.qml" line="86"/>
+        <source>Editor</source>
+        <translation>Editör</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/BottomDock.qml" line="91"/>
+        <source>Mixer</source>
+        <translation>Karıştırıcı</translation>
+    </message>
+    <message>
+        <source>Modulators</source>
+        <translation type="vanished">Modulatör</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/BottomDock.qml" line="102"/>
+        <source>Chord Pad</source>
+        <translation>Akor Pedi</translation>
+    </message>
+</context>
+<context>
+    <name>CenterDock</name>
+    <message>
+        <source>Timeline</source>
+        <translation type="vanished">Zaman çizelgesi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/CenterDock.qml" line="342"/>
+        <source>Arrangement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/CenterDock.qml" line="347"/>
+        <source>Port Connections</source>
+        <translation>Port Bağlantıları</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/CenterDock.qml" line="352"/>
+        <source>Midi CC Bindings</source>
+        <translation>Midi CC kısa yolları</translation>
+    </message>
+</context>
+<context>
+    <name>ChordEditorPane</name>
+    <message>
+        <location filename="../src/gui/qml/components/editors/ChordEditorPane.qml" line="97"/>
+        <source>Zoom In</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ChordPadPanel</name>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="57"/>
+        <source>Apply Preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="62"/>
+        <source>Populate pads from a preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="71"/>
+        <source>From Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="157"/>
+        <source>Transpose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="165"/>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="498"/>
+        <source>Transpose Up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="174"/>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="509"/>
+        <source>Transpose Down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="196"/>
+        <source>Add a scale to the chord track to see chord suggestions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="196"/>
+        <source>Press a chord for suggestions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="204"/>
+        <source>Suggestions:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="453"/>
+        <source>Edit…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="464"/>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="473"/>
+        <source>Invert Backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordPadPanel.qml" line="484"/>
+        <source>Invert Forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ChordSelectorDialog</name>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="102"/>
+        <source>Chord Selector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="113"/>
+        <source>Custom</source>
+        <translation type="unfinished">Özel eklenti</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="117"/>
+        <source>Diatonic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="146"/>
+        <source>Constrain to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="187"/>
+        <source>Maj</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="191"/>
+        <source>min</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="195"/>
+        <source>dim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="199"/>
+        <source>sus4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="203"/>
+        <source>sus2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="207"/>
+        <source>aug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="298"/>
+        <source>Bass:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="337"/>
+        <source>Inv:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="376"/>
+        <source>No scale at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="382"/>
+        <source>Add a scale to the chord track to see diatonic chords here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ChordSelectorDialog.qml" line="390"/>
+        <source>No diatonic chord presets available for this scale type. Use the Custom tab to build chords manually.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ClipEditorGrid</name>
+    <message>
+        <location filename="../src/gui/qml/components/editors/ClipEditorGrid.qml" line="59"/>
+        <source>Highlight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/editors/ClipEditorGrid.qml" line="65"/>
+        <source>No Highlight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/editors/ClipEditorGrid.qml" line="69"/>
+        <source>Chord</source>
+        <translation type="unfinished">Akor</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/editors/ClipEditorGrid.qml" line="73"/>
+        <source>Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/editors/ClipEditorGrid.qml" line="77"/>
+        <source>Scale + Chord</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/editors/ClipEditorGrid.qml" line="90"/>
+        <source>Piano Roll Highlighting</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ClipLaunchButton</name>
+    <message>
+        <location filename="../src/gui/qml/components/ClipLaunchButton.qml" line="80"/>
+        <source>Start Playback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ClipLaunchButton.qml" line="80"/>
+        <source> (Right-click for quantization options)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ClipLaunchButton.qml" line="83"/>
+        <source>Stop Playback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ClipLaunchButton.qml" line="91"/>
+        <source>Launch Quantization</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ClipLaunchButton.qml" line="94"/>
+        <source>Launch Immediately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ClipLaunchButton.qml" line="100"/>
+        <source>Launch on Next Bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ClipLaunchButton.qml" line="106"/>
+        <source>Launch on Next Beat</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ClipLauncherView</name>
+    <message>
+        <location filename="../src/gui/qml/components/ClipLauncherView.qml" line="86"/>
+        <source>Stop Scenes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ClipLauncherView.qml" line="123"/>
+        <source>Play Scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ClipLauncherView.qml" line="160"/>
+        <source>Switch Playback to Timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>DemoView</name>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="332"/>
+        <source>Editor</source>
+        <translation>Editör</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="338"/>
+        <source>Mixer</source>
+        <translation>Karıştırıcı</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="344"/>
+        <source>Modulators</source>
+        <translation>Modulatörler</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="359"/>
+        <source>Track Inspector</source>
+        <translation>Kayıt inceleyici</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="364"/>
+        <source>Plugin Inspector</source>
+        <translation>Eklenti inceleyici</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="375"/>
+        <source>Plugin Browser</source>
+        <translation>Eklenti görüntüleyici</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="383"/>
+        <source>File Browser</source>
+        <translation>Dosya görüntüleyici</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="391"/>
+        <source>Monitor Section</source>
+        <translation>İzleme Bölümü</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="399"/>
+        <source>Chord Preset Browser</source>
+        <translation>Akor Önayar Tarayıcı</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="80"/>
+        <location filename="../src/gui/qml/DemoView.qml" line="122"/>
+        <source>Undo</source>
+        <translation>Geri al</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="79"/>
+        <source>Undo Multiple</source>
+        <translation>Çoklu Geri Al</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="84"/>
+        <source>Undo Move</source>
+        <translation>Hareketi Geri Al</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="88"/>
+        <source>Undo Cut</source>
+        <translation>Kesmeyi Geri Al</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="99"/>
+        <source>Redo</source>
+        <translation>Yinele</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="98"/>
+        <source>Redo Multiple</source>
+        <translation>Çoklu Yinele</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="107"/>
+        <source>&amp;File</source>
+        <translation>&amp;File</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="110"/>
+        <source>New Long Long Long Long Long Long Long Long Long Name</source>
+        <translation>New Long Long Long Long Long Long Long Long Long Name</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="114"/>
+        <source>Open</source>
+        <translation>Açık</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="119"/>
+        <source>&amp;Edit</source>
+        <translation>&amp;Edit</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="127"/>
+        <source>&amp;View</source>
+        <translation>&amp;View</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="130"/>
+        <source>Appearance</source>
+        <translation>Görünüm</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="133"/>
+        <source>Switch Light/Dark Theme</source>
+        <translation>Aydınlık/Karanlık Temaya Değiştir</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="139"/>
+        <source>Theme Color</source>
+        <translation>Tema Rengi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="142"/>
+        <source>Zrythm Orange</source>
+        <translation>Zrythm Turuncu</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="150"/>
+        <source>Celestial Blue</source>
+        <translation>Gök Mavisi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="158"/>
+        <source>Jonquil Yellow</source>
+        <translation>Jonquil Sarısı</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="169"/>
+        <source>&amp;Help</source>
+        <translation>&amp;Help</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="172"/>
+        <source>Something</source>
+        <translation>Bir şey</translation>
+    </message>
+</context>
+<context>
+    <name>DropAreaBase</name>
+    <message>
+        <location filename="../src/gui/qml/components/basic/DropAreaBase.qml" line="38"/>
+        <source>Drop files and plugins here</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>DspLoadIndicator</name>
+    <message>
+        <location filename="../src/gui/qml/components/DspLoadIndicator.qml" line="26"/>
+        <source>DSP Load: %1%
+XRun Count: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExportDialog</name>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="34"/>
+        <source>Export Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="45"/>
+        <source>Export As...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="58"/>
+        <source>Export</source>
+        <translation type="unfinished">_Dışa Aktar</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="72"/>
+        <source>Exporting audio...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="87"/>
+        <source>Audio</source>
+        <translation type="unfinished">Ses</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="91"/>
+        <source>MIDI</source>
+        <translation type="unfinished">MIDI</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="117"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="227"/>
+        <source>Export Audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="120"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="354"/>
+        <source>Track title</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="121"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="355"/>
+        <source>Title</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="127"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="361"/>
+        <source>Enter title...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="138"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="372"/>
+        <source>Artist name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="139"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="373"/>
+        <source>Artist</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="145"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="379"/>
+        <source>Enter artist...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="157"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="390"/>
+        <source>Music genre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="158"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="391"/>
+        <source>Genre</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="164"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="397"/>
+        <source>Enter genre...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="175"/>
+        <source>Audio file format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="176"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="409"/>
+        <source>Format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="185"/>
+        <source>Audio bit depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="186"/>
+        <source>Bit Depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="195"/>
+        <source>Apply dithering</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="196"/>
+        <source>Dither</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="204"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="427"/>
+        <source>Pattern for generated filenames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="205"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="428"/>
+        <source>Filename Pattern</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="214"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="437"/>
+        <source>Whether to export the selected tracks as a single mixdown file or each track in its own file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="215"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="438"/>
+        <source>Mixdown or Stems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="219"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="442"/>
+        <source>Mixdown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="219"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="442"/>
+        <source>Stems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="230"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="453"/>
+        <source>Only events inside this time range will be exported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="231"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="454"/>
+        <source>Time Range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="235"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="458"/>
+        <source>Song Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="235"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="458"/>
+        <source>Loop</source>
+        <translation type="unfinished">Döngü</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="235"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="458"/>
+        <source>Custom</source>
+        <translation type="unfinished">Özel eklenti</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="240"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="463"/>
+        <source>Set custom start and end positions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="241"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="464"/>
+        <source>Custom Time Range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="283"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="506"/>
+        <source>Track Selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="325"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="548"/>
+        <source>Export destination and file info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="326"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="549"/>
+        <source>Output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="331"/>
+        <source>Output will be saved to: /path/to/export/file.wav</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="351"/>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="450"/>
+        <source>Export MIDI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="408"/>
+        <source>MIDI file format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="418"/>
+        <source>Export MIDI lanes as separate tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="419"/>
+        <source>Export Lanes as Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ExportDialog.qml" line="554"/>
+        <source>Output will be saved to: /path/to/export/file.mid</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FaderButtons</name>
+    <message>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="36"/>
+        <source>Mono compatibility</source>
+        <translation type="unfinished">Mono uyumluluk</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="58"/>
+        <source>Record</source>
+        <translation type="unfinished">Kaydet</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="114"/>
+        <source>Monitor: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="131"/>
+        <source>Solo</source>
+        <translation type="unfinished">Solo</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="149"/>
+        <source>Mute</source>
+        <translation type="unfinished">Sesi Kapat</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="169"/>
+        <source>Listen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="187"/>
+        <source>Swap phase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="204"/>
+        <source>Channel settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FaderControl</name>
+    <message>
+        <location filename="../src/gui/qml/components/FaderControl.qml" line="33"/>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/FaderControl.qml" line="41"/>
+        <source>Bind MIDI CC</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Greeter</name>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="94"/>
+        <source>About Flatpak</source>
+        <translation>Flatpak hakkında</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="92"/>
+        <source>Only audio plugins installed via Flatpak are supported.</source>
+        <translation>Yalnızca Flatpak aracılığıyla yüklenen ses eklentileri desteklenir.</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="104"/>
+        <source>Donate</source>
+        <translation>Bağış yap</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="102"/>
+        <source>Zrythm relies on donations and purchases to sustain development. If you enjoy the software, please consider %1donating%2 or %3buying an installer%2.</source>
+        <translation>Zrythm, gelişimini sürdürmek için bağışlara ve satın alımlara güvenmektedir. Yazılımı beğendiyseniz, lütfen %1bağış yapmayı%2 veya %3bir yükleyici satın almayı%2 düşünün.</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="112"/>
+        <source>All Ready!</source>
+        <translation>Her şey hazır!</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="115"/>
+        <source>Proceed to Configuration</source>
+        <translation>Yapılandırmaya Geçin</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="149"/>
+        <location filename="../src/gui/qml/Greeter.qml" line="171"/>
+        <source>Welcome</source>
+        <translation>Hoş geldiniz</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="169"/>
+        <source>Welcome to the Zrythm digital audio workstation. Move to the next page to get started.</source>
+        <translation>Zrythm dijital ses iş istasyonuna hoş geldiniz. Başlamak için bir sonraki sayfaya geçin.</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="179"/>
+        <source>Read the Manual</source>
+        <translation>Kılavuzu Okuyun</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="177"/>
+        <source>If this is your first time using Zrythm, we suggest going through the &apos;Getting Started&apos; section in the %1user manual%2.</source>
+        <translation>Zrythm&apos;i ilk kez kullanıyorsanız, %1kullanım kılavuzundaki%2 &apos;Başlarken&apos; bölümünü incelemenizi öneririz.</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="235"/>
+        <source>Configuration</source>
+        <translation>Yapılandırma</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="262"/>
+        <source>Initial Configuration</source>
+        <translation>İlk Yapılandırma</translation>
+    </message>
+    <message>
+        <source>‹</source>
+        <translation type="vanished">‹</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="250"/>
+        <source>Continue</source>
+        <translation>Devam et</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="290"/>
+        <source>Progress</source>
+        <translation>İlerleme</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="308"/>
+        <source>Scanning Plugins</source>
+        <translation>Eklentiler Taranıyor</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="329"/>
+        <source>Scanning:</source>
+        <translation>Taranıyor:</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="352"/>
+        <source>Open a Project</source>
+        <translation>Bir Proje Aç</translation>
+    </message>
+    <message>
+        <source>Preferences</source>
+        <translation type="vanished">Tercihler</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="388"/>
+        <source>About Zrythm</source>
+        <translation>Zrythm Hakkında</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="358"/>
+        <source>Create New Project...</source>
+        <translation>Yeni Proje Oluştur...</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="364"/>
+        <source>Open From Path...</source>
+        <translation>Yoldan Aç...</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="378"/>
+        <source>Device Selector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="421"/>
+        <source>Show in File Manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="428"/>
+        <source>Remove From List</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="452"/>
+        <source>Create New Project</source>
+        <translation>Yeni Proje Oluştur</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="462"/>
+        <source>Project Name</source>
+        <translation>Proje Adı</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="463"/>
+        <source>Untitled Project</source>
+        <translation>Adsız Proje</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="494"/>
+        <source>Create Project</source>
+        <translation>Proje Oluştur</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="511"/>
+        <source>Creating Project</source>
+        <translation>Proje Oluşturma</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="524"/>
+        <source>Creating Project...</source>
+        <translation>Proje Oluşturma...</translation>
+    </message>
+    <message>
+        <source>Project Loading Failed</source>
+        <translation type="vanished">Proje Yükleme Başarısız</translation>
+    </message>
+</context>
+<context>
+    <name>Knob</name>
+    <message>
+        <location filename="../src/gui/qml/components/basic/Knob.qml" line="71"/>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/basic/Knob.qml" line="79"/>
+        <source>Bind MIDI CC</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LeftDock</name>
+    <message>
+        <location filename="../src/gui/qml/components/LeftDock.qml" line="45"/>
+        <source>Track Inspector</source>
+        <translation>Kayıt İnceleyici</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/LeftDock.qml" line="53"/>
+        <source>Plugin Inspector</source>
+        <translation>Eklenti İnceleyici</translation>
+    </message>
+</context>
+<context>
+    <name>LoadController</name>
+    <message>
+        <location filename="../src/gui/qml/components/LoadController.qml" line="14"/>
+        <source>Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/LoadController.qml" line="23"/>
+        <source>Open Project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/LoadController.qml" line="32"/>
+        <source>Loading project...</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MainMenuBar</name>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="45"/>
+        <source>&amp;File</source>
+        <translation type="unfinished">&amp;File</translation>
+    </message>
+    <message>
+        <source>New Long Long Long Long Long Long Long Long Long Name</source>
+        <translation type="obsolete">New Long Long Long Long Long Long Long Long Long Name</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="obsolete">Açık</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="60"/>
+        <source>Export…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="69"/>
+        <source>&amp;Edit</source>
+        <translation type="unfinished">&amp;Edit</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="76"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="76"/>
+        <source>Undo</source>
+        <translation type="unfinished">Geri al</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="86"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="86"/>
+        <source>Redo</source>
+        <translation type="unfinished">Yinele</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="116"/>
+        <source>&amp;View</source>
+        <translation type="unfinished">&amp;View</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="121"/>
+        <source>Left Panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="132"/>
+        <source>Bottom Panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="143"/>
+        <source>Right Panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="176"/>
+        <source>Language</source>
+        <translation type="unfinished">Dil</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="183"/>
+        <source>System</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="202"/>
+        <source>More Languages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="212"/>
+        <source>Appearance</source>
+        <translation type="unfinished">Görünüm</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="216"/>
+        <source>Switch Light/Dark Theme</source>
+        <translation type="unfinished">Aydınlık/Karanlık Temaya Değiştir</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="222"/>
+        <source>Theme Color</source>
+        <translation type="unfinished">Tema Rengi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="226"/>
+        <source>Zrythm Orange</source>
+        <translation type="unfinished">Zrythm Turuncu</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="234"/>
+        <source>Celestial Blue</source>
+        <translation type="unfinished">Gök Mavisi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="243"/>
+        <source>Jonquil Yellow</source>
+        <translation type="unfinished">Jonquil Sarısı</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="252"/>
+        <source>Spring Green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="261"/>
+        <source>Munsell Red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="270"/>
+        <source>Gunmetal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="278"/>
+        <source>Electric Purple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="292"/>
+        <source>Debug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="296"/>
+        <source>Show Cache Activity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="307"/>
+        <source>Devices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="310"/>
+        <source>Audio/MIDI Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="319"/>
+        <source>&amp;Help</source>
+        <translation type="unfinished">&amp;Help</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="322"/>
+        <source>About Zrythm</source>
+        <translation type="unfinished">Zrythm Hakkında</translation>
+    </message>
+</context>
+<context>
+    <name>MainToolbar</name>
+    <message>
+        <location filename="../src/gui/qml/components/MainToolbar.qml" line="65"/>
+        <source>Master Output Spectrum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainToolbar.qml" line="74"/>
+        <source>Master Output Visualizer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainToolbar.qml" line="94"/>
+        <source>Toggle Left Panel</source>
+        <translation>Sol Paneli Aç</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainToolbar.qml" line="109"/>
+        <source>Toggle Bottom Panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainToolbar.qml" line="124"/>
+        <source>Toggle Right Panel</source>
+        <translation>Sağ Paneli Aç</translation>
+    </message>
+    <message>
+        <source>Menu</source>
+        <translation type="vanished">Menü</translation>
+    </message>
+    <message>
+        <source>Open a Project…</source>
+        <translation type="vanished">Bir Proje Aç…</translation>
+    </message>
+    <message>
+        <source>Create New Project…</source>
+        <translation type="vanished">Yeni Proje Oluştur…</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="vanished">Kaydet</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation type="vanished">Farklı Kaydet…</translation>
+    </message>
+    <message>
+        <source>Export As…</source>
+        <translation type="vanished">Dışarıya Farklı Aktar…</translation>
+    </message>
+    <message>
+        <source>Export Graph…</source>
+        <translation type="vanished">Grafiği Dışarı Aktar…</translation>
+    </message>
+    <message>
+        <source>Fullscreen</source>
+        <translation type="vanished">Tam Ekran</translation>
+    </message>
+    <message>
+        <source>Preferences</source>
+        <translation type="vanished">Tercihler</translation>
+    </message>
+    <message>
+        <source>Keyboard Shortcuts</source>
+        <translation type="vanished">Klavye Kısayolları</translation>
+    </message>
+    <message>
+        <source>About Zrythm Long Long Long Long Long Long Long</source>
+        <translation type="vanished">About Zrythm Long Long Long Long Long Long Long</translation>
+    </message>
+</context>
+<context>
+    <name>MarkerTrack</name>
+    <message>
+        <source>Markers</source>
+        <translation type="vanished">İşaretçiler</translation>
+    </message>
+</context>
+<context>
+    <name>MetronomeSplitButton</name>
+    <message>
+        <location filename="../src/gui/qml/components/MetronomeSplitButton.qml" line="19"/>
+        <source>Metronome Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MetronomeSplitButton.qml" line="20"/>
+        <source>Metronome</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MidiEditorPane</name>
+    <message>
+        <location filename="../src/gui/qml/components/editors/MidiEditorPane.qml" line="83"/>
+        <source>Drum Notation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/editors/MidiEditorPane.qml" line="92"/>
+        <source>Listen Notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/editors/MidiEditorPane.qml" line="101"/>
+        <source>Show Automation Values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/editors/MidiEditorPane.qml" line="128"/>
+        <source>Zoom In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/editors/MidiEditorPane.qml" line="211"/>
+        <source>Velocity</source>
+        <translation type="unfinished">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>MonitorSection</name>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="35"/>
+        <source>%1 soloed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="43"/>
+        <source>Currently soloed tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="55"/>
+        <source>Unsolo all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="69"/>
+        <source>%1 muted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="73"/>
+        <source>Currently muted tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="84"/>
+        <source>Unmute all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="98"/>
+        <source>%1 listened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="102"/>
+        <source>Currently listened tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="113"/>
+        <source>Unlisten all tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="135"/>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="217"/>
+        <source>Mute</source>
+        <translation type="unfinished">Sesi Kapat</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="154"/>
+        <source>Listen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="172"/>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="206"/>
+        <source>Dim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="195"/>
+        <source>Mono</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="198"/>
+        <source>Sum to mono</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="209"/>
+        <source>Dim output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="220"/>
+        <source>Mute output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="235"/>
+        <source>Monitor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MonitorSection.qml" line="251"/>
+        <source>Device Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MusicalMode</name>
+    <message>
+        <source>Inherit</source>
+        <translation type="vanished">Kalıtım</translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation type="vanished">Kapalı</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation type="vanished">Açık</translation>
+    </message>
+</context>
+<context>
+    <name>MusicalScale</name>
+    <message>
+        <source>Chromatic</source>
+        <translation type="vanished">Kromatik</translation>
+    </message>
+    <message>
+        <source>Major</source>
+        <translation type="vanished">Majör</translation>
+    </message>
+    <message>
+        <source>Minor</source>
+        <translation type="vanished">Minör</translation>
+    </message>
+    <message>
+        <source>Ionian</source>
+        <translation type="vanished">İyonyan</translation>
+    </message>
+    <message>
+        <source>Dorian</source>
+        <translation type="vanished">Doryan</translation>
+    </message>
+    <message>
+        <source>Phrygian</source>
+        <translation type="vanished">Frigyen</translation>
+    </message>
+    <message>
+        <source>Lydian</source>
+        <translation type="vanished">Lidyan</translation>
+    </message>
+    <message>
+        <source>Mixolydian</source>
+        <translation type="vanished">Miksolidyen</translation>
+    </message>
+    <message>
+        <source>Aeolian</source>
+        <translation type="vanished">Aeoliyen</translation>
+    </message>
+    <message>
+        <source>Locrian</source>
+        <translation type="vanished">Lokriyen</translation>
+    </message>
+    <message>
+        <source>Melodic Minor</source>
+        <translation type="vanished">Melodik Minör</translation>
+    </message>
+    <message>
+        <source>Harmonic Minor</source>
+        <translation type="vanished">Harmonik Minör</translation>
+    </message>
+    <message>
+        <source>Whole Tone</source>
+        <translation type="vanished">Tam Ton</translation>
+    </message>
+    <message>
+        <source>Major Pentatonic</source>
+        <translation type="vanished">Pentatonik Majör</translation>
+    </message>
+    <message>
+        <source>Minor Pentatonic</source>
+        <translation type="vanished">Pentatonik Minör</translation>
+    </message>
+    <message>
+        <source>Octatonic Half Whole</source>
+        <translation type="vanished">Oktatonik Yarım Tam</translation>
+    </message>
+    <message>
+        <source>Octatonic Whole Half</source>
+        <translation type="vanished">Oktatonik Tam Yarım</translation>
+    </message>
+    <message>
+        <source>Acoustic</source>
+        <translation type="vanished">Akustik</translation>
+    </message>
+    <message>
+        <source>Harmonic Major</source>
+        <translation type="vanished">Harmonik Majör</translation>
+    </message>
+    <message>
+        <source>Phrygian Dominant</source>
+        <translation type="vanished">Frigyen Dominant</translation>
+    </message>
+    <message>
+        <source>Major Locrian</source>
+        <translation type="vanished">Lokriyen Majör</translation>
+    </message>
+    <message>
+        <source>Algerian</source>
+        <translation type="vanished">Cezayir</translation>
+    </message>
+    <message>
+        <source>Augmented</source>
+        <translation type="vanished">Artırılmış</translation>
+    </message>
+    <message>
+        <source>Double Harmonic</source>
+        <translation type="vanished">Çift Harmonik</translation>
+    </message>
+    <message>
+        <source>Chinese</source>
+        <translation type="vanished">Çince</translation>
+    </message>
+    <message>
+        <source>Diminished</source>
+        <translation type="vanished">Azaltılmış</translation>
+    </message>
+    <message>
+        <source>Dominant Diminished</source>
+        <translation type="vanished">Dominant Azaltılmış</translation>
+    </message>
+    <message>
+        <source>Egyptian</source>
+        <translation type="vanished">Mısırlı</translation>
+    </message>
+    <message>
+        <source>Eight Tone Spanish</source>
+        <translation type="vanished">İspanyol Sekiz Ton</translation>
+    </message>
+    <message>
+        <source>Enigmatic</source>
+        <translation type="vanished">Enigmatik</translation>
+    </message>
+    <message>
+        <source>Geez</source>
+        <translation type="vanished">Tanrım</translation>
+    </message>
+    <message>
+        <source>Hindu</source>
+        <translation type="vanished">Hint</translation>
+    </message>
+    <message>
+        <source>Hirajoshi</source>
+        <translation type="vanished">Hirajoshi</translation>
+    </message>
+    <message>
+        <source>Hungarian Gypsy</source>
+        <translation type="vanished">Macar Çingene</translation>
+    </message>
+    <message>
+        <source>Insen</source>
+        <translation type="vanished">Insen</translation>
+    </message>
+    <message>
+        <source>Neapolitan Major</source>
+        <translation type="vanished">Napoliten Majör</translation>
+    </message>
+    <message>
+        <source>Neapolitan Minor</source>
+        <translation type="vanished">Napoliten Minör</translation>
+    </message>
+    <message>
+        <source>Oriental</source>
+        <translation type="vanished">Oryantal</translation>
+    </message>
+    <message>
+        <source>Romanian Minor</source>
+        <translation type="vanished">Roman Minör</translation>
+    </message>
+    <message>
+        <source>Altered</source>
+        <translation type="vanished">Değiştirimiş</translation>
+    </message>
+    <message>
+        <source>Maqam</source>
+        <translation type="vanished">Maqam</translation>
+    </message>
+    <message>
+        <source>Yo</source>
+        <translation type="vanished">Yo</translation>
+    </message>
+    <message>
+        <source>Bebop Locrian</source>
+        <translation type="vanished">Lokriyen Bebop</translation>
+    </message>
+    <message>
+        <source>Bebop Dominant</source>
+        <translation type="vanished">Dominant Bebop</translation>
+    </message>
+    <message>
+        <source>Bebop Major</source>
+        <translation type="vanished">Bebop Majör</translation>
+    </message>
+    <message>
+        <source>Super Locrian</source>
+        <translation type="vanished">Süper Lokriyen</translation>
+    </message>
+    <message>
+        <source>Enigmatic Minor</source>
+        <translation type="vanished">Enikmatik Minör</translation>
+    </message>
+    <message>
+        <source>Composite</source>
+        <translation type="vanished">Kompozit</translation>
+    </message>
+    <message>
+        <source>Bhairav</source>
+        <translation type="vanished">Bhairav</translation>
+    </message>
+    <message>
+        <source>Hungarian Minor</source>
+        <translation type="vanished">Macar Minör</translation>
+    </message>
+    <message>
+        <source>Persian</source>
+        <translation type="vanished">Pers</translation>
+    </message>
+    <message>
+        <source>Iwato</source>
+        <translation type="vanished">Iwato</translation>
+    </message>
+    <message>
+        <source>Kumoi</source>
+        <translation type="vanished">Kumoi</translation>
+    </message>
+    <message>
+        <source>Pelog</source>
+        <translation type="vanished">Pelog</translation>
+    </message>
+    <message>
+        <source>Prometheus</source>
+        <translation type="vanished">Prometheus</translation>
+    </message>
+    <message>
+        <source>Prometheus Neapolitan</source>
+        <translation type="vanished">Prometheus Napoliten</translation>
+    </message>
+    <message>
+        <source>Prometheus Liszt</source>
+        <translation type="vanished">Prometheus Liszt</translation>
+    </message>
+    <message>
+        <source>Balinese</source>
+        <translation type="vanished">Bali</translation>
+    </message>
+    <message>
+        <source>RagaTodi</source>
+        <translation type="vanished">RagaTodi</translation>
+    </message>
+    <message>
+        <source>Japanese 1</source>
+        <translation type="vanished">Japon 1</translation>
+    </message>
+    <message>
+        <source>Japanese 2</source>
+        <translation type="vanished">Japon 2</translation>
+    </message>
+</context>
+<context>
+    <name>MuteButton</name>
+    <message>
+        <location filename="../src/gui/qml/components/basic/MuteButton.qml" line="16"/>
+        <source>Mute</source>
+        <translation>Sesi Kapat</translation>
+    </message>
+</context>
+<context>
+    <name>NotificationCenterButton</name>
+    <message>
+        <location filename="../src/gui/qml/components/NotificationCenterButton.qml" line="37"/>
+        <location filename="../src/gui/qml/components/NotificationCenterButton.qml" line="40"/>
+        <source>Notifications</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NotificationCenterPopover</name>
+    <message>
+        <location filename="../src/gui/qml/components/NotificationCenterPopover.qml" line="42"/>
+        <source>just now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/NotificationCenterPopover.qml" line="44"/>
+        <source>%1 s ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/NotificationCenterPopover.qml" line="47"/>
+        <source>%1 min ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/NotificationCenterPopover.qml" line="50"/>
+        <source>%1 h ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/NotificationCenterPopover.qml" line="161"/>
+        <source>No Notifications</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/NotificationCenterPopover.qml" line="177"/>
+        <source>Clear All</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PluginBrowserPage</name>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="20"/>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="268"/>
+        <source>Instrument</source>
+        <translation type="unfinished">Enstrüman</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="21"/>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="276"/>
+        <source>Effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="22"/>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="284"/>
+        <source>MIDI</source>
+        <translation type="unfinished">MIDI</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="23"/>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="292"/>
+        <source>Modulator</source>
+        <translation type="unfinished">Modülatör</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="39"/>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="249"/>
+        <source>Favorites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="175"/>
+        <source>Search plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="186"/>
+        <source>Plugin Spec Filters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="191"/>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="226"/>
+        <source>Filters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="236"/>
+        <source>Clear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="262"/>
+        <source>Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="304"/>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="653"/>
+        <source>Format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="405"/>
+        <source>No Plugins Match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="406"/>
+        <source>Scanning Plugins…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="406"/>
+        <source>No Plugins Found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="420"/>
+        <source>Try a different search or clear the active filters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="423"/>
+        <source>Scan your system for audio plugins to get started.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="433"/>
+        <source>Clear Filters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="449"/>
+        <source>Scan for Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="509"/>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="641"/>
+        <source>Vendor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="556"/>
+        <source>Show in File Manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="561"/>
+        <source>Plugin Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="578"/>
+        <source>Favorite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="586"/>
+        <source>Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="664"/>
+        <source>Category</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="676"/>
+        <source>Location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginBrowserPage.qml" line="724"/>
+        <source>Remove Filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PluginInspectorPage</name>
+    <message>
+        <location filename="../src/gui/qml/components/PluginInspectorPage.qml" line="29"/>
+        <source>Plugin Properties</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginInspectorPage.qml" line="35"/>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginInspectorPage.qml" line="45"/>
+        <source>Category</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginInspectorPage.qml" line="54"/>
+        <source>Enabled</source>
+        <translation type="unfinished">Etkinleştirildi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginInspectorPage.qml" line="66"/>
+        <source>Hide UI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginInspectorPage.qml" line="66"/>
+        <source>Show UI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginInspectorPage.qml" line="74"/>
+        <source>Gain</source>
+        <translation type="unfinished">Ses kontrolü</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginInspectorPage.qml" line="104"/>
+        <source>Parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PluginParameterListView</name>
+    <message>
+        <location filename="../src/gui/qml/components/PluginParameterListView.qml" line="89"/>
+        <source>Trigger</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PluginSlotList</name>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotList.qml" line="74"/>
+        <source>Drop plugins here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotList.qml" line="95"/>
+        <source>Drop or Paste Plugins Here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotList.qml" line="105"/>
+        <source>Paste Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotList.qml" line="115"/>
+        <source>Paste the plugins from the clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PluginSlotView</name>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="82"/>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="154"/>
+        <source>Remove Plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="82"/>
+        <source>Remove %1 Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="84"/>
+        <source>Cut %1 Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="84"/>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="101"/>
+        <source>Cut Plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="86"/>
+        <source>Copy %1 Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="86"/>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="114"/>
+        <source>Copy Plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="88"/>
+        <source>Duplicate %1 Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="88"/>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="138"/>
+        <source>Duplicate Plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="125"/>
+        <source>Paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="165"/>
+        <source>Show Plugin UI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginSlotView.qml" line="179"/>
+        <source>Properties</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PluginWindowHeaderBar</name>
+    <message>
+        <location filename="../src/gui/qml/components/PluginWindowHeaderBar.qml" line="165"/>
+        <source>Bypass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginWindowHeaderBar.qml" line="221"/>
+        <source>Compare two plugin states</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginWindowHeaderBar.qml" line="238"/>
+        <source>Toggle plugin diagnostics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginWindowHeaderBar.qml" line="276"/>
+        <source>Load: %1% · Latency: %2 samples (%3 ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/PluginWindowHeaderBar.qml" line="278"/>
+        <source>Load: %1% · Latency: %2 samples</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PresetBrowserPopup</name>
+    <message>
+        <location filename="../src/gui/qml/components/basic/PresetBrowserPopup.qml" line="322"/>
+        <source>Search presets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/basic/PresetBrowserPopup.qml" line="391"/>
+        <source>All</source>
+        <translation type="unfinished">Tümü</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/basic/PresetBrowserPopup.qml" line="445"/>
+        <source>%1 of %2 presets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/basic/PresetBrowserPopup.qml" line="447"/>
+        <source> · Loaded: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/basic/PresetBrowserPopup.qml" line="458"/>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/basic/PresetBrowserPopup.qml" line="467"/>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/basic/PresetBrowserPopup.qml" line="480"/>
+        <source>No matching presets</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PresetSelector</name>
+    <message>
+        <location filename="../src/gui/qml/components/basic/PresetSelector.qml" line="53"/>
+        <source>No Preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/basic/PresetSelector.qml" line="133"/>
+        <source>Previous Item</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/basic/PresetSelector.qml" line="182"/>
+        <source>Next Item</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProjectWindow</name>
+    <message>
+        <source>&amp;File</source>
+        <translation type="vanished">&amp;File</translation>
+    </message>
+    <message>
+        <source>New Long Long Long Long Long Long Long Long Long Name</source>
+        <translation type="vanished">New Long Long Long Long Long Long Long Long Long Name</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="vanished">Açık</translation>
+    </message>
+    <message>
+        <source>&amp;Edit</source>
+        <translation type="vanished">&amp;Edit</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="vanished">Geri al</translation>
+    </message>
+    <message>
+        <source>&amp;View</source>
+        <translation type="vanished">&amp;View</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation type="vanished">Görünüm</translation>
+    </message>
+    <message>
+        <source>Switch Light/Dark Theme</source>
+        <translation type="vanished">Aydınlık/Karanlık Temaya Değiştir</translation>
+    </message>
+    <message>
+        <source>Theme Color</source>
+        <translation type="vanished">Tema Rengi</translation>
+    </message>
+    <message>
+        <source>Zrythm Orange</source>
+        <translation type="vanished">Zrythm Turuncu</translation>
+    </message>
+    <message>
+        <source>Celestial Blue</source>
+        <translation type="vanished">Gök Mavisi</translation>
+    </message>
+    <message>
+        <source>Jonquil Yellow</source>
+        <translation type="vanished">Jonquil Sarısı</translation>
+    </message>
+    <message>
+        <source>&amp;Help</source>
+        <translation type="vanished">&amp;Help</translation>
+    </message>
+    <message>
+        <source>About Zrythm</source>
+        <translation type="vanished">Zrythm Hakkında</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="46"/>
+        <source>&amp;Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="64"/>
+        <source>Fullscreen</source>
+        <translation type="unfinished">Tam Ekran</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="28"/>
+        <source>&amp;Copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="37"/>
+        <source>Cu&amp;t</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="56"/>
+        <source>&amp;Duplicate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="76"/>
+        <source>&amp;Paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="170"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="182"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="190"/>
+        <source>Cannot Perform Operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="174"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="194"/>
+        <source>Pasted Content Modified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="202"/>
+        <source>Plugin Instantiation Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="202"/>
+        <source>Failed to instantiate plugin %1:
+
+%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="500"/>
+        <source>%1 Hz · %2 samples</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="503"/>
+        <source>%1 tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="508"/>
+        <source>Cache: %1 pending · %2 complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <source>Failed to create track</source>
+        <translation type="vanished">Kayıt oluşturulamadı</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/curve_preset.cpp" line="125"/>
+        <source>Linear</source>
+        <translation>Doğrusal</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/curve_preset.cpp" line="127"/>
+        <source>Exponential</source>
+        <translation>üstel</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/curve_preset.cpp" line="130"/>
+        <source>Elliptic</source>
+        <translation>Eliptik</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/curve_preset.cpp" line="133"/>
+        <source>Logarithmic</source>
+        <translation>Logaritmik</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/curve_preset.cpp" line="136"/>
+        <source>Vital</source>
+        <translation>Hayati</translation>
+    </message>
+    <message>
+        <source>Failed to add region</source>
+        <translation type="vanished">Bölge eklenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to paste selections</source>
+        <translation type="vanished">Seçim yapıştırılamadı</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="vanished">Ana sayfa</translation>
+    </message>
+    <message>
+        <source>Desktop</source>
+        <translation type="vanished">Masaüstü</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/plugin_collections.cpp" line="64"/>
+        <source>Delete</source>
+        <translation>Sil</translation>
+    </message>
+    <message>
+        <source>Failed to paste plugins</source>
+        <translation type="vanished">Eklentiler yapıştırılamadı</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="159"/>
+        <source>&lt;no track&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_saver.cpp" line="153"/>
+        <source>Failed to create backup directory {}</source>
+        <translation>Yedek dizin oluşturulamadı</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/project/project.cpp" line="403"/>
+        <source>Markers</source>
+        <translation type="unfinished">İşaretçiler</translation>
+    </message>
+    <message>
+        <source>Unable to read file at {}: {}</source>
+        <translation type="vanished">{}: {} konumundaki dosya okunamadı</translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_saver.cpp" line="177"/>
+        <source>Unable to read file at {}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_saver.cpp" line="191"/>
+        <source>Unable to decompress project file at {}</source>
+        <translation>{} dizinindeki dosya ayıklanamadı</translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_saver.cpp" line="294"/>
+        <source>Failed to save the project</source>
+        <translation>Proje kaydedilemedi</translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_saver.cpp" line="483"/>
+        <source>Writing audio files...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_saver.cpp" line="489"/>
+        <source>Serializing project...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_saver.cpp" line="498"/>
+        <source>Validating project data...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_saver.cpp" line="502"/>
+        <source>Writing project file...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_saver.cpp" line="506"/>
+        <source>Finalizing save...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_saver.cpp" line="517"/>
+        <source>Project saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to compress project file</source>
+        <translation type="vanished">Proje sıkıştırılamadı</translation>
+    </message>
+    <message>
+        <source>Failed to create backup directory</source>
+        <translation type="vanished">Yedek dizin oluşturulamadı</translation>
+    </message>
+    <message>
+        <source>Failed to copy plugin states</source>
+        <translation type="vanished">Eklenti durumu kopyalanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to deserialize v1 project file</source>
+        <translation type="vanished">V1 proje dosyası serisizleştirilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to serialize v1 project file</source>
+        <translation type="vanished">V1 proje dosyası serileştirilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to deserialize v1/2/3 project file</source>
+        <translation type="vanished">V1/2/3 proje dosyaları serisizleştirilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to serialize v3 project file</source>
+        <translation type="vanished">v3 proje dosyası serileştirilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to deserialize v4 project file</source>
+        <translation type="vanished">v4 proje dosyası serisizleştirilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to serialize v4 project file</source>
+        <translation type="vanished">v4 proje dosyası serileştirilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to deserialize v5 project file</source>
+        <translation type="vanished">v5 proje dosyası serisizleştirilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to convert v5 YAML project file to JSON</source>
+        <translation type="vanished">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+    <message>
+        <source>Invalid project: missing version</source>
+        <translation type="vanished">Geçersiz proje: kayıp version</translation>
+    </message>
+    <message>
+        <source>Failed to upgrade YAML project schema</source>
+        <translation type="vanished">YAML proje şeması yükseltilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to upgrade project schema to JSON</source>
+        <translation type="vanished">Proje şeması JSON’a yükseltilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to deserialize project YAML</source>
+        <translation type="vanished">YAML Projesinin serisizleştirilmesi başarısız oldu</translation>
+    </message>
+    <message>
+        <source>Could not load project: Corrupted project detected (missing FINISHED file at &apos;{}&apos;).</source>
+        <translation type="vanished">Proje yüklenemedi: Bozulmuş proje algılandı (&apos;{}&apos; dizininde bitmiş dosya kayıp).</translation>
+    </message>
+    <message>
+        <source>Failed to initialize the audio file pool</source>
+        <translation type="vanished">Ses dosyası havuzu başlatılamadı</translation>
+    </message>
+    <message>
+        <source>Project Upgraded</source>
+        <translation type="vanished">Proje Yükseltildi</translation>
+    </message>
+    <message>
+        <source>This project has been automatically upgraded to v{}.{}. Saving this project will overwrite the old one. If you would like to keep both, please use &apos;Save As...&apos;.</source>
+        <translation type="vanished">Bu proje otomatik olarak v{}. {}’e yükseltildi. Bu projenin kaydı halinde eskisinin üzerine yazılır. Eğer iki sürümü de tutmak istiyorsanız lütfen “Farklı kaydet” seçeneğini kullanın.</translation>
+    </message>
+    <message>
+        <source>Open Backup?</source>
+        <translation type="vanished">Yedeği aç?</translation>
+    </message>
+    <message>
+        <source>Newer backup found:
+  %s.
+Use the newer backup?</source>
+        <translation type="vanished">Daha yeni yedek bulundu:
+  %s.
+Daha yeni yedek kullanılsın mı?</translation>
+    </message>
+    <message>
+        <source>Open Backup</source>
+        <translation type="vanished">Yedeği Aç</translation>
+    </message>
+    <message>
+        <source>Ignore</source>
+        <translation type="vanished">Görmezden gel</translation>
+    </message>
+    <message>
+        <source>Failed to paste tracks</source>
+        <translation type="vanished">Ses dosyası yapıştırılamadı</translation>
+    </message>
+    <message>
+        <source>Arranger selections contain an undeletable object</source>
+        <translation type="vanished">Düzenleyici seçimleri silinemeyen bir nesne içermekte</translation>
+    </message>
+    <message>
+        <source>Arranger selections contain an object that cannot be duplicated</source>
+        <translation type="vanished">Düzenleyici seçimleri kopyalanamayan bir nesne içermekte</translation>
+    </message>
+    <message>
+        <source>Cannot rename selected object(s)</source>
+        <translation type="vanished">Seçini nesne(ler) yeniden adlandırılamaz</translation>
+    </message>
+    <message>
+        <source>Attempted to resize unresizable objects</source>
+        <translation type="vanished">Boyutu değiştirileme nesneler değiştirilmeye çalışıldı</translation>
+    </message>
+    <message>
+        <source>Cannot perform {} resize - selections contain looped objects</source>
+        <translation type="vanished">Yeniden boyutlandırma {} gerçekleştirilemiyor - seçimler döngülü nesneler içeriyor</translation>
+    </message>
+    <message>
+        <source>Cannot perform {} resize - selections contain unloopable objects</source>
+        <translation type="vanished">Yeniden boyutlandırma {} gerçekleştirilemiyor - seçimler döngülenemez nesneler içeriyor</translation>
+    </message>
+    <message>
+        <source>Create timeline selections</source>
+        <translation type="vanished">Zaman çizelgesi seçimleri oluştur</translation>
+    </message>
+    <message>
+        <source>Create audio selections</source>
+        <translation type="vanished">Ses seçimleri oluştur</translation>
+    </message>
+    <message>
+        <source>Create automation selections</source>
+        <translation type="vanished">Otomasyon seçimleri oluştur</translation>
+    </message>
+    <message>
+        <source>Create chord selections</source>
+        <translation type="vanished">Akor seçimleri oluştur</translation>
+    </message>
+    <message>
+        <source>Create MIDI selections</source>
+        <translation type="vanished">MIDI seçimleri oluştur</translation>
+    </message>
+    <message>
+        <source>Delete arranger selections</source>
+        <translation type="vanished">Aranjör seçimlerini sil</translation>
+    </message>
+    <message>
+        <source>Duplicate arranger selections</source>
+        <translation type="vanished">Aranjör seçimlerini çoğalt</translation>
+    </message>
+    <message>
+        <source>Move arranger selections</source>
+        <translation type="vanished">Aranjör seçimlerini taşı</translation>
+    </message>
+    <message>
+        <source>Link arranger selections</source>
+        <translation type="vanished">Aranjör seçimlerini bağla</translation>
+    </message>
+    <message>
+        <source>Record arranger selections</source>
+        <translation type="vanished">Aranjör seçimlerini kaydet</translation>
+    </message>
+    <message>
+        <source>Edit arranger selections</source>
+        <translation type="vanished">Aranjör seçimlerini düzenle</translation>
+    </message>
+    <message>
+        <source>Automation fill</source>
+        <translation type="vanished">Doldurma otomasyonu</translation>
+    </message>
+    <message>
+        <source>Split arranger selections</source>
+        <translation type="vanished">Aranjör seçimlerini böl</translation>
+    </message>
+    <message>
+        <source>Merge arranger selections</source>
+        <translation type="vanished">Aranjör seçimlerini birleştir</translation>
+    </message>
+    <message>
+        <source>Resize arranger selections - {}</source>
+        <translation type="vanished">Aranjör seçimlerini yeniden boyutlandır - {}</translation>
+    </message>
+    <message>
+        <source>Quantize arranger selections</source>
+        <translation type="vanished">Aranjör seçimlerini kuantize et</translation>
+    </message>
+    <message>
+        <source>Connect sidechain</source>
+        <translation type="vanished">Yanzincir bağla</translation>
+    </message>
+    <message>
+        <source>Connect stereo</source>
+        <translation type="vanished">Stereo bağla</translation>
+    </message>
+    <message>
+        <source>Connect MIDI</source>
+        <translation type="vanished">MIDI bağla</translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="vanished">Bağlantıyı kes</translation>
+    </message>
+    <message>
+        <source>Change amount</source>
+        <translation type="vanished">Miktarı değiştir</translation>
+    </message>
+    <message>
+        <source>Change ports</source>
+        <translation type="vanished">Portları değiştir</translation>
+    </message>
+    <message>
+        <source>Channel send connection</source>
+        <translation type="vanished">Kanal gönderme bağlantısı</translation>
+    </message>
+    <message>
+        <source>Change chords</source>
+        <translation type="vanished">Akorları değiştir</translation>
+    </message>
+    <message>
+        <source>MIDI mapping enable</source>
+        <translation type="vanished">MIDI haritalama etkin</translation>
+    </message>
+    <message>
+        <source>MIDI mapping disable</source>
+        <translation type="vanished">MIDI haritalama devre dışı</translation>
+    </message>
+    <message>
+        <source>MIDI mapping bind</source>
+        <translation type="vanished">MIDI haritalama bağla</translation>
+    </message>
+    <message>
+        <source>MIDI mapping unbind</source>
+        <translation type="vanished">MIDI haritalama bağı çöz</translation>
+    </message>
+    <message>
+        <source>Project Reload Needed</source>
+        <translation type="vanished">Proje Yeniden Yükleme Gerekli</translation>
+    </message>
+    <message>
+        <source>Plugin load behavior changes will only take effect after you save and re-load the project</source>
+        <translation type="vanished">Eklenti yükleme davranışı değişiklikleri yalnızca projeyi kaydedip yeniden yükledikten sonra etkili olacaktır</translation>
+    </message>
+    <message>
+        <source>Create {}</source>
+        <translation type="vanished">Oluştur {}</translation>
+    </message>
+    <message>
+        <source>Create {} {}s</source>
+        <translation type="vanished">Oluştur {} {}</translation>
+    </message>
+    <message>
+        <source>Delete Plugin</source>
+        <translation type="vanished">Eklentiyi sil</translation>
+    </message>
+    <message>
+        <source>Delete {} Plugins</source>
+        <translation type="vanished">Eklentileri Sil {}</translation>
+    </message>
+    <message>
+        <source>Move {}</source>
+        <translation type="vanished">Taşı {}</translation>
+    </message>
+    <message>
+        <source>Move {} Plugins</source>
+        <translation type="vanished">Eklentileri taşı {}</translation>
+    </message>
+    <message>
+        <source>Copy {}</source>
+        <translation type="vanished">Kopyala {}</translation>
+    </message>
+    <message>
+        <source>Copy {} Plugins</source>
+        <translation type="vanished">Eklentileri Kopyala {}</translation>
+    </message>
+    <message>
+        <source>Paste {}</source>
+        <translation type="vanished">Yapıştır {}</translation>
+    </message>
+    <message>
+        <source>Paste {} Plugins</source>
+        <translation type="vanished">Eklentileri Yapıştır {}</translation>
+    </message>
+    <message>
+        <source>Change Status for {}</source>
+        <translation type="vanished">Durumu değiştir {}</translation>
+    </message>
+    <message>
+        <source>Change Status for {} Plugins</source>
+        <translation type="vanished">Eklentiler için Durumu Değiştir {}</translation>
+    </message>
+    <message>
+        <source>Change Load Behavior for {}</source>
+        <translation type="vanished">Yükleme Davranışını Değiştir {}</translation>
+    </message>
+    <message>
+        <source>Set {} to {}</source>
+        <translation type="vanished">{} öğesini {} olarak ayarlayın</translation>
+    </message>
+    <message>
+        <source>Connect ports</source>
+        <translation type="vanished">Portları bağla</translation>
+    </message>
+    <message>
+        <source>Disconnect ports</source>
+        <translation type="vanished">Portların bağlantısını kes</translation>
+    </message>
+    <message>
+        <source>Enable port connection</source>
+        <translation type="vanished">Port bağlantısını etkinleştir</translation>
+    </message>
+    <message>
+        <source>Disable port connection</source>
+        <translation type="vanished">Port bağlantısını kes</translation>
+    </message>
+    <message>
+        <source>Change port connection</source>
+        <translation type="vanished">Port bağlantısını değiştir</translation>
+    </message>
+    <message>
+        <source>Insert silence</source>
+        <translation type="vanished">Sessizlik ekle</translation>
+    </message>
+    <message>
+        <source>Delete range</source>
+        <translation type="vanished">Aralığı sil</translation>
+    </message>
+    <message>
+        <source>Cannot copy tracks: selection contains an uncopyable track</source>
+        <translation type="vanished">Parçalar kopyalanamıyor: seçim kopyalanamayan bir parça içeriyor</translation>
+    </message>
+    <message>
+        <source>Cannot delete tracks: selection contains an undeletable track</source>
+        <translation type="vanished">Parçalar silinemiyor: seçim silinemeyen bir parça içeriyor</translation>
+    </message>
+    <message>
+        <source>No tracks selected</source>
+        <translation type="vanished">Seçili parça bulunmuyor</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/tracks/track.cpp" line="634"/>
+        <source>{} Track</source>
+        <translation>{} Parça</translation>
+    </message>
+    <message>
+        <source>Copy Track inside</source>
+        <translation type="vanished">İçindeki Parçayı Kopyala</translation>
+    </message>
+    <message>
+        <source>Copy Track</source>
+        <translation type="vanished">Parçayı Kopyala</translation>
+    </message>
+    <message>
+        <source>Copy {} Tracks inside</source>
+        <translation type="vanished">{} İçindeki Parçaları Kopyala</translation>
+    </message>
+    <message>
+        <source>Copy {} Tracks</source>
+        <translation type="vanished">{} Parçalarını Kopyala</translation>
+    </message>
+    <message>
+        <source>Create {} Track</source>
+        <translation type="vanished">{} Parçasını Oluştur</translation>
+    </message>
+    <message>
+        <source>Create {} {} Tracks</source>
+        <translation type="vanished">{} {} Parçalarını Oluştur</translation>
+    </message>
+    <message>
+        <location filename="../src/commands/delete_tracks_command.cpp" line="17"/>
+        <source>Delete Track</source>
+        <translation>Parçayı Sil</translation>
+    </message>
+    <message>
+        <location filename="../src/commands/delete_tracks_command.cpp" line="18"/>
+        <source>Delete Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete {} Tracks</source>
+        <translation type="vanished">{} Parçalarını Sil</translation>
+    </message>
+    <message>
+        <source>Solo Track</source>
+        <translation type="vanished">Parçayı Solo Yap</translation>
+    </message>
+    <message>
+        <source>Unsolo Track</source>
+        <translation type="vanished">Parçayı Solo Yapmayı Durdur</translation>
+    </message>
+    <message>
+        <source>Solo Lane</source>
+        <translation type="vanished">Solo Çizgisi</translation>
+    </message>
+    <message>
+        <source>Unsolo Lane</source>
+        <translation type="vanished">Solo Olmayan Çizgi</translation>
+    </message>
+    <message>
+        <source>Mute Track</source>
+        <translation type="vanished">Parçayı Sessize Al</translation>
+    </message>
+    <message>
+        <source>Unmute Track</source>
+        <translation type="vanished">Parça Sesini Aç</translation>
+    </message>
+    <message>
+        <source>Mute Lane</source>
+        <translation type="vanished">Şeridi Sessize Al</translation>
+    </message>
+    <message>
+        <source>Unmute Lane</source>
+        <translation type="vanished">Şeridin Sesini Aç</translation>
+    </message>
+    <message>
+        <source>Listen Track</source>
+        <translation type="vanished">Parçayı Dinle</translation>
+    </message>
+    <message>
+        <source>Unlisten Track</source>
+        <translation type="vanished">Parçayı Dinleme</translation>
+    </message>
+    <message>
+        <source>Enable Track</source>
+        <translation type="vanished">Parçayı Etkinleştir</translation>
+    </message>
+    <message>
+        <source>Disable Track</source>
+        <translation type="vanished">Parçayı Devre Dışı Bırak</translation>
+    </message>
+    <message>
+        <source>Fold Track</source>
+        <translation type="vanished">Parçayı Katla</translation>
+    </message>
+    <message>
+        <source>Unfold Track</source>
+        <translation type="vanished">Parçayı Katlamayı Durdur</translation>
+    </message>
+    <message>
+        <source>Change Fader from {:.1f} to {:.1f}</source>
+        <translation type="vanished">Fader&apos;ı {:.1f} ile {:.1f} arasında değiştirin</translation>
+    </message>
+    <message>
+        <source>Change Pan from {:.1f} to {:.1f}</source>
+        <translation type="vanished">Pan&apos;ı {:.1f} ile {:.1f} arasında değiştirin</translation>
+    </message>
+    <message>
+        <source>Change direct out</source>
+        <translation type="vanished">Doğrudan çıkışı değiştir</translation>
+    </message>
+    <message>
+        <source>Rename track</source>
+        <translation type="vanished">Parçayı yeniden adlandır</translation>
+    </message>
+    <message>
+        <source>Rename lane</source>
+        <translation type="vanished">Çizgiyi yeniden adlandır</translation>
+    </message>
+    <message>
+        <source>Change color</source>
+        <translation type="vanished">Renk değiştir</translation>
+    </message>
+    <message>
+        <source>Change icon</source>
+        <translation type="vanished">İkonu değiştir</translation>
+    </message>
+    <message>
+        <source>Change comment</source>
+        <translation type="vanished">Yorumu değiştir</translation>
+    </message>
+    <message>
+        <source>Change MIDI fader mode</source>
+        <translation type="vanished">MIDI’yi fader modundan değiştir</translation>
+    </message>
+    <message>
+        <source>Solo {} Tracks</source>
+        <translation type="vanished">Şu Parçaları Solola {}</translation>
+    </message>
+    <message>
+        <source>Unsolo {} Tracks</source>
+        <translation type="vanished">Şu Parçaları Sololama {}</translation>
+    </message>
+    <message>
+        <source>Mute {} Tracks</source>
+        <translation type="vanished">Şu Parçaları Sessize Al {}</translation>
+    </message>
+    <message>
+        <source>Unmute {} Tracks</source>
+        <translation type="vanished">Şu Parçaları Sessize Alma {}</translation>
+    </message>
+    <message>
+        <source>Listen {} Tracks</source>
+        <translation type="vanished">Şu Parçaları Dinle {}</translation>
+    </message>
+    <message>
+        <source>Unlisten {} Tracks</source>
+        <translation type="vanished">Şu Parçaları Dinleme {}</translation>
+    </message>
+    <message>
+        <source>Enable {} Tracks</source>
+        <translation type="vanished">Şu Parçaları Etkinleştir {}</translation>
+    </message>
+    <message>
+        <source>Disable {} Tracks</source>
+        <translation type="vanished">Şu Parçaları Etkinleştirme {}</translation>
+    </message>
+    <message>
+        <source>Fold {} Tracks</source>
+        <translation type="vanished">Şu Parçaları Katla {}</translation>
+    </message>
+    <message>
+        <source>Unfold {} Tracks</source>
+        <translation type="vanished">Şu Parçaları Katlama {}</translation>
+    </message>
+    <message>
+        <source>Solo lanes</source>
+        <translation type="vanished">Solo çizgiler</translation>
+    </message>
+    <message>
+        <source>Mute lanes</source>
+        <translation type="vanished">Sessiz çizgiler</translation>
+    </message>
+    <message>
+        <source>Edit tracks</source>
+        <translation type="vanished">Parçaları düzenle</translation>
+    </message>
+    <message>
+        <source>Move Track inside</source>
+        <translation type="vanished">Parçayı içeri taşı</translation>
+    </message>
+    <message>
+        <source>Move Track</source>
+        <translation type="vanished">Parçayı Taşı</translation>
+    </message>
+    <message>
+        <source>Move {} Tracks inside</source>
+        <translation type="vanished">Parçayı İçeri Taşı {}</translation>
+    </message>
+    <message>
+        <source>Move {} Tracks</source>
+        <translation type="vanished">Parçaları Taşı {}</translation>
+    </message>
+    <message>
+        <source>Pin Track</source>
+        <translation type="vanished">Parçayı Sabitle</translation>
+    </message>
+    <message>
+        <source>Pin {} Tracks</source>
+        <translation type="vanished">Parçaları Sabitle {}</translation>
+    </message>
+    <message>
+        <source>Unpin Track</source>
+        <translation type="vanished">Parçayı Sabitlemeyi Durdur</translation>
+    </message>
+    <message>
+        <source>Unpin {} Tracks</source>
+        <translation type="vanished">Parçalarını Sabitlemeyi Durdur{}</translation>
+    </message>
+    <message>
+        <source>Change BPM from {:.2f} to {:.2f}</source>
+        <translation type="vanished">BPM&apos;yi {:.2f}&apos;den {:.2f}&apos;ye değiştirin</translation>
+    </message>
+    <message>
+        <source>Change beats per bar from {} to {}</source>
+        <translation type="vanished">Çubuk başına vuruş sayısını {} ile {} arasında değiştirin</translation>
+    </message>
+    <message>
+        <source>Change beat unit from {} to {}</source>
+        <translation type="vanished">Ritim birimini {}&apos;den {}&apos;e değiştirin</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/chord_preset.cpp" line="60"/>
+        <location filename="../src/structure/project/project.cpp" line="379"/>
+        <source>Chords</source>
+        <translation>Akorlar</translation>
+    </message>
+    <message>
+        <source>_Rename</source>
+        <translation type="vanished">_Yeniden Adlandır</translation>
+    </message>
+    <message>
+        <source>_Delete</source>
+        <translation type="vanished">_Sil</translation>
+    </message>
+    <message>
+        <source>Euro Pop</source>
+        <translation type="vanished">Euro Pop</translation>
+    </message>
+    <message>
+        <source>4 Chord Song</source>
+        <translation type="vanished">4 Akorlu Şarkı</translation>
+    </message>
+    <message>
+        <source>Canon in D</source>
+        <translation type="vanished">D&apos;de Kanon</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="120"/>
+        <source>Pop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="123"/>
+        <source>4-Chord Pop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="134"/>
+        <source>Canon Progression</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="147"/>
+        <source>Love Progression</source>
+        <translation>Aşk İlerlemesi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="156"/>
+        <source>Pop Chords 1</source>
+        <translation>Pop Akorları 1</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="169"/>
+        <source>Common Pop Chords</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="183"/>
+        <source>J-Pop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="187"/>
+        <source>J-Pop Uplifting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="200"/>
+        <source>J-Pop Modulating</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="218"/>
+        <source>Royal Road (IV-V-iii-vi)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="226"/>
+        <source>K-Pop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="230"/>
+        <source>K-Pop Bright</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="240"/>
+        <source>Anime Ballad</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="244"/>
+        <source>Ballad — Bright Modulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="262"/>
+        <source>Ballad — Chromatic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="280"/>
+        <source>Ballad — Nostalgic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="295"/>
+        <source>Eurodance Anthem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="305"/>
+        <source>Eurodance Minor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="321"/>
+        <source>Eurobeat — Chromatic Minor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="334"/>
+        <source>Eurobeat — Long Modulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="351"/>
+        <source>Eurobeat — Modal Minor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="366"/>
+        <source>Eurobeat — Minor Anthem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="384"/>
+        <source>Eurobeat — Uplifting Major</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="400"/>
+        <source>Eurobeat — Minor Groove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="415"/>
+        <source>Trance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="419"/>
+        <source>Uplifting Trance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="449"/>
+        <source>Rock Ballad</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="461"/>
+        <source>J-Rock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="465"/>
+        <source>J-Rock — Modal Mix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="479"/>
+        <source>J-Rock — Cinematic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="497"/>
+        <source>J-Rock — Diatonic Run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Most Often Used Chords</source>
+        <translation type="vanished">En Sık Kullanılan Akorlar</translation>
+    </message>
+    <message>
+        <source>Eastern Pop</source>
+        <translation type="vanished">Doğu Pop</translation>
+    </message>
+    <message>
+        <source>Fight Together</source>
+        <translation type="vanished">Birlikte Savaş</translation>
+    </message>
+    <message>
+        <source>Gee</source>
+        <translation type="vanished">Gee</translation>
+    </message>
+    <message>
+        <source>Daijiken</source>
+        <translation type="vanished">Daijiken</translation>
+    </message>
+    <message>
+        <source>Dance</source>
+        <translation type="vanished">Dans</translation>
+    </message>
+    <message>
+        <source>Idol 2</source>
+        <translation type="vanished">İdol 2</translation>
+    </message>
+    <message>
+        <source>Ballad</source>
+        <translation type="vanished">Türkü</translation>
+    </message>
+    <message>
+        <source>Snow Halation</source>
+        <translation type="vanished">Soğuk Ağılı</translation>
+    </message>
+    <message>
+        <source>Connect</source>
+        <translation type="vanished">Bağlan</translation>
+    </message>
+    <message>
+        <source>Secret Base</source>
+        <translation type="vanished">Gizli üs</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="291"/>
+        <source>Eurodance</source>
+        <translation>Eurodans</translation>
+    </message>
+    <message>
+        <source>What is Love</source>
+        <translation type="vanished">What is Love</translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation type="vanished">Mavi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="317"/>
+        <source>Eurobeat</source>
+        <translation>Eurobeat</translation>
+    </message>
+    <message>
+        <source>Burning Night</source>
+        <translation type="vanished">Burning Night</translation>
+    </message>
+    <message>
+        <source>Dreamin&apos; Of You</source>
+        <translation type="vanished">Dreamin&apos; Of You</translation>
+    </message>
+    <message>
+        <source>Get Me Power</source>
+        <translation type="vanished">Get Me Power</translation>
+    </message>
+    <message>
+        <source>Night of Fire</source>
+        <translation type="vanished">Night of Fire</translation>
+    </message>
+    <message>
+        <source>Super Fever Night</source>
+        <translation type="vanished">Super Fever Night</translation>
+    </message>
+    <message>
+        <source>Break In2 The Nite</source>
+        <translation type="vanished">Break In2 The Nite</translation>
+    </message>
+    <message>
+        <source>Progressive Trance</source>
+        <translation type="vanished">Progresif Trance</translation>
+    </message>
+    <message>
+        <source>Sajek Valley</source>
+        <translation type="vanished">Sajek Valley</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="430"/>
+        <source>Rock</source>
+        <translation>Rock</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/chord_preset_manager.cpp" line="434"/>
+        <source>Overdrive</source>
+        <translation>Yükleme</translation>
+    </message>
+    <message>
+        <source>Kokoro</source>
+        <translation type="vanished">Kokoro</translation>
+    </message>
+    <message>
+        <source>Pray</source>
+        <translation type="vanished">Pray</translation>
+    </message>
+    <message>
+        <source>No Thank You</source>
+        <translation type="vanished">No Thank You</translation>
+    </message>
+    <message>
+        <source>Broken Dreams</source>
+        <translation type="vanished">Broken Dreams</translation>
+    </message>
+    <message>
+        <source>{} Output</source>
+        <translation type="vanished">{} Çıktı</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/arrangement/audio_function.cpp" line="118"/>
+        <source>Failed to instantiate plugin</source>
+        <translation>Eklenti somutlaştırılamadı</translation>
+    </message>
+    <message>
+        <source>Stereo?</source>
+        <translation type="vanished">Stereo?</translation>
+    </message>
+    <message>
+        <source>Are the outputs stereo?</source>
+        <translation type="vanished">Çıktı stereo mudur?</translation>
+    </message>
+    <message>
+        <source>_Yes</source>
+        <translation type="vanished">_Evet</translation>
+    </message>
+    <message>
+        <source>_No</source>
+        <translation type="vanished">_Hayır</translation>
+    </message>
+    <message>
+        <source>Auto-route?</source>
+        <translation type="vanished">Oto-yönlendir?</translation>
+    </message>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+    <message>
+        <source>Failed to edit object</source>
+        <translation type="vanished">Nesne düzenlenemedi</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/arrangement/audio_function.cpp" line="110"/>
+        <source>Failed to create plugin</source>
+        <translation>Eklenti oluşturulamadı</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/arrangement/audio_function.cpp" line="311"/>
+        <source>Invalid positions - skipping function</source>
+        <translation>Geçersiz konumlar - fonksiyon geçiliyor</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/arrangement/audio_function.cpp" line="546"/>
+        <source>Failed to apply plugin</source>
+        <translation>Eklenti uygulanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to duplicate audio clip</source>
+        <translation type="vanished">Ses kaydı çoğaltılamadı</translation>
+    </message>
+    <message>
+        <source>Invalid Value</source>
+        <translation type="vanished">Geçersiz değer</translation>
+    </message>
+    <message>
+        <source>Please enter a number between {:f} and {:f}</source>
+        <translation type="vanished">Lütfen {:f} ile {:f} arası bir değer girin</translation>
+    </message>
+    <message>
+        <source>MIDI out</source>
+        <translation type="vanished">MIDI Çıktısı</translation>
+    </message>
+    <message>
+        <source>Failed to move or copy plugins</source>
+        <translation type="vanished">Eklentiler taşınamadı veya kopyalanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to create plugin {}</source>
+        <translation type="vanished">Eklenti oluşturulamadı {}</translation>
+    </message>
+    <message>
+        <source>zrythm::plugins::Plugin {} cannot be added to this slot</source>
+        <translation type="vanished">zrythm::eklentiler::Eklenti {} bu slota eklenemez</translation>
+    </message>
+    <message>
+        <source>Failed to add plugin</source>
+        <translation type="vanished">Eklenti eklenemedi</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+    <message>
+        <source>Invalid</source>
+        <translation type="vanished">Geçersiz</translation>
+    </message>
+    <message>
+        <source>Channel Send {} enabled</source>
+        <translation type="vanished">Kanal Gönderimi {} etkinleştirildi</translation>
+    </message>
+    <message>
+        <source>Channel Send {} amount</source>
+        <translation type="vanished">Kanal Gönderimi {} miktar</translation>
+    </message>
+    <message>
+        <source>Channel Send {} audio in</source>
+        <translation type="vanished">Kanal Gönderimi {} ses girdisi</translation>
+    </message>
+    <message>
+        <source>Channel Send {} MIDI in</source>
+        <translation type="vanished">Kanal Gönderimi {} MIDI girdisi</translation>
+    </message>
+    <message>
+        <source>Channel Send {} audio out</source>
+        <translation type="vanished">Kanal Gönderimi {} ses çıktısı</translation>
+    </message>
+    <message>
+        <source>Channel Send {} MIDI out</source>
+        <translation type="vanished">Kanal Gönderimi {} MIDI çıktısı</translation>
+    </message>
+    <message>
+        <source>Ports cannot be connected</source>
+        <translation type="vanished">Portlar bağlanamaz</translation>
+    </message>
+    <message>
+        <source>Pre-fader send</source>
+        <translation type="vanished">Pre-fader gönder</translation>
+    </message>
+    <message>
+        <source>Post-fader send</source>
+        <translation type="vanished">Post-fader gönder</translation>
+    </message>
+    <message>
+        <source>{} input</source>
+        <translation type="vanished">{} girdi</translation>
+    </message>
+    <message>
+        <source>New direct out</source>
+        <translation type="vanished">Yeni doğrudan çıkış</translation>
+    </message>
+    <message>
+        <source>Route Target</source>
+        <translation type="vanished">Yönlendirme Hedefi</translation>
+    </message>
+    <message>
+        <source>Direct Output</source>
+        <translation type="vanished">Doğrudan Çıktı</translation>
+    </message>
+    <message>
+        <source>Edit in external app</source>
+        <translation type="vanished">Harici uygulamada düzenle</translation>
+    </message>
+    <message>
+        <source>_OK</source>
+        <translation type="vanished">_Tamam</translation>
+    </message>
+    <message>
+        <source>Edit the file at &lt;u&gt;%s&lt;/u&gt;, then press OK</source>
+        <translation type="vanished">&lt;u&gt;%s&lt;/u&gt; adresindeki dosyayı düzenleyin, ardından Tamam&apos;a basın</translation>
+    </message>
+    <message>
+        <source>Launch</source>
+        <translation type="vanished">Başlat</translation>
+    </message>
+    <message>
+        <source>Backend Initialization Failed</source>
+        <translation type="vanished">Arka uç başlatılamadı</translation>
+    </message>
+    <message>
+        <source>Failed to initialize the %s audio backend. Will use the dummy backend instead. Please check your backend settings in the Preferences.</source>
+        <translation type="vanished">%s ses arka ucu başlatılamadı. Bunun yerine temsili arka uç kullanacak. Lütfen Tercihler&apos;de arka uç ayarlarınızı kontrol edin.</translation>
+    </message>
+    <message>
+        <source>Backend Error</source>
+        <translation type="vanished">Arka uç hatası</translation>
+    </message>
+    <message>
+        <source>The JACK MIDI backend can only be used with the JACK audio backend (your current audio backend is %s). Will use the dummy MIDI backend instead.</source>
+        <translation type="vanished">JACK MIDI arka ucu yalnızca JACK ses arka ucu ile kullanılabilir (geçerli ses arka ucunuz %s). Temsili MIDI arka ucu kullanılacak.</translation>
+    </message>
+    <message>
+        <source>Failed to initialize the %s MIDI backend. Will use the dummy backend instead. Please check your backend settings in the Preferences.</source>
+        <translation type="vanished">%s MIDI arka ucu başlatılamadı. Bunun yerine temsili arka uç kullanacak. Lütfen Tercihler&apos;de arka uç ayarlarınızı kontrol edin.</translation>
+    </message>
+    <message>
+        <source>Invalid Backend Combination</source>
+        <translation type="vanished">Geçersiz arka uç kombinasyonu</translation>
+    </message>
+    <message>
+        <source>Your selected combination of backends may not work properly. If you want to use JACK, please select JACK as both your audio and MIDI backend.</source>
+        <translation type="vanished">Seçtiğiniz arka uç kombinasyonu düzgün çalışmayabilir. JACK kullanmak istiyorsanız, lütfen hem ses hem de MIDI arka ucunuz olarak JACK&apos;i seçin.</translation>
+    </message>
+    <message>
+        <source>Selected Backend Not Found</source>
+        <translation type="vanished">Seçili Arka Uç Bulunamadı</translation>
+    </message>
+    <message>
+        <source>The selected MIDI/audio backend was not found in the version of %s you have installed. The audio and MIDI backends were set to &quot;Dummy&quot;. Please set your preferred backend from the preferences.</source>
+        <translation type="vanished">Seçilen MIDI/ses arka ucu, yüklediğiniz %s sürümünde bulunamadı. Ses ve MIDI arka uçları &quot;Temsili&quot; olarak ayarlandı. Lütfen tercih ettiğiniz arka ucu tercihlerden ayarlayın.</translation>
+    </message>
+    <message>
+        <source>JACK Error</source>
+        <translation type="vanished">JACK Hatası</translation>
+    </message>
+    <message>
+        <source>Overall operation failed</source>
+        <translation type="vanished">Genel operasyon başarısız oldu</translation>
+    </message>
+    <message>
+        <source>The operation contained an invalid or unsupported option</source>
+        <translation type="vanished">İşlem geçersiz veya desteklenmeyen bir seçenek içeriyordu</translation>
+    </message>
+    <message>
+        <source>The desired client name was not unique</source>
+        <translation type="vanished">İstenen müşteri adı benzersiz değildİ</translation>
+    </message>
+    <message>
+        <source>Unable to connect to the JACK server</source>
+        <translation type="vanished">JACK sunucusuna bağlanılamıyor</translation>
+    </message>
+    <message>
+        <source>Communication error with the JACK server</source>
+        <translation type="vanished">JACK sunucusuyla iletişim hatası</translation>
+    </message>
+    <message>
+        <source>Requested client does not exist</source>
+        <translation type="vanished">İstenen istemci mevcut değil</translation>
+    </message>
+    <message>
+        <source>Unable to load internal client</source>
+        <translation type="vanished">Dahili istemci yüklenemiyor</translation>
+    </message>
+    <message>
+        <source>Unable to initialize client</source>
+        <translation type="vanished">İstemci başlatılamıyor</translation>
+    </message>
+    <message>
+        <source>Unable to access shared memory</source>
+        <translation type="vanished">Paylaşılan belleğe erişilemiyor</translation>
+    </message>
+    <message>
+        <source>Client&apos;s protocol version does not match</source>
+        <translation type="vanished">İstemcinin protokol sürümü eşleşmiyor</translation>
+    </message>
+    <message>
+        <source>Backend error</source>
+        <translation type="vanished">Arka uç hatası</translation>
+    </message>
+    <message>
+        <source>Client zombie</source>
+        <translation type="vanished">Zombi İstemci</translation>
+    </message>
+    <message>
+        <source>JACK: Failed to disconnect monitor out: {}</source>
+        <translation type="vanished">JACK: Monitör bağlantısı kesilemedi: {}</translation>
+    </message>
+    <message>
+        <source>JACK: No physical playback ports found</source>
+        <translation type="vanished">JACK: Fiziksel oynatma portu bulunamadı</translation>
+    </message>
+    <message>
+        <source>JACK: Failed to connect monitor output [{}]: {}</source>
+        <translation type="vanished">JACK: Monitör çıkışı [{}] bağlanamadı: {}</translation>
+    </message>
+    <message>
+        <source>left</source>
+        <translation type="vanished">sol</translation>
+    </message>
+    <message>
+        <source>right</source>
+        <translation type="vanished">sağ</translation>
+    </message>
+    <message>
+        <source>Failed to connect to left monitor output port</source>
+        <translation type="vanished">Sol monitör çıkış portuna bağlanılamadı</translation>
+    </message>
+    <message>
+        <source>Failed to connect to right monitor output port</source>
+        <translation type="vanished">Sağ monitör çıkış portuna bağlanılamadı</translation>
+    </message>
+    <message>
+        <source>PortAudio Error: %s</source>
+        <translation type="vanished">PortAudio Hatası: %s</translation>
+    </message>
+    <message>
+        <source>Buffer Underflow</source>
+        <translation type="vanished">Arabellek Alt Akışı</translation>
+    </message>
+    <message>
+        <source>A buffer underflow has occurred. Try increasing the buffer size in the settings to avoid audio glitches.</source>
+        <translation type="vanished">Bir arabellek düşük akışı meydana geldi. Ses hatalarını önlemek için ayarlardan arabellek boyutunu artırmayı deneyin.</translation>
+    </message>
+    <message>
+        <source>PulseAudio Error: %s</source>
+        <translation type="vanished">PulseAudio Hatası: %s</translation>
+    </message>
+    <message>
+        <source>Pulseaudio Backend Test Failed</source>
+        <translation type="vanished">Pulseaudio Arka Uç Testi Başarısız</translation>
+    </message>
+    <message>
+        <source>The exported audio contains segments louder than 0 dB (max detected %.1f dB).</source>
+        <translation type="vanished">Dışa aktarılan ses 0 dB&apos;den daha yüksek segmentler içeriyor (maksimum algılanan %.1f dB).</translation>
+    </message>
+    <message>
+        <source>Failed to create audio track</source>
+        <translation type="vanished">Ses parçası oluşturulamadı</translation>
+    </message>
+    <message>
+        <source>Invalid time range</source>
+        <translation type="vanished">Geçersiz zaman aralığı</translation>
+    </message>
+    <message>
+        <source>Failed to export</source>
+        <translation type="vanished">Dışarı aktarılamadı</translation>
+    </message>
+    <message>
+        <source>Prefader Swap Phase</source>
+        <translation type="vanished">Prefader Değiştirme Aşaması</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="48"/>
+        <source>Fader Gain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="131"/>
+        <source>Fader Swap Phase</source>
+        <translation>Fader Değiştirme Aşaması</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="143"/>
+        <source>Fader input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="157"/>
+        <source>Fader output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prefader Volume</source>
+        <translation type="vanished">Prefader Ses Seviyesi</translation>
+    </message>
+    <message>
+        <source>Fader Volume</source>
+        <translation type="vanished">Fader Ses Seviyesi</translation>
+    </message>
+    <message>
+        <source>Prefader Balance</source>
+        <translation type="vanished">Prefader Dengesi</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="60"/>
+        <source>Fader Balance</source>
+        <translation>Fader Dengesi</translation>
+    </message>
+    <message>
+        <source>Prefader Mute</source>
+        <translation type="vanished">Prefader Sessize Al</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="73"/>
+        <source>Fader Mute</source>
+        <translation>Fader Sessize Al</translation>
+    </message>
+    <message>
+        <source>Prefader Solo</source>
+        <translation type="vanished">Prefader Solo</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="86"/>
+        <source>Fader Solo</source>
+        <translation>Fader Solo</translation>
+    </message>
+    <message>
+        <source>Prefader Listen</source>
+        <translation type="vanished">Prefader Dinle</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="99"/>
+        <source>Fader Listen</source>
+        <translation>Fader Dinle</translation>
+    </message>
+    <message>
+        <source>Prefader Mono Compat</source>
+        <translation type="vanished">Prefader Mono Uyumlu</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="117"/>
+        <source>Fader Mono Compat</source>
+        <translation>Fader Mono Uyumlu</translation>
+    </message>
+    <message>
+        <source>Ch Pre-Fader in</source>
+        <translation type="vanished">Ch Pre-Fader girişi</translation>
+    </message>
+    <message>
+        <source>Ch Fader in</source>
+        <translation type="vanished">Ch Fader girişi</translation>
+    </message>
+    <message>
+        <source>Sample Processor Fader in</source>
+        <translation type="vanished">Örnek İşlemci Fader girişi</translation>
+    </message>
+    <message>
+        <source>Monitor Fader in</source>
+        <translation type="vanished">Monitör Fader girişi</translation>
+    </message>
+    <message>
+        <source>Ch Pre-Fader out</source>
+        <translation type="vanished">Ch Pre-Fader çıkışı</translation>
+    </message>
+    <message>
+        <source>Ch Fader out</source>
+        <translation type="vanished">Ch Fader çıkışı</translation>
+    </message>
+    <message>
+        <source>Sample Processor Fader out</source>
+        <translation type="vanished">Örnek İşlemci Fader çıkışı</translation>
+    </message>
+    <message>
+        <source>Monitor Fader out</source>
+        <translation type="vanished">Monitör Fader çıkışı</translation>
+    </message>
+    <message>
+        <source>Ch MIDI Pre-Fader in</source>
+        <translation type="vanished">Ch MIDI Pre-Fader girişi</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="177"/>
+        <source>Ch MIDI Fader in</source>
+        <translation>Ch MIDI Fader girişi</translation>
+    </message>
+    <message>
+        <source>Ch MIDI Pre-Fader out</source>
+        <translation type="vanished">Ch MIDI Pre-Fader çıkışı</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/fader.cpp" line="191"/>
+        <source>Ch MIDI Fader out</source>
+        <translation>Ch MIDI Fader çıkışı</translation>
+    </message>
+    <message>
+        <source>Failed to change volume</source>
+        <translation type="vanished">Ses seviyesi değiştirilemedi</translation>
+    </message>
+    <message>
+        <source>Failed to set MIDI mode</source>
+        <translation type="vanished">MIDI modu ayarlanamadı</translation>
+    </message>
+    <message>
+        <source>Cannot set track folded</source>
+        <translation type="vanished">Parça katlanamadı</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/project/project.cpp" line="408"/>
+        <source>start</source>
+        <translation>başlangıç</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/project/project.cpp" line="421"/>
+        <source>end</source>
+        <translation>bitiş</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/project/project.cpp" line="442"/>
+        <source>Master</source>
+        <translation>Master</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/modulator_macro_processor.cpp" line="26"/>
+        <location filename="../src/dsp/modulator_macro_processor.cpp" line="30"/>
+        <source>Macro {}</source>
+        <translation>Makro {}</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/modulator_macro_processor.cpp" line="47"/>
+        <source>Macro {} CV In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/modulator_macro_processor.cpp" line="61"/>
+        <source>Macro {} CV Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Macro CV In {}</source>
+        <translation type="vanished">Makro CV içinde {}</translation>
+    </message>
+    <message>
+        <source>Macro CV Out {}</source>
+        <translation type="vanished">Makro CV Dışında {}</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/project/project.cpp" line="398"/>
+        <source>Modulators</source>
+        <translation>Modülatörler</translation>
+    </message>
+    <message>
+        <source>Invalid object name %s</source>
+        <translation type="vanished">Geçersiz nesne adı %s</translation>
+    </message>
+    <message>
+        <source>Invalid Name</source>
+        <translation type="vanished">Geçersiz ad</translation>
+    </message>
+    <message>
+        <source>Failed to rename object</source>
+        <translation type="vanished">Yeniden isimlendirme başarısız</translation>
+    </message>
+    <message>
+        <source>Track record</source>
+        <translation type="vanished">Kayıt geçmişi</translation>
+    </message>
+    <message>
+        <source>Adaptive</source>
+        <translation type="vanished">Adaptif</translation>
+    </message>
+    <message>
+        <source>Tempo</source>
+        <translation type="vanished">Tempo</translation>
+    </message>
+    <message>
+        <source>BPM</source>
+        <translation type="vanished">BPM</translation>
+    </message>
+    <message>
+        <source>Beats per bar</source>
+        <translation type="vanished">Çubuk başına vuruş</translation>
+    </message>
+    <message>
+        <source>Beat unit</source>
+        <translation type="vanished">Vuruş birimi</translation>
+    </message>
+    <message>
+        <source>Failed to change BPM</source>
+        <translation type="vanished">BPM değiştirilemedi</translation>
+    </message>
+    <message>
+        <source>Invalid BPM Value</source>
+        <translation type="vanished">Geçersiz BPM Değeri</translation>
+    </message>
+    <message>
+        <source>Please enter a positive decimal number</source>
+        <translation type="vanished">Lütfen pozitif bir ondalık sayı girin</translation>
+    </message>
+    <message>
+        <source>Failed creating audio clip from file at {}</source>
+        <translation type="vanished">{} dizinindeki dosyadan ses klibi oluşturulamadı</translation>
+    </message>
+    <message>
+        <source>Failed to rename track</source>
+        <translation type="vanished">Parça yeniden adlandırılamadı</translation>
+    </message>
+    <message>
+        <source>Failed to set track comment</source>
+        <translation type="vanished">Parça yorumu ayarlanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to set track color</source>
+        <translation type="vanished">Parça rengi ayarlanamadı</translation>
+    </message>
+    <message>
+        <source>Cannot set track icon</source>
+        <translation type="vanished">Parça simgesi ayarlanamaz</translation>
+    </message>
+    <message>
+        <source>Cannot set track enabled status</source>
+        <translation type="vanished">Parça etkin durumu ayarlanamıyor</translation>
+    </message>
+    <message>
+        <source>_Delete Track</source>
+        <translation type="vanished">_Parçayı Sil</translation>
+    </message>
+    <message>
+        <source>_Delete Tracks</source>
+        <translation type="vanished">_Parçaları Sil</translation>
+    </message>
+    <message>
+        <source>Duplicate Track</source>
+        <translation type="vanished">Parçağı Çoğalt</translation>
+    </message>
+    <message>
+        <source>Duplicate Tracks</source>
+        <translation type="vanished">Parçaları Çoğalt</translation>
+    </message>
+    <message>
+        <source>Hide Track</source>
+        <translation type="vanished">Parçayı Gizle</translation>
+    </message>
+    <message>
+        <source>Hide Tracks</source>
+        <translation type="vanished">Parçaları Gizle</translation>
+    </message>
+    <message>
+        <source>Pin/Unpin Track</source>
+        <translation type="vanished">Parçayı Sabitle/Sabitleme</translation>
+    </message>
+    <message>
+        <source>Pin/Unpin Tracks</source>
+        <translation type="vanished">Parçaları Sabitle/Sabitleme</translation>
+    </message>
+    <message>
+        <source>Change Color...</source>
+        <translation type="vanished">Rengi Değiştir...</translation>
+    </message>
+    <message>
+        <source>Rename...</source>
+        <translation type="vanished">Yeniden Adlandır...</translation>
+    </message>
+    <message>
+        <source>Lane {}</source>
+        <translation type="vanished">Çizgi {}</translation>
+    </message>
+    <message>
+        <source>Failed to rename lane</source>
+        <translation type="vanished">Çizgi yeniden adlandırılamadı</translation>
+    </message>
+    <message>
+        <source>Cannot set track lane soloed</source>
+        <translation type="vanished">Tek başına parça çizgisi ayarlanamıyor</translation>
+    </message>
+    <message>
+        <source>Could not mute/unmute track lane</source>
+        <translation type="vanished">Parça çizgisi sesi kapatılamadı/açılamadı</translation>
+    </message>
+    <message>
+        <source>No file was found</source>
+        <translation type="vanished">Dosya bulunamadı</translation>
+    </message>
+    <message>
+        <source>Can only drop 1 file at a time on existing tracks</source>
+        <translation type="vanished">Mevcut parçalara bir seferde yalnızca 1 dosya bırakabilir</translation>
+    </message>
+    <message>
+        <source>Can only drop audio files on audio tracks</source>
+        <translation type="vanished">Ses dosyalarını yalnızca ses parçalarına bırakabilir</translation>
+    </message>
+    <message>
+        <source>Can only drop MIDI files on MIDI/instrument tracks</source>
+        <translation type="vanished">MIDI dosyalarını yalnızca MIDI/enstrüman parçalarına bırakabilir</translation>
+    </message>
+    <message>
+        <source>Unsupported file type {}</source>
+        <translation type="vanished">Desteklenmeyen dosya türü {}</translation>
+    </message>
+    <message>
+        <source>Failed to import file {}: {}</source>
+        <translation type="vanished">{} dosyası içe aktarılamadı: {}</translation>
+    </message>
+    <message>
+        <source>Failed to move tracks after copying or moving inside folder</source>
+        <translation type="vanished">Klasör içinde kopyalama veya taşıma işleminden sonra parçalar taşınamadı</translation>
+    </message>
+    <message>
+        <source>Failed to copy tracks inside</source>
+        <translation type="vanished">İçindeki parçalar kopyalanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to copy track inside</source>
+        <translation type="vanished">İçindeki parça kopyalanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to clone/add track</source>
+        <translation type="vanished">Parça klonlanamadı/eklenemedi</translation>
+    </message>
+    <message>
+        <source>Failed to copy tracks</source>
+        <translation type="vanished">Parçalar kopyalanamadı</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="vanished">Hata</translation>
+    </message>
+    <message>
+        <source>Cannot drag folder into itself</source>
+        <translation type="vanished">Klasör kendi içine sürüklenemiyor</translation>
+    </message>
+    <message>
+        <source>Failed to move track inside folder</source>
+        <translation type="vanished">Klasör içindeki parça taşınamadı</translation>
+    </message>
+    <message>
+        <source>Failed to clone track</source>
+        <translation type="vanished">Parça klonlanamadı</translation>
+    </message>
+    <message>
+        <source>Failed to move tracks</source>
+        <translation type="vanished">Parçalar taşınamadı</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/io/file_descriptor.cpp" line="192"/>
+        <source>&lt;b&gt;{}&lt;/b&gt;
+Sample rate: {}
+Length: {}s {} ms | BPM: {:.1f}
+Channel(s): {} | Bitrate: {:L}.{} kb/s
+Bit depth: {} bits</source>
+        <translation>&lt;b&gt;{}&lt;/b&gt;
+Örnekleme hızı: {}
+Uzunluk: {}s {} ms | BPM: {:.1f}
+Kanal(lar): {} | Bit hızı: {:L}.{} kb/s
+Bit derinliği: {} bit</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/io/file_descriptor.cpp" line="210"/>
+        <source>Failed reading metadata for {}</source>
+        <translation>{} için meta veriler okunamadı</translation>
+    </message>
+    <message>
+        <source>Unsupported file type %s</source>
+        <translation type="vanished">Desteklenmeyen dosya türü %s</translation>
+    </message>
+    <message>
+        <source>The MIDI file at %s contains no data</source>
+        <translation type="vanished">%s adresindeki MIDI dosyası veri içermiyor</translation>
+    </message>
+    <message>
+        <source>This MIDI file contains %d tracks. It cannot be dropped into an existing track</source>
+        <translation type="vanished">Bu MIDI dosyası %d parça içeriyor. Mevcut bir parçanın içine bırakılamaz</translation>
+    </message>
+    <message>
+        <source>Failed to get track from hash %u</source>
+        <translation type="vanished">%u hash&apos;inden parça alınamadı</translation>
+    </message>
+    <message>
+        <source>Failed to create an audio region for file %s: %s</source>
+        <translation type="vanished">%s dosyası için bir ses bölgesi oluşturulamadı: %s</translation>
+    </message>
+    <message>
+        <source>Failed to create a MIDI region for file %s: %s</source>
+        <translation type="vanished">%s dosyası için bir MIDI bölgesi oluşturulamadı: %s</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/io/midi_file.cpp" line="129"/>
+        <source>Untitled Track {}</source>
+        <translation>İsimsiz Parça {}</translation>
+    </message>
+    <message>
+        <source>Default bank</source>
+        <translation type="vanished">Varsayılan Klavye</translation>
+    </message>
+    <message>
+        <source>Init</source>
+        <translation type="vanished">Init</translation>
+    </message>
+    <message>
+        <source>Preset {}</source>
+        <translation type="vanished">Ön Ayar {}</translation>
+    </message>
+    <message>
+        <source>Audio in</source>
+        <translation type="vanished">Ses girişi</translation>
+    </message>
+    <message>
+        <source>Audio out</source>
+        <translation type="vanished">Ses çıkışı</translation>
+    </message>
+    <message>
+        <source>MIDI in</source>
+        <translation type="vanished">MIDI girişi</translation>
+    </message>
+    <message>
+        <source>CV in</source>
+        <translation type="vanished">CV Girişi</translation>
+    </message>
+    <message>
+        <source>CV out</source>
+        <translation type="vanished">CV Çıkışı</translation>
+    </message>
+    <message>
+        <source>Error adding carla plugin: {}</source>
+        <translation type="vanished">Carla eklentisi eklenirken hata oluştu: {}</translation>
+    </message>
+    <message>
+        <source>Failed to load Carla state</source>
+        <translation type="vanished">Carla durumu yüklenemedi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/plugin_collections.cpp" line="61"/>
+        <source>Rename</source>
+        <translation>Yeniden Adlandır</translation>
+    </message>
+    <message>
+        <source>Instantiation failed for plugin &apos;{}&apos;. Disabling...</source>
+        <translation type="vanished">&apos;{}&apos; eklentisi için başlatma başarısız oldu. Devre dışı bırakılıyor...</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/tracks/channel_send.cpp" line="43"/>
+        <source>Enabled</source>
+        <translation>Etkinleştirildi</translation>
+    </message>
+    <message>
+        <location filename="../src/plugins/plugin.cpp" line="275"/>
+        <source>Bypass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/plugins/plugin.cpp" line="278"/>
+        <source>Enables or disables the plugin</source>
+        <translation>Eklentiyi etkinleştirir veya devre dışı bırakır</translation>
+    </message>
+    <message>
+        <location filename="../src/plugins/plugin.cpp" line="290"/>
+        <source>Gain</source>
+        <translation>Ses kontrolü</translation>
+    </message>
+    <message>
+        <source>Plugin gain</source>
+        <translation type="vanished">Eklenti ses kontrolü</translation>
+    </message>
+    <message>
+        <source>Add to project</source>
+        <translation type="vanished">Projeye ekle</translation>
+    </message>
+    <message>
+        <source>Add to project (bridged UI)</source>
+        <translation type="vanished">Projeye ekle (Eşikli UI)</translation>
+    </message>
+    <message>
+        <source>Add to project (bridged full)</source>
+        <translation type="vanished">Projeye ekle (Eşik full)</translation>
+    </message>
+    <message>
+        <source>Add to collection</source>
+        <translation type="vanished">Koleksiyona ekle</translation>
+    </message>
+    <message>
+        <source>Remove from collection</source>
+        <translation type="vanished">Koleksiyondan kaldır</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="vanished">Detaylar</translation>
+    </message>
+    <message>
+        <source>%s has encountered an error
+</source>
+        <translation type="vanished">%s bir hata ile karşılaştı
+</translation>
+    </message>
+    <message>
+        <source>A locale for the language you have selected ({}) is not available. Please install one first and restart {}</source>
+        <translation type="vanished">Seçtiğiniz dil için bir yerel ayar ({}) mevcut değil. Lütfen önce bir tane yükleyin ve yeniden başlatın {}</translation>
+    </message>
+    <message>
+        <source>A locale for the language you have selected is not available. Please enable one first using the steps below and try again.
+1. Uncomment any locale starting with the language code &lt;b&gt;{}&lt;/b&gt; in &lt;b&gt;/etc/locale.gen&lt;/b&gt; (needs root privileges)
+2. Run &lt;b&gt;locale-gen&lt;/b&gt; as root
+3. Restart {}</source>
+        <translation type="vanished">Seçtiğiniz dil için bir yerel ayar ({}) mevcut değil. Lütfen önce bir tane yükleyin ve yeniden başlatın {}
+1. &lt;b&gt;/etc/locale.gen&lt;/b&gt; dosyasında &lt;b&gt;{&lt;/b&gt; dil koduyla başlayan herhangi bir yerel ayarın açıklamasını kaldırın (root izni gerekir)
+2. &lt;b&gt;locale-gen&lt;/b&gt; &apos;i root olarak çalıştırın
+3. Yeniden başlatın {}</translation>
+    </message>
+    <message>
+        <source>Experimental Feature</source>
+        <translation type="vanished">Deneysel Özellik</translation>
+    </message>
+    <message>
+        <source>BPM and time signature automation is an experimental feature. Using it may corrupt your project.</source>
+        <translation type="vanished">BPM ve zaman imzası otomasyonu deneysel bir özelliktir. Kullanılması projenizi bozabilir.</translation>
+    </message>
+    <message>
+        <source>Error - Backtrace:
+</source>
+        <translation type="vanished">Hata - Geri İzleme:
+</translation>
+    </message>
+    <message>
+        <source>Error: {} - Backtrace:
+</source>
+        <translation type="vanished">Hata: {} - Geri İzleme
+</translation>
+    </message>
+    <message>
+        <source>Failed to create pipe for communicating with child process (%s)</source>
+        <translation type="vanished">Alt süreçle iletişim için kaval oluşturulamadı (%s)</translation>
+    </message>
+    <message>
+        <source>Pipes are not supported in this platform</source>
+        <translation type="vanished">Kaval bu platformda desteklenmemektedir</translation>
+    </message>
+    <message>
+        <location filename="../src/structure/tracks/channel_send.cpp" line="33"/>
+        <source>Amount</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/structure/tracks/channel_send.cpp" line="72"/>
+        <source>MIDI input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/structure/tracks/channel_send.cpp" line="82"/>
+        <source>MIDI output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_creator.cpp" line="31"/>
+        <source>Add Track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../tests/unit/commands/change_parameter_value_command_test.cpp" line="233"/>
+        <source>Change &apos;%1&apos; value to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/commands/move_arranger_objects_command.cpp" line="15"/>
+        <source>Move Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/commands/move_plugins_command.cpp" line="15"/>
+        <source>Move Plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/commands/move_plugins_command.cpp" line="16"/>
+        <source>Move %n Plugin(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="238"/>
+        <source>{}-{}
+{}
+
+{} comes with ABSOLUTELY NO WARRANTY!
+
+This is free software, and you are welcome to redistribute it
+under certain conditions. See the file &apos;COPYING&apos; for details.
+
+Write comments and bugs to {}
+Support this project at {}
+
+</source>
+        <translation type="unfinished">{}-{}
+{}
+
+{} KESİNLİKLE GARANTİ İLE GELMEMEKTEDİR!
+
+Bu ücretsiz bir yazılımdır ve belirli koşullar altında
+yeniden dağıtabilirsiniz. Ayrıntılar için &apos;COPYING&apos; dosyasına bakın.
+
+Yorumlarınızı ve buglarınızı {} adresine yazın
+Bu projeyi {} adresinden destekleyebilirsiniz
+
+</translation>
+    </message>
+    <message>
+        <location filename="../src/utils/audio_file_writer.cpp" line="58"/>
+        <source>Unsupported audio format: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/utils/audio_file_writer.cpp" line="66"/>
+        <source>Failed to create parent directories for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/utils/audio_file_writer.cpp" line="77"/>
+        <source>Failed to open output file: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/utils/audio_file_writer.cpp" line="87"/>
+        <source>Failed to create audio writer for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/utils/audio_file_writer.cpp" line="117"/>
+        <source>Failed to write audio data to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/utils/audio_file_writer.cpp" line="125"/>
+        <source>Writing audio file...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/graph_renderer.cpp" line="199"/>
+        <source>Rendering to audio...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/commands/move_tracks_command.cpp" line="35"/>
+        <source>Move Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/commands/remove_plugins_command.cpp" line="13"/>
+        <source>Remove Plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/commands/remove_plugins_command.cpp" line="14"/>
+        <source>Remove %n Plugin(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/commands/resize_arranger_objects_command.cpp" line="17"/>
+        <source>Resize Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_loader.cpp" line="71"/>
+        <source>Verifying directory...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_loader.cpp" line="83"/>
+        <source>Reading project file...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_loader.cpp" line="91"/>
+        <source>Parsing project data...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_loader.cpp" line="99"/>
+        <source>Extracting metadata...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/project_loader.cpp" line="106"/>
+        <source>Load complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="330"/>
+        <source>Ramp Velocities</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="368"/>
+        <source>Delete %1 Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="427"/>
+        <source>An object&apos;s owner could not be found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="433"/>
+        <source>No objects to delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="460"/>
+        <source>The objects could not be deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="650"/>
+        <source>Delete Object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="670"/>
+        <source>The object could not be deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="932"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1251"/>
+        <source>Cut %1 Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="945"/>
+        <source>The objects could not be cut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="996"/>
+        <source>The objects could not be cloned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1001"/>
+        <source>Copy %1 Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1205"/>
+        <source>The objects could not be copied to the clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1231"/>
+        <source>Some selected objects cannot be cut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1356"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1612"/>
+        <source>Time signatures can only be placed at bar boundaries</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1385"/>
+        <source>The objects could not be duplicated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1392"/>
+        <source>Duplicate %1 Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1601"/>
+        <source>Objects cannot be placed before the start of the destination</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1639"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1689"/>
+        <source>The clipboard objects could not be pasted here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1695"/>
+        <source>Paste %1 Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1712"/>
+        <location filename="../src/actions/track_collection_operator.cpp" line="289"/>
+        <source>%n audio item(s) were dropped</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1716"/>
+        <source>%n routing(s) were severed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1721"/>
+        <location filename="../src/actions/track_collection_operator.cpp" line="302"/>
+        <source> (content from another project could not be resolved here)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1831"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1853"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1868"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1905"/>
+        <location filename="../src/actions/plugin_operator.cpp" line="357"/>
+        <location filename="../src/actions/plugin_operator.cpp" line="378"/>
+        <location filename="../src/actions/plugin_operator.cpp" line="400"/>
+        <location filename="../src/actions/plugin_operator.cpp" line="413"/>
+        <location filename="../src/actions/track_collection_operator.cpp" line="265"/>
+        <location filename="../src/actions/track_collection_operator.cpp" line="514"/>
+        <location filename="../src/actions/track_collection_operator.cpp" line="529"/>
+        <source>The clipboard contents could not be pasted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="2013"/>
+        <source>Mute %1 Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="2014"/>
+        <source>Unmute %1 Objects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="2053"/>
+        <source>Change Timestretch Algorithm on %1 Clip(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="2078"/>
+        <source>Set Timebase Override</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="2109"/>
+        <source>Clear Timebase Override</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/plugin_importer.cpp" line="103"/>
+        <source>Import %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../tests/unit/commands/change_qobject_property_command_test.cpp" line="152"/>
+        <source>Change %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/commands/set_clip_loop_points_command.cpp" line="44"/>
+        <source>Change Clip Loop Points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/controllers/recording_materializer.cpp" line="180"/>
+        <source>Record</source>
+        <translation type="unfinished">Kaydet</translation>
+    </message>
+    <message>
+        <location filename="../src/actions/arranger_object_creator.cpp" line="346"/>
+        <source>Edit chord</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/chord_pad_bank_operator.cpp" line="90"/>
+        <source>Transpose Chord Pads</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/chord_pad_bank_operator.cpp" line="112"/>
+        <source>Apply Scale Preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/chord_pad_bank_operator.cpp" line="131"/>
+        <source>Apply Chord Preset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_session.cpp" line="357"/>
+        <source>Recording %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/commands/delete_lane_command.cpp" line="13"/>
+        <source>Delete Lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/plugin_operator.cpp" line="93"/>
+        <location filename="../src/actions/plugin_operator.cpp" line="105"/>
+        <source>The plugins could not be copied to the clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/plugin_operator.cpp" line="128"/>
+        <source>Cut %1 Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/plugin_operator.cpp" line="147"/>
+        <source>Paste %1 Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/plugin_operator.cpp" line="187"/>
+        <source>The clipboard plugins do not fit this slot category</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/plugin_operator.cpp" line="213"/>
+        <source>The clipboard plugins could not be pasted here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/plugin_operator.cpp" line="236"/>
+        <source>A clipboard plugin failed to instantiate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/plugin_operator.cpp" line="297"/>
+        <source>The plugins could not be duplicated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/plugin_operator.cpp" line="305"/>
+        <source>Duplicate %1 Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="138"/>
+        <source>The lane is not attached to a track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="152"/>
+        <source>The lane could not be deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="175"/>
+        <location filename="../src/actions/track_collection_operator.cpp" line="187"/>
+        <source>The tracks could not be copied to the clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="212"/>
+        <location filename="../src/actions/track_collection_operator.cpp" line="223"/>
+        <source>The tracks could not be cut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="236"/>
+        <source>Cut %1 Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="280"/>
+        <source>Paste %1 Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/actions/track_collection_operator.cpp" line="293"/>
+        <source>%n external reference(s) were severed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="305"/>
+        <source> (content deleted after the copy could not be restored)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="335"/>
+        <source>The tracks could not be duplicated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="383"/>
+        <source>Duplicate %1 Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="569"/>
+        <location filename="../src/actions/track_collection_operator.cpp" line="618"/>
+        <location filename="../src/actions/track_collection_operator.cpp" line="687"/>
+        <location filename="../src/actions/track_collection_operator.cpp" line="852"/>
+        <source>The clipboard tracks could not be pasted here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="593"/>
+        <source>A plugin on the clipboard tracks failed to instantiate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/actions/track_collection_operator.cpp" line="672"/>
+        <source>The clipboard tracks contain invalid folder nesting</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RecordButton</name>
+    <message>
+        <location filename="../src/gui/qml/components/basic/RecordButton.qml" line="22"/>
+        <source>Record</source>
+        <translation>Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>RecordSplitButton</name>
+    <message>
+        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="24"/>
+        <source>Record Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="25"/>
+        <source>Record</source>
+        <translation type="unfinished">Kaydet</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="38"/>
+        <source>Create takes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="46"/>
+        <source>Create takes (mute previous)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="57"/>
+        <source>Punch in/out</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RightDock</name>
+    <message>
+        <location filename="../src/gui/qml/components/RightDock.qml" line="27"/>
+        <source>Plugin Browser</source>
+        <translation>Eklenti Görüntüleyici</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/RightDock.qml" line="35"/>
+        <source>File Browser</source>
+        <translation>Dosya Görüntüleyici</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/RightDock.qml" line="43"/>
+        <source>Monitor Section</source>
+        <translation>Monitör Bölümü</translation>
+    </message>
+    <message>
+        <source>Chord Preset Browser</source>
+        <translation type="vanished">Akor Önayar Görüntüleyici</translation>
+    </message>
+</context>
+<context>
+    <name>Ruler</name>
+    <message>
+        <location filename="../src/gui/qml/components/Ruler.qml" line="305"/>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SaveController</name>
+    <message>
+        <location filename="../src/gui/qml/components/SaveController.qml" line="14"/>
+        <source>Save</source>
+        <translation type="unfinished">Kaydet</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SaveController.qml" line="26"/>
+        <source>Save As…</source>
+        <translation type="unfinished">Farklı Kaydet…</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SaveController.qml" line="34"/>
+        <source>Save Project As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SaveController.qml" line="45"/>
+        <source>Saving project...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SaveController.qml" line="52"/>
+        <source>Project Save Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ScaleObjectView</name>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/ScaleObjectView.qml" line="72"/>
+        <source>Edit Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ScaleSelectorDialog</name>
+    <message>
+        <location filename="../src/gui/qml/components/ScaleSelectorDialog.qml" line="22"/>
+        <source>Edit Scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ScaleSelectorDialog.qml" line="32"/>
+        <source>Root Key:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ScaleSelectorDialog.qml" line="75"/>
+        <source>Scale:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ScaleSelectorDialog.qml" line="96"/>
+        <source>Exotic Scales</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ScaleSelectorDialog.qml" line="115"/>
+        <source>Notes in Scale:</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SnapGridButton</name>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="29"/>
+        <source>Off</source>
+        <translation type="unfinished">Kapalı</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="38"/>
+        <source>%1 - Last object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="52"/>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="65"/>
+        <source>Snap/Grid Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="74"/>
+        <source>Position Snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="84"/>
+        <source>Snap to Grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="98"/>
+        <source>Adaptive Snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="113"/>
+        <source>Snap Length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="142"/>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="287"/>
+        <source>Bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="155"/>
+        <source>Note Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="172"/>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="319"/>
+        <source>Normal</source>
+        <translation type="unfinished">Normal</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="172"/>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="319"/>
+        <source>Triplet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="172"/>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="319"/>
+        <source>Dotted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="185"/>
+        <source>Keep Offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="200"/>
+        <source>Snap to Events</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="216"/>
+        <source>Default Object Length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="226"/>
+        <source>Length Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="243"/>
+        <source>Link to snap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="243"/>
+        <source>Last object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="243"/>
+        <source>Custom</source>
+        <translation type="unfinished">Özel eklenti</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="258"/>
+        <source>Custom Length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/SnapGridButton.qml" line="302"/>
+        <source>Custom Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SoloButton</name>
+    <message>
+        <location filename="../src/gui/qml/components/basic/SoloButton.qml" line="20"/>
+        <source>Solo</source>
+        <translation>Solo</translation>
+    </message>
+</context>
+<context>
+    <name>SplitButton</name>
+    <message>
+        <location filename="../src/gui/qml/components/basic/SplitButton.qml" line="56"/>
+        <source>More Options...</source>
+        <translation>Daha Fazla Seçenek...</translation>
+    </message>
+</context>
+<context>
+    <name>TempoMapArranger</name>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TempoMapArranger.qml" line="23"/>
+        <source>Create Time Signature Object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TempoMapArranger.qml" line="23"/>
+        <source>Create Tempo Object</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TempoMapLegend</name>
+    <message>
+        <location filename="../src/gui/qml/components/TempoMapLegend.qml" line="23"/>
+        <source>Tempo</source>
+        <translation type="unfinished">Tempo</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TempoMapLegend.qml" line="30"/>
+        <source>Time Signature</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TempoObjectView</name>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TempoObjectView.qml" line="21"/>
+        <source>Set Tempo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TempoObjectView.qml" line="38"/>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TempoObjectView.qml" line="41"/>
+        <location filename="../src/gui/qml/components/arranger/TempoObjectView.qml" line="126"/>
+        <source>Constant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TempoObjectView.qml" line="47"/>
+        <location filename="../src/gui/qml/components/arranger/TempoObjectView.qml" line="130"/>
+        <source>Linear</source>
+        <translation type="unfinished">Doğrusal</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TempoObjectView.qml" line="95"/>
+        <source>Edit Tempo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TempoObjectView.qml" line="101"/>
+        <source>BPM:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TempoObjectView.qml" line="117"/>
+        <source>Curve:</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TimeSignatureObjectView</name>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TimeSignatureObjectView.qml" line="21"/>
+        <source>Set Beats Per Bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TimeSignatureObjectView.qml" line="38"/>
+        <source>Set Beat Unit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TimeSignatureObjectView.qml" line="96"/>
+        <source>Edit Time Signature</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TimeSignatureObjectView.qml" line="102"/>
+        <source>Beats per bar:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/TimeSignatureObjectView.qml" line="116"/>
+        <source>Beat unit:</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Timeline</name>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Timeline.qml" line="45"/>
+        <source>Create Marker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Timeline.qml" line="45"/>
+        <source>Create Scale Object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/arranger/Timeline.qml" line="104"/>
+        <source>Custom Marker</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ToolBox</name>
+    <message>
+        <location filename="../src/gui/qml/components/ToolBox.qml" line="36"/>
+        <source>Select tool</source>
+        <translation>Alet seç</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ToolBox.qml" line="51"/>
+        <source>Pencil tool</source>
+        <translation>Kalem</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ToolBox.qml" line="66"/>
+        <source>Scissors tool</source>
+        <translation>Makas</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ToolBox.qml" line="81"/>
+        <source>Eraser tool</source>
+        <translation>Silgi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ToolBox.qml" line="96"/>
+        <source>Ramp tool</source>
+        <translation>Rampa</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/ToolBox.qml" line="111"/>
+        <source>Audition tool</source>
+        <translation>Denetim Aracı</translation>
+    </message>
+</context>
+<context>
+    <name>TrackInspectorPage</name>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="46"/>
+        <source>Track Properties</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="52"/>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="67"/>
+        <source>Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="89"/>
+        <source>Choose Track Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="98"/>
+        <source>Notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="128"/>
+        <source>Timebase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="136"/>
+        <source>Musical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="136"/>
+        <source>Absolute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="166"/>
+        <source>Device Input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="173"/>
+        <source>Audio Input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="183"/>
+        <source>Input %1-%2 (Stereo)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="184"/>
+        <source>Input %1 (Mono)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="206"/>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="355"/>
+        <source>None</source>
+        <translation type="unfinished">Yok</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="262"/>
+        <source>Monitoring</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="321"/>
+        <source>MIDI Input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="328"/>
+        <source>Device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="401"/>
+        <source>Channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="411"/>
+        <source>All</source>
+        <translation type="unfinished">Tümü</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="413"/>
+        <source>Channel %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="463"/>
+        <source>Instrument</source>
+        <translation type="unfinished">Enstrüman</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackInspectorPage.qml" line="475"/>
+        <source>Inserts</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackRouteControl</name>
+    <message>
+        <location filename="../src/gui/qml/components/TrackRouteControl.qml" line="36"/>
+        <source>Prerouted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackRouteControl.qml" line="92"/>
+        <source>Unroute</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackView</name>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="72"/>
+        <source>Cut %1 Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="72"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="86"/>
+        <source>Cut Track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="74"/>
+        <source>Copy %1 Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="74"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="96"/>
+        <source>Copy Track</source>
+        <translation type="unfinished">Parçayı Kopyala</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="77"/>
+        <source>Duplicate %1 Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="77"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="114"/>
+        <source>Duplicate Track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="79"/>
+        <source>Delete %1 Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="79"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="127"/>
+        <source>Delete Track</source>
+        <translation type="unfinished">Parçayı Sil</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="106"/>
+        <source>Paste Tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="380"/>
+        <source>Delete Lane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="666"/>
+        <source>Scales</source>
+        <translation>Ölçekler</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="700"/>
+        <source>Show lanes</source>
+        <translation>Çizgileri göster</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="717"/>
+        <source>Show automation</source>
+        <translation>Otomasyonu göster</translation>
+    </message>
+</context>
+<context>
+    <name>Tracklist</name>
+    <message>
+        <source>Test</source>
+        <translation type="vanished">Test</translation>
+    </message>
+</context>
+<context>
+    <name>TracklistDropArea</name>
+    <message>
+        <source>Test</source>
+        <translation type="obsolete">Test</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistDropArea.qml" line="13"/>
+        <source>Drop files and plugins here</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TracklistHeader</name>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="27"/>
+        <source>Add track</source>
+        <translation>Parça ekle</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="34"/>
+        <source>Add _MIDI Track</source>
+        <translation>_MIDI Parça Ekle</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="40"/>
+        <source>Add Audio Track</source>
+        <translation>Ses Parçası Ekle</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="49"/>
+        <source>Import File...</source>
+        <translation>Dosya İçe Aktar...</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="56"/>
+        <source>Add Audio FX Track</source>
+        <translation>Ses FX Parçası Ekle</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="62"/>
+        <source>Add MIDI FX Track</source>
+        <translation>MIDI FX Parçası Ekle</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="71"/>
+        <source>Add Audio Group Track</source>
+        <translation>Ses Grubu Parçası Ekle</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="77"/>
+        <source>Add MIDI Group Track</source>
+        <translation>MIDI Ses Grubu Parçası Ekle</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="86"/>
+        <source>Add Folder Track</source>
+        <translation>Klasör Parça Ekle</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="100"/>
+        <source>Clip Launcher</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="111"/>
+        <source>Timeline</source>
+        <translation type="unfinished">Zaman çizelgesi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="122"/>
+        <source>BPM &amp; Time Signature</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TransportControls</name>
+    <message>
+        <location filename="../src/gui/qml/components/TransportControls.qml" line="200"/>
+        <source>Tempo at playhead differs from base tempo (%1 BPM)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TransportControls.qml" line="200"/>
+        <source>Base tempo: %1 BPM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TransportControls.qml" line="209"/>
+        <source>Edit Base Tempo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TransportControls.qml" line="215"/>
+        <source>Base BPM (at tick 0):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TransportControls.qml" line="455"/>
+        <source>Edit Time Signature</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TransportControls.qml" line="461"/>
+        <source>Beats per bar:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TransportControls.qml" line="475"/>
+        <source>Beat unit:</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UndoSplitButton</name>
+    <message>
+        <location filename="../src/gui/qml/components/UndoSplitButton.qml" line="17"/>
+        <source>Undo</source>
+        <translation>Geri al</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/UndoSplitButton.qml" line="17"/>
+        <source>Redo</source>
+        <translation>Yinele</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/UndoSplitButton.qml" line="21"/>
+        <source>Redo multiple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2</source>
+        <translation type="vanished">%1 %2</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/UndoSplitButton.qml" line="21"/>
+        <source>Undo multiple</source>
+        <translation>Çoklu geri al</translation>
+    </message>
+</context>
+<context>
+    <name>WaveformViewer</name>
+    <message>
+        <location filename="../src/gui/qml/components/WaveformViewer.qml" line="35"/>
+        <source>Master Output Visualizer</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ZrythmFilePicker</name>
+    <message>
+        <location filename="../src/gui/qml/components/basic/ZrythmFilePicker.qml" line="14"/>
+        <source>Browse</source>
+        <translation>Göz at</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.appdata.xml.in:38</name>
+    <message>
+        <source>Zrythm</source>
+        <translation type="vanished">Zrythm</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.appdata.xml.in:6</name>
+    <message>
+        <source>Zrythm</source>
+        <translation type="vanished">Zrythm</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.appdata.xml.in:7</name>
+    <message>
+        <source>The Zrythm project</source>
+        <translation type="obsolete">Projeyi kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.appdata.xml.in:8</name>
+    <message>
+        <source>Digital audio workstation</source>
+        <translation type="obsolete">Dijital Ses İş İstasyonu</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1009</name>
+    <message>
+        <source>Lanes as tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1073</name>
+    <message>
+        <source>General</source>
+        <translation type="vanished">Genel</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1109</name>
+    <message>
+        <source>A list of audio inputs to enable.</source>
+        <translation type="obsolete">Etkinleştirilecek denetleyicilerin listesi.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1113</name>
+    <message>
+        <source>MIDI controllers</source>
+        <translation type="vanished">MIDI denetleyicileri</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1114</name>
+    <message>
+        <source>A list of controllers to enable.</source>
+        <translation type="obsolete">Etkinleştirilecek denetleyicilerin listesi.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1122</name>
+    <message>
+        <source>General</source>
+        <translation type="vanished">Genel</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1123</name>
+    <message>
+        <source>Paths</source>
+        <translation type="vanished">Yollar</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1128</name>
+    <message>
+        <source>Directory used to save user data in.</source>
+        <translation type="vanished">Kullanıcı verilerini kaydetmek için kullanılan dizin.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1136</name>
+    <message>
+        <source>General</source>
+        <translation type="vanished">Genel</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1150</name>
+    <message>
+        <source>General</source>
+        <translation type="vanished">Genel</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1159</name>
+    <message>
+        <source>Plugins</source>
+        <translation type="vanished">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1190</name>
+    <message>
+        <source>Plugins</source>
+        <translation type="vanished">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1191</name>
+    <message>
+        <source>Paths</source>
+        <translation type="vanished">Yollar</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1195</name>
+    <message>
+        <source>VST2 plugins</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1196</name>
+    <message>
+        <source>VST2 plugin search paths.</source>
+        <translation type="obsolete">Eklenti arama yolları.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1200</name>
+    <message>
+        <source>VST3 plugins</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1201</name>
+    <message>
+        <source>VST3 plugin search paths.</source>
+        <translation type="obsolete">Eklenti arama yolları.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1205</name>
+    <message>
+        <source>CLAP plugins</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1206</name>
+    <message>
+        <source>CLAP plugin search paths.</source>
+        <translation type="obsolete">Eklenti arama yolları.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1210</name>
+    <message>
+        <source>LV2 plugins</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1215</name>
+    <message>
+        <source>DSSI plugins</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1216</name>
+    <message>
+        <source>DSSI plugin search paths.</source>
+        <translation type="obsolete">Eklenti arama yolları.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1220</name>
+    <message>
+        <source>LADSPA plugins</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1221</name>
+    <message>
+        <source>LADSPA plugin search paths.</source>
+        <translation type="obsolete">Eklenti arama yolları.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1225</name>
+    <message>
+        <source>JSFX plugins</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1226</name>
+    <message>
+        <source>JSFX plugin search paths.</source>
+        <translation type="obsolete">Eklenti arama yolları.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1231</name>
+    <message>
+        <source>SFZ instrument search paths.</source>
+        <translation type="obsolete">Enstrüman arama yolları.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1236</name>
+    <message>
+        <source>SF2 instrument search paths.</source>
+        <translation type="obsolete">Enstrüman arama yolları.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1244</name>
+    <message>
+        <source>Editing</source>
+        <translation type="vanished">Düzenleme</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1245</name>
+    <message>
+        <source>Audio</source>
+        <translation type="vanished">Ses</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1258</name>
+    <message>
+        <source>Editing</source>
+        <translation type="vanished">Düzenleme</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1272</name>
+    <message>
+        <source>Editing</source>
+        <translation type="vanished">Düzenleme</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1288</name>
+    <message>
+        <source>General</source>
+        <translation type="vanished">Genel</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1293</name>
+    <message>
+        <source>Autosave interval</source>
+        <translation type="vanished">Otomatik kaydetme aralığı</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1294</name>
+    <message>
+        <source>Interval to auto-save project backups, in minutes. Set to 0 to disable.</source>
+        <translation type="vanished">Proje yedeklerini otomatik kaydetme aralığı, dakika cinsinden. Devre dışı bırakmak için 0&apos;a ayarlayın.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1303</name>
+    <message>
+        <source>General</source>
+        <translation type="vanished">Genel</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1307</name>
+    <message>
+        <source>Draw detail</source>
+        <translation type="vanished">Çizim ayrıntısı</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1308</name>
+    <message>
+        <source>Level of detail to use when drawing graphics.</source>
+        <translation type="obsolete">Grafikleri çizerken kullanılacak ayrıntı düzeyi.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1318</name>
+    <message>
+        <source>User interface language</source>
+        <translation type="vanished">Kullanıcı arayüzü dili</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1323</name>
+    <message>
+        <source>CSS theme</source>
+        <translation type="vanished">CSS teması</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1328</name>
+    <message>
+        <source>Icon theme</source>
+        <translation type="vanished">Simge teması</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1356</name>
+    <message>
+        <source>Scripting</source>
+        <translation type="vanished">Scripting</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:1357</name>
+    <message>
+        <source>General</source>
+        <translation type="vanished">Genel</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:253</name>
+    <message>
+        <source>Installation directory</source>
+        <translation type="vanished">Kurulum dizini</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:254</name>
+    <message>
+        <source>This is the directory Zrythm is installed in. Currently only used on Windows.</source>
+        <translation type="vanished">Bu, Zrythm&apos;in kurulu olduğu dizindir. Şu anda yalnızca Windows&apos;ta kullanılmaktadır.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:258</name>
+    <message>
+        <source>Last project directory</source>
+        <translation type="vanished">Son proje dizini</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:259</name>
+    <message>
+        <source>Last directory a project was created in.</source>
+        <translation type="vanished">Bir projenin oluşturulduğu son dizin.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:263</name>
+    <message>
+        <source>List of all versions run at least once</source>
+        <translation type="vanished">En az bir kez çalıştırılan tüm sürümlerin listesi</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:264</name>
+    <message>
+        <source>A list of versions run at least once.</source>
+        <translation type="vanished">En az bir kez çalıştırılan sürümlerin bir listesi.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:316</name>
+    <message>
+        <source>Mute</source>
+        <translation type="vanished">Sesi Kapat</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:397</name>
+    <message>
+        <source>Last set velocity</source>
+        <translation type="obsolete">Son proje dizini</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:539</name>
+    <message>
+        <source>Name to filter tracks with.</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:548</name>
+    <message>
+        <source>Show disabled tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:558</name>
+    <message>
+        <source>Auto-select tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:567</name>
+    <message>
+        <source>Start velocity</source>
+        <translation type="obsolete">Son proje dizini</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:568</name>
+    <message>
+        <source>Start velocity.</source>
+        <translation type="obsolete">Son proje dizini</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:572</name>
+    <message>
+        <source>End velocity</source>
+        <translation type="obsolete">Geçersiz hız</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:573</name>
+    <message>
+        <source>End velocity.</source>
+        <translation type="obsolete">Geçersiz hız</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:596</name>
+    <message>
+        <source>velocity</source>
+        <translation type="obsolete">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:639</name>
+    <message>
+        <source>Plugin browser sort style</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:683</name>
+    <message>
+        <source>Show unsupported files</source>
+        <translation type="vanished">Desteklenmeyen dosyaları göster</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:688</name>
+    <message>
+        <source>Show hidden files</source>
+        <translation type="vanished">Gizli dosyaları göster</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:703</name>
+    <message>
+        <source>Instrument</source>
+        <translation type="vanished">Enstrüman</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:825</name>
+    <message>
+        <source>Chord pack browser detached</source>
+        <translation type="vanished">Akor paketi tarayıcı ayrıldı</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:826</name>
+    <message>
+        <source>Whether the chord pack browser panel is detached.</source>
+        <translation type="vanished">Akor paketi tarayıcı panelinin ayrılmış olma durumu.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:875</name>
+    <message>
+        <source>Chord pad detached</source>
+        <translation type="vanished">Akor pedi ayrılmış</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:876</name>
+    <message>
+        <source>Whether the chord pad panel is detached.</source>
+        <translation type="vanished">Akor pedi panelinin ayrılmış olma durumu.</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:880</name>
+    <message>
+        <source>Chord pad size</source>
+        <translation type="vanished">Akor pedi boyutu</translation>
+    </message>
+</context>
+<context>
+    <name>build/data/org.zrythm.Zrythm.gschema.xml:881</name>
+    <message>
+        <source>Chord pad panel size when detached.</source>
+        <translation type="vanished">Ayrıldığında akor pedi paneli boyutu.</translation>
+    </message>
+</context>
+<context>
+    <name>data/zrythm.desktop.in:7</name>
+    <message>
+        <source>Digital Audio Workstation</source>
+        <translation type="vanished">Dijital Ses İş İstasyonu</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/audio_function.h:56</name>
+    <message>
+        <source>Invert</source>
+        <translation type="vanished">Ters Çevir</translation>
+    </message>
+    <message>
+        <source>Normalize peak</source>
+        <translation type="vanished">Piki normalleştir</translation>
+    </message>
+    <message>
+        <source>Normalize RMS</source>
+        <translation type="vanished">RMS&apos;yi normalleştir</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/audio_function.h:57</name>
+    <message>
+        <source>Normalize LUFS</source>
+        <translation type="vanished">LUFS&apos;yi normalleştir</translation>
+    </message>
+    <message>
+        <source>Linear fade in</source>
+        <translation type="vanished">Doğrusal arttırma</translation>
+    </message>
+    <message>
+        <source>Linear fade out</source>
+        <translation type="vanished">Doğrusal azaltma</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/audio_function.h:58</name>
+    <message>
+        <source>Nudge left</source>
+        <translation type="vanished">Sola sürükle</translation>
+    </message>
+    <message>
+        <source>Nudge right</source>
+        <translation type="vanished">Sağa sürükle</translation>
+    </message>
+    <message>
+        <source>Reverse</source>
+        <translation type="vanished">Ters çevir</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/audio_function.h:59</name>
+    <message>
+        <source>Pitch shift</source>
+        <translation type="vanished">Perde kaydırma</translation>
+    </message>
+    <message>
+        <source>Copy L to R</source>
+        <translation type="vanished">L&apos;den R&apos;ye kopyala</translation>
+    </message>
+    <message>
+        <source>External program</source>
+        <translation type="vanished">Harici program</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/audio_function.h:60</name>
+    <message>
+        <source>Guile script</source>
+        <translation type="vanished">Guile betiği</translation>
+    </message>
+    <message>
+        <source>Custom plugin</source>
+        <translation type="vanished">Özel eklenti</translation>
+    </message>
+    <message>
+        <source>Invalid</source>
+        <translation type="vanished">Geçersiz</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/automation_function.h:35</name>
+    <message>
+        <source>Flip H</source>
+        <translation type="vanished">Çevir H</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/automation_function.h:36</name>
+    <message>
+        <source>Flip V</source>
+        <translation type="obsolete">Çevir V</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/curve.h:100</name>
+    <message>
+        <source>Vital</source>
+        <translation type="vanished">Hayati</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/curve.h:101</name>
+    <message>
+        <source>Pulse</source>
+        <translation type="vanished">Ritim</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/curve.h:102</name>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="vanished">Logaritmik</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/curve.h:98</name>
+    <message>
+        <source>Exponent</source>
+        <translation type="vanished">Üs</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/curve.h:99</name>
+    <message>
+        <source>Superellipse</source>
+        <translation type="vanished">Süperelips</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/engine.h:170</name>
+    <message>
+        <source>1,024</source>
+        <translation type="vanished">1,024</translation>
+    </message>
+    <message>
+        <source>2,048</source>
+        <translation type="vanished">2,048</translation>
+    </message>
+    <message>
+        <source>4,096</source>
+        <translation type="vanished">4,096</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/engine.h:195</name>
+    <message>
+        <source>22,050</source>
+        <translation type="vanished">22,050</translation>
+    </message>
+    <message>
+        <source>32,000</source>
+        <translation type="vanished">32,000</translation>
+    </message>
+    <message>
+        <source>44,100</source>
+        <translation type="vanished">44,100</translation>
+    </message>
+    <message>
+        <source>48,000</source>
+        <translation type="vanished">48,000</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/engine.h:196</name>
+    <message>
+        <source>88,200</source>
+        <translation type="vanished">88,200</translation>
+    </message>
+    <message>
+        <source>96,000</source>
+        <translation type="vanished">96,000</translation>
+    </message>
+    <message>
+        <source>192,000</source>
+        <translation type="vanished">192,000</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/engine.h:240</name>
+    <message>
+        <source>Dummy</source>
+        <translation type="vanished">Temsili</translation>
+    </message>
+    <message>
+        <source>Dummy (libsoundio)</source>
+        <translation type="vanished">Temsili (libsoundio)</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/engine.h:295</name>
+    <message>
+        <source>Dummy</source>
+        <translation type="vanished">Temsili</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/engine.h:296</name>
+    <message>
+        <source>ALSA Sequencer (not working)</source>
+        <translation type="vanished">ALSA Sekanslayıcı (çalışmıyor)</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/engine.h:297</name>
+    <message>
+        <source>ALSA Sequencer (rtmidi)</source>
+        <translation type="vanished">ALSA Sekanslayıcı (rtmidi)</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/exporter.h:127</name>
+    <message>
+        <source>Before inserts</source>
+        <translation type="vanished">Eklerden önce</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/exporter.h:128</name>
+    <message>
+        <source>Pre-fader</source>
+        <translation type="vanished">Pre-fader</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/exporter.h:129</name>
+    <message>
+        <source>Post fader</source>
+        <translation type="vanished">Fader sonrası</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/midi_function.h:42</name>
+    <message>
+        <source>Crescendo</source>
+        <translation type="vanished">Artış</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/midi_function.h:43</name>
+    <message>
+        <source>Flam</source>
+        <translation type="vanished">Flam</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/midi_function.h:44</name>
+    <message>
+        <source>Flip H</source>
+        <translation type="vanished">Çevir H</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/midi_function.h:45</name>
+    <message>
+        <source>Flip V</source>
+        <translation type="obsolete">Çevir V</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/midi_function.h:46</name>
+    <message>
+        <source>Legato</source>
+        <translation type="obsolete">Legato</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/midi_function.h:47</name>
+    <message>
+        <source>Portato</source>
+        <translation type="obsolete">Portato</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/midi_function.h:48</name>
+    <message>
+        <source>Staccato</source>
+        <translation type="obsolete">Staccato</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/midi_function.h:49</name>
+    <message>
+        <source>Strum</source>
+        <translation type="obsolete">Strum</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/pan.h:38</name>
+    <message>
+        <source>0dB</source>
+        <translation type="vanished">0dB</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/pan.h:39</name>
+    <message>
+        <source>-3dB</source>
+        <translation type="vanished">-3dB</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/pan.h:40</name>
+    <message>
+        <source>-6dB</source>
+        <translation type="vanished">-6dB</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/pan.h:60</name>
+    <message>
+        <source>Linear</source>
+        <translation type="vanished">Doğrusal</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/pan.h:61</name>
+    <message>
+        <source>Square Root</source>
+        <translation type="vanished">Karekök</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/pan.h:62</name>
+    <message>
+        <source>Sine</source>
+        <translation type="vanished">Sinüs</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/region.h:62</name>
+    <message>
+        <source>Inherit</source>
+        <translation type="vanished">Miras al</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/region.h:63</name>
+    <message>
+        <source>Off</source>
+        <translation type="vanished">Kapalı</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/region.h:64</name>
+    <message>
+        <source>On</source>
+        <translation type="vanished">Açık</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/scale.h:130</name>
+    <message>
+        <source>Major</source>
+        <translation type="vanished">Majör</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/scale.h:131</name>
+    <message>
+        <source>Minor</source>
+        <translation type="vanished">Minör</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/scale.h:146</name>
+    <message>
+        <source>Acoustic</source>
+        <translation type="vanished">Akustik</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/scale.h:150</name>
+    <message>
+        <source>Algerian</source>
+        <translation type="vanished">Cezayirli</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/scale.h:153</name>
+    <message>
+        <source>Chinese</source>
+        <translation type="vanished">Çince</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/scale.h:156</name>
+    <message>
+        <source>Egyptian</source>
+        <translation type="vanished">Mısırlı</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/scale.h:166</name>
+    <message>
+        <source>Oriental</source>
+        <translation type="obsolete">Yatay</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/snap_grid.h:52</name>
+    <message>
+        <source>bar</source>
+        <translation type="vanished">bar</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/snap_grid.h:53</name>
+    <message>
+        <source>beat</source>
+        <translation type="vanished">beat</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/snap_grid.h:73</name>
+    <message>
+        <source>normal</source>
+        <translation type="vanished">normal</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/snap_grid.h:74</name>
+    <message>
+        <source>dotted</source>
+        <translation type="vanished">noktalı</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/snap_grid.h:75</name>
+    <message>
+        <source>triplet</source>
+        <translation type="vanished">üçlü</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:163</name>
+    <message>
+        <source>Instrument</source>
+        <translation type="vanished">Enstrüman</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:164</name>
+    <message>
+        <source>Audio</source>
+        <translation type="vanished">Ses</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:165</name>
+    <message>
+        <source>Master</source>
+        <translation type="vanished">Master</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:166</name>
+    <message>
+        <source>Chord</source>
+        <translation type="vanished">Akor</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:167</name>
+    <message>
+        <source>Marker</source>
+        <translation type="vanished">İşaretleyici</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:168</name>
+    <message>
+        <source>Tempo</source>
+        <translation type="vanished">Tempo</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:169</name>
+    <message>
+        <source>Modulator</source>
+        <translation type="vanished">Modülatör</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:170</name>
+    <message>
+        <source>Audio FX</source>
+        <translation type="vanished">Ses Efekti</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:171</name>
+    <message>
+        <source>Audio Group</source>
+        <translation type="vanished">Ses Grubu</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:172</name>
+    <message>
+        <source>MIDI</source>
+        <translation type="vanished">MIDI</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:173</name>
+    <message>
+        <source>MIDI FX</source>
+        <translation type="vanished">MIDI FX</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:174</name>
+    <message>
+        <source>MIDI Group</source>
+        <translation type="vanished">MIDI Grubu</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/track.h:175</name>
+    <message>
+        <source>Folder</source>
+        <translation type="vanished">Klasör</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/transport.h:51</name>
+    <message>
+        <source>None</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/transport.h:52</name>
+    <message>
+        <source>1 bar</source>
+        <translation type="vanished">1 bar</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/transport.h:53</name>
+    <message>
+        <source>2 bars</source>
+        <translation type="vanished">2 bar</translation>
+    </message>
+</context>
+<context>
+    <name>inc/dsp/transport.h:54</name>
+    <message>
+        <source>4 bars</source>
+        <translation type="vanished">4 bar</translation>
+    </message>
+</context>
+<context>
+    <name>inc/gui/backend/arranger_object.h:80</name>
+    <message>
+        <source>None</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>inc/gui/backend/arranger_object.h:81</name>
+    <message>
+        <source>All</source>
+        <translation type="vanished">Tümü</translation>
+    </message>
+</context>
+<context>
+    <name>inc/gui/backend/arranger_object.h:82</name>
+    <message>
+        <source>Region</source>
+        <translation type="vanished">Bölge</translation>
+    </message>
+</context>
+<context>
+    <name>inc/gui/backend/arranger_object.h:83</name>
+    <message>
+        <source>Midi Note</source>
+        <translation type="vanished">MIDI Notası</translation>
+    </message>
+</context>
+<context>
+    <name>inc/gui/backend/arranger_object.h:84</name>
+    <message>
+        <source>Chord Object</source>
+        <translation type="vanished">Akor Nesnesi</translation>
+    </message>
+</context>
+<context>
+    <name>inc/gui/backend/arranger_object.h:85</name>
+    <message>
+        <source>Scale Object</source>
+        <translation type="vanished">Ölçek Nesnesi</translation>
+    </message>
+</context>
+<context>
+    <name>inc/gui/backend/arranger_object.h:86</name>
+    <message>
+        <source>Marker</source>
+        <translation type="vanished">İşaretleyici</translation>
+    </message>
+</context>
+<context>
+    <name>inc/gui/backend/arranger_object.h:87</name>
+    <message>
+        <source>Automation Point</source>
+        <translation type="vanished">Otomasyon Noktası</translation>
+    </message>
+</context>
+<context>
+    <name>inc/gui/backend/arranger_object.h:88</name>
+    <message>
+        <source>Velocity</source>
+        <translation type="vanished">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>inc/plugins/plugin_descriptor.h:142</name>
+    <message>
+        <source>Dummy</source>
+        <translation type="vanished">Temsili</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/gtk.h:42</name>
+    <message>
+        <source>MIDI learn</source>
+        <translation type="vanished">MIDI öğren</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/gtk.h:45</name>
+    <message>
+        <source>Cu_t</source>
+        <translation type="vanished">K_es</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/gtk.h:48</name>
+    <message>
+        <source>_Copy</source>
+        <translation type="vanished">_Kopyala</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/gtk.h:51</name>
+    <message>
+        <source>_Paste</source>
+        <translation type="vanished">_Yapıştır</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/gtk.h:54</name>
+    <message>
+        <source>_Delete</source>
+        <translation type="vanished">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/gtk.h:58</name>
+    <message>
+        <source>Cle_ar Selection</source>
+        <translation type="vanished">Seçimi _Temizle</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/gtk.h:61</name>
+    <message>
+        <source>Select A_ll</source>
+        <translation type="vanished">_Hepsini Seç</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/gtk.h:64</name>
+    <message>
+        <source>Duplicate</source>
+        <translation type="vanished">Çoğalt</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/gtk.h:67</name>
+    <message>
+        <source>Mute</source>
+        <translation type="vanished">Sesi Kapat</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/gtk.h:70</name>
+    <message>
+        <source>Unmute</source>
+        <translation type="vanished">Sesi Aç</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/ui.h:81</name>
+    <message>
+        <source>High</source>
+        <translation type="vanished">Yüksek</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/ui.h:82</name>
+    <message>
+        <source>Normal</source>
+        <translation type="vanished">Normal</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/ui.h:83</name>
+    <message>
+        <source>Low</source>
+        <translation type="vanished">Düşük</translation>
+    </message>
+</context>
+<context>
+    <name>inc/utils/ui.h:84</name>
+    <message>
+        <source>Ultra Low</source>
+        <translation type="vanished">Aşırı Düşük</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1057</name>
+    <message>
+        <source>Failed to delete selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1070</name>
+    <message>
+        <source>Failed to delete selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1108</name>
+    <message>
+        <source>Selections copied to clipboard</source>
+        <translation type="obsolete">Seçimi panoya kes</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1129</name>
+    <message>
+        <source>Plugins copied to clipboard</source>
+        <translation type="obsolete">Seçimi panoya kes</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1147</name>
+    <message>
+        <source>Tracks copied to clipboard</source>
+        <translation type="obsolete">Panodan yapıştır</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1164</name>
+    <message>
+        <source>Failed to paste data: %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1292</name>
+    <message>
+        <source>Failed to delete selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1317</name>
+    <message>
+        <source>Failed to duplicate selections</source>
+        <translation type="vanished">Seçimler çoğaltılamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1547</name>
+    <message>
+        <source>Failed to unbind</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1588</name>
+    <message>
+        <source>Failed to quantize</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1697</name>
+    <message>
+        <source>Failed to import files</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1706</name>
+    <message>
+        <source>Select File(s)</source>
+        <translation type="obsolete">Seçimler</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1768</name>
+    <message>
+        <source>Failed to duplicate tracks</source>
+        <translation type="obsolete">Parçalar çoğaltılamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1843</name>
+    <message>
+        <source>Failed to delete tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1861</name>
+    <message>
+        <source>Delete Tracks?</source>
+        <translation type="obsolete">Önayar Silinsin mi?</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1866</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1867</name>
+    <message>
+        <source>_Delete</source>
+        <translation type="vanished">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1889</name>
+    <message>
+        <source>Failed to delete tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1921</name>
+    <message>
+        <source>Failed to pin/unpin tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1932</name>
+    <message>
+        <source>Failed to solo tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1943</name>
+    <message>
+        <source>Failed to unsolo tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1965</name>
+    <message>
+        <source>Failed to unmute tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1976</name>
+    <message>
+        <source>Failed to listen tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1987</name>
+    <message>
+        <source>Failed to unlisten tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:1998</name>
+    <message>
+        <source>Failed to enable tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2009</name>
+    <message>
+        <source>Failed to disable tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2105</name>
+    <message>
+        <source>Failed to quantize</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2132</name>
+    <message>
+        <source>Failed to quantize</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2147</name>
+    <message>
+        <source>Invalid Selection For Quantize</source>
+        <translation type="obsolete">Geçersiz ad</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2215</name>
+    <message>
+        <source>Failed to mute selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2253</name>
+    <message>
+        <source>Failed to merge selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2331</name>
+    <message>
+        <source>Failed to insert silence</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2348</name>
+    <message>
+        <source>Failed to remove range</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2731</name>
+    <message>
+        <source>Track name</source>
+        <translation type="obsolete">Önayar Paket Adı</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2750</name>
+    <message>
+        <source>Object name</source>
+        <translation type="obsolete">Proje adı</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2815</name>
+    <message>
+        <source>Failed to set region color</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2843</name>
+    <message>
+        <source>Region Color</source>
+        <translation type="obsolete">Bölge</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2875</name>
+    <message>
+        <source>Failed to reset region color</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:2977</name>
+    <message>
+        <source>Failed to move selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3205</name>
+    <message>
+        <source>Failed to edit fades</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3267</name>
+    <message>
+        <source>No custom preset packs found. Please create a preset pack first from the chord preset browser.</source>
+        <translation type="vanished">Özel önayar paketi bulunamadı. Lütfen önce akor önayar tarayıcıdan bir önayar paketi oluşturun.</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3338</name>
+    <message>
+        <source>Failed to create pack</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3350</name>
+    <message>
+        <source>Preset Pack Name</source>
+        <translation type="vanished">Önayar Paket Adı</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3381</name>
+    <message>
+        <source>Delete?</source>
+        <translation type="obsolete">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3382</name>
+    <message>
+        <source>Are you sure you want to delete this chord preset pack?</source>
+        <translation type="obsolete">Bu akor önayar paketini kaldırmak istediğinizden emin misiniz?</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3384</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3385</name>
+    <message>
+        <source>_Delete</source>
+        <translation type="vanished">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3405</name>
+    <message>
+        <source>Preset Pack Name</source>
+        <translation type="vanished">Önayar Paket Adı</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3433</name>
+    <message>
+        <source>Delete?</source>
+        <translation type="obsolete">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3434</name>
+    <message>
+        <source>Are you sure you want to delete this chord preset?</source>
+        <translation type="obsolete">Bu akor önayar paketini kaldırmak istediğinizden emin misiniz?</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3436</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3437</name>
+    <message>
+        <source>_Delete</source>
+        <translation type="vanished">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3457</name>
+    <message>
+        <source>Preset Name</source>
+        <translation type="vanished">Önayar Adı</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3499</name>
+    <message>
+        <source>Failed to change plugin states</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3533</name>
+    <message>
+        <source>Failed to change load behavior</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3556</name>
+    <message>
+        <source>Failed to delete plugins</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3578</name>
+    <message>
+        <source>Delete Plugins?</source>
+        <translation type="obsolete">Önayar Silinsin mi?</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3582</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3583</name>
+    <message>
+        <source>_Delete</source>
+        <translation type="vanished">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3630</name>
+    <message>
+        <source>Failed to reset %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3655</name>
+    <message>
+        <source>Failed to disconnect %s from %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3701</name>
+    <message>
+        <source>Delete?</source>
+        <translation type="obsolete">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3702</name>
+    <message>
+        <source>Are you sure you want to delete this bookmark?</source>
+        <translation type="obsolete">Bu akor önayar paketini kaldırmak istediğinizden emin misiniz?</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3704</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3705</name>
+    <message>
+        <source>_Delete</source>
+        <translation type="vanished">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3964</name>
+    <message>
+        <source>Delete?</source>
+        <translation type="obsolete">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3971</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:3972</name>
+    <message>
+        <source>_Delete</source>
+        <translation type="vanished">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:690</name>
+    <message>
+        <source>Failed to save project</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:707</name>
+    <message>
+        <source>Discard Changes?</source>
+        <translation type="obsolete">Kaydedilmemiş değişiklikler</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:708</name>
+    <message>
+        <source>Any unsaved changes to the current project will be lost. Continue?</source>
+        <translation type="vanished">Geçerli projedeki kaydedilmemiş tüm değişiklikler kaybolacak. Devam edilsin mi?</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:711</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:712</name>
+    <message>
+        <source>_Save</source>
+        <translation type="vanished">_Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:751</name>
+    <message>
+        <source>Failed to save project</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:767</name>
+    <message>
+        <source>Save Changes?</source>
+        <translation type="obsolete">Kaydedilmemiş değişiklikler</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:772</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:773</name>
+    <message>
+        <source>_Save</source>
+        <translation type="vanished">_Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:805</name>
+    <message>
+        <source>Failed to save project</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:824</name>
+    <message>
+        <source>Failed to save project</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:843</name>
+    <message>
+        <source>Save Project</source>
+        <translation type="vanished">Projeyi Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:981</name>
+    <message>
+        <source>Failed to redo action</source>
+        <translation type="vanished">İşlem yinelenemedi</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/actions.c:985</name>
+    <message>
+        <source>Failed to undo action</source>
+        <translation type="vanished">İşlem geri alınamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/arranger_selections.c:2954</name>
+    <message>
+        <source>Create chord selections</source>
+        <translation type="vanished">Akor seçimleri oluştur</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/arranger_selections.c:2963</name>
+    <message>
+        <source>Duplicate arranger selections</source>
+        <translation type="vanished">Aranjör seçimlerini çoğalt</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/arranger_selections.c:2983</name>
+    <message>
+        <source>Resize arranger selections - %s</source>
+        <translation type="obsolete">Aranjör seçimlerini çoğalt</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/channel_send_action.c:138</name>
+    <message>
+        <source>Failed to connect MIDI send</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/channel_send_action.c:157</name>
+    <message>
+        <source>Failed to connect audio send</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/channel_send_action.c:216</name>
+    <message>
+        <source>Failed to perform channel send action: %s</source>
+        <translation type="vanished">Kanal gönderme işlemi gerçekleştirilemedi: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/channel_send_action.c:274</name>
+    <message>
+        <source>Failed to perform channel send action: %s</source>
+        <translation type="vanished">Kanal gönderme işlemi gerçekleştirilemedi: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/chord_action.c:157</name>
+    <message>
+        <source>Change chords</source>
+        <translation type="vanished">Akorları değiştir</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/mixer_selections_action.c:1256</name>
+    <message>
+        <source>Change Status for %s</source>
+        <translation type="obsolete">Akorları değiştir</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/mixer_selections_action.c:153</name>
+    <message>
+        <source>Failed to clone mixer selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/mixer_selections_action.c:399</name>
+    <message>
+        <source>Failed to clone plugin</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/mixer_selections_action.c:497</name>
+    <message>
+        <source>Failed to instantiate plugin</source>
+        <translation type="obsolete">İstemci başlatılamıyor</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/mixer_selections_action.c:763</name>
+    <message>
+        <source>Project Reload Needed</source>
+        <translation type="obsolete">Proje kaydedildi.</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/tracklist_selections.c:1322</name>
+    <message>
+        <source>Failed to clone track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/tracklist_selections.c:1889</name>
+    <message>
+        <source>Mute Lane</source>
+        <translation type="obsolete">Sesi Kapat</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/tracklist_selections.c:1891</name>
+    <message>
+        <source>Unmute Lane</source>
+        <translation type="obsolete">Sesi Aç</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/tracklist_selections.c:275</name>
+    <message>
+        <source>Failed getting contents for %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/tracklist_selections.c:289</name>
+    <message>
+        <source>Failed creating audio clip from file at %s</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/tracklist_selections.c:347</name>
+    <message>
+        <source>Failed to clone track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/tracklist_selections.c:707</name>
+    <message>
+        <source>Failed to create plugin %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/tracklist_selections.c:786</name>
+    <message>
+        <source>Failed saving file %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/tracklist_selections.c:913</name>
+    <message>
+        <source>Failed to clone track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/undo_manager.c:188</name>
+    <message>
+        <source>Failed to undo action</source>
+        <translation type="vanished">İşlem geri alınamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/undo_manager.c:238</name>
+    <message>
+        <source>Failed to redo action</source>
+        <translation type="vanished">İşlem yinelenemedi</translation>
+    </message>
+</context>
+<context>
+    <name>src/actions/undo_manager.c:281</name>
+    <message>
+        <source>Failed to perform action</source>
+        <translation type="vanished">İşlem gerçekleştirilemedi</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/audio_function.c:140</name>
+    <message>
+        <source>Failed to instantiate plugin</source>
+        <translation type="obsolete">İstemci başlatılamıyor</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/audio_function.c:568</name>
+    <message>
+        <source>Failed to get audio clip from external program</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/audio_region.c:226</name>
+    <message>
+        <source>Failed to duplicate audio clip</source>
+        <translation type="obsolete">Otomasyon çoğaltılamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/audio_region.c:89</name>
+    <message>
+        <source>Failed to create audio clip from file at %s</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/automation_point.c:228</name>
+    <message>
+        <source>Invalid Value</source>
+        <translation type="obsolete">Geçersiz değer</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/automation_track.c:148</name>
+    <message>
+        <source>On</source>
+        <translation type="vanished">Açık</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/automation_track.c:154</name>
+    <message>
+        <source>Off</source>
+        <translation type="vanished">Kapalı</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/channel.c:1826</name>
+    <message>
+        <source>Failed to create plugin %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/channel.c:1851</name>
+    <message>
+        <source>Failed to add plugin</source>
+        <translation type="obsolete">İşlem geri alınamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/channel.c:1966</name>
+    <message>
+        <source>Failed to clone plugin</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/channel_send.c:56</name>
+    <message>
+        <source>None</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/channel_send.c:73</name>
+    <message>
+        <source>Invalid</source>
+        <translation type="vanished">Geçersiz</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/channel_send.c:95</name>
+    <message>
+        <source>Invalid</source>
+        <translation type="vanished">Geçersiz</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/chord_track.c:40</name>
+    <message>
+        <source>Chords</source>
+        <translation type="vanished">Akorlar</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/clip.c:195</name>
+    <message>
+        <source>Failed to initialize audio file</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/clip.c:221</name>
+    <message>
+        <source>Failed to initialize audio file at %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/clip.c:468</name>
+    <message>
+        <source>Failed to write audio clip to file: %s</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/clip.c:531</name>
+    <message>
+        <source>Failed to write audio file</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/clip.c:551</name>
+    <message>
+        <source>Failed to create audio clip from file</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/clip.c:692</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/clip.c:741</name>
+    <message>
+        <source>Failed to create audio clip from file at %s</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/curve.c:346</name>
+    <message>
+        <source>Linear</source>
+        <translation type="vanished">Doğrusal</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/curve.c:358</name>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="vanished">Logaritmik</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/curve.c:361</name>
+    <message>
+        <source>Vital</source>
+        <translation type="vanished">Hayati</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/curve.c:58</name>
+    <message>
+        <source>Exponent</source>
+        <translation type="vanished">Üs</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/curve.c:61</name>
+    <message>
+        <source>Superellipse</source>
+        <translation type="vanished">Süperelips</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/curve.c:67</name>
+    <message>
+        <source>Pulse</source>
+        <translation type="vanished">Ritim</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/curve.c:70</name>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="vanished">Logaritmik</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine.c:483</name>
+    <message>
+        <source>Backend Initialization Failed</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine.c:484</name>
+    <message>
+        <source>Failed to initialize the %s audio backend. Will use the dummy backend instead. Please check your backend settings in the Preferences.</source>
+        <translation type="vanished">%s ses arka ucu başlatılamadı. Bunun yerine temsili arka uç kullanacak. Lütfen Tercihler&apos;de arka uç ayarlarınızı kontrol edin.</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine.c:523</name>
+    <message>
+        <source>Backend Error</source>
+        <translation type="obsolete">Arka uç hatası</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine.c:524</name>
+    <message>
+        <source>The JACK MIDI backend can only be used with the JACK audio backend (your current audio backend is %s). Will use the dummy MIDI backend instead.</source>
+        <translation type="vanished">JACK MIDI arka ucu yalnızca JACK ses arka ucu ile kullanılabilir (geçerli ses arka ucunuz %s). Temsili MIDI arka ucu kullanılacak.</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine.c:557</name>
+    <message>
+        <source>Backend Initialization Failed</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine.c:558</name>
+    <message>
+        <source>Failed to initialize the %s MIDI backend. Will use the dummy backend instead. Please check your backend settings in the Preferences.</source>
+        <translation type="vanished">%s MIDI arka ucu başlatılamadı. Bunun yerine temsili arka uç kullanacak. Lütfen Tercihler&apos;de arka uç ayarlarınızı kontrol edin.</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine.c:598</name>
+    <message>
+        <source>Invalid Backend Combination</source>
+        <translation type="obsolete">Geçersiz konum</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine.c:789</name>
+    <message>
+        <source>The selected MIDI/audio backend was not found in the version of %s you have installed. The audio and MIDI backends were set to &quot;Dummy&quot;. Please set your preferred backend from the preferences.</source>
+        <translation type="vanished">Seçilen MIDI/ses arka ucu, yüklediğiniz %s sürümünde bulunamadı. Ses ve MIDI arka uçları &quot;Temsili&quot; olarak ayarlandı. Lütfen tercih ettiğiniz arka ucu tercihlerden ayarlayın.</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_alsa.c:328</name>
+    <message>
+        <source>ALSA Error: %s</source>
+        <translation type="vanished">ALSA Hatası: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:604</name>
+    <message>
+        <source>Unable to connect to the JACK server</source>
+        <translation type="vanished">JACK sunucusuna bağlanılamıyor</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:608</name>
+    <message>
+        <source>Communication error with the JACK server</source>
+        <translation type="vanished">JACK sunucusuyla iletişim hatası</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:612</name>
+    <message>
+        <source>Requested client does not exist</source>
+        <translation type="vanished">İstenen istemci yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:616</name>
+    <message>
+        <source>Unable to load internal client</source>
+        <translation type="vanished">Dahili istemci yüklenemiyor</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:620</name>
+    <message>
+        <source>Unable to initialize client</source>
+        <translation type="vanished">İstemci başlatılamıyor</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:624</name>
+    <message>
+        <source>Unable to access shared memory</source>
+        <translation type="vanished">Paylaşılan belleğe erişilemiyor</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:628</name>
+    <message>
+        <source>Client&apos;s protocol version does not match</source>
+        <translation type="vanished">İstemcinin protokol sürümü eşleşmiyor</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:632</name>
+    <message>
+        <source>Backend error</source>
+        <translation type="vanished">Arka uç hatası</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:636</name>
+    <message>
+        <source>Client zombie</source>
+        <translation type="vanished">İstemci zombi</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:678</name>
+    <message>
+        <source>JACK: Failed to disconnect monitor out: %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:738</name>
+    <message>
+        <source>JACK: Failed to connect monitor output [%s]: %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:739</name>
+    <message>
+        <source>right</source>
+        <translation type="obsolete">Sağa sürükle</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:793</name>
+    <message>
+        <source>Failed to connect to left monitor output port</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_jack.c:800</name>
+    <message>
+        <source>Failed to connect to right monitor output port</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_pulse.c:190</name>
+    <message>
+        <source>PulseAudio error: Failed to create main loop</source>
+        <translation type="vanished">PulseAudio hatası: Ana döngü oluşturulamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_pulse.c:206</name>
+    <message>
+        <source>PulseAudio Error: %s</source>
+        <translation type="vanished">PulseAudio Hatası: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_pulse.c:221</name>
+    <message>
+        <source>PulseAudio Error: Failed to connect</source>
+        <translation type="vanished">PulseAudio Hatası: Bağlanamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/engine_pulse.c:415</name>
+    <message>
+        <source>Pulseaudio Backend Test Failed</source>
+        <translation type="obsolete">Bağlanılacak ses arka ucu</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/exporter.c:976</name>
+    <message>
+        <source>Invalid time range</source>
+        <translation type="obsolete">Geçersiz ad</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/fader.c:551</name>
+    <message>
+        <source>Failed to change volume</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/pool.c:397</name>
+    <message>
+        <source>Failed to initialize audio clip &apos;%s&apos;</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/pool.c:512</name>
+    <message>
+        <source>Failed to write clip %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/region.c:468</name>
+    <message>
+        <source>MIDI</source>
+        <translation type="vanished">MIDI</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/region.c:471</name>
+    <message>
+        <source>Audio</source>
+        <translation type="vanished">Ses</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/region.c:477</name>
+    <message>
+        <source>Chord</source>
+        <translation type="vanished">Akor</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/sample_processor.c:512</name>
+    <message>
+        <source>Failed to create plugin %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/supported_file.c:272</name>
+    <message>
+        <source>Failed reading metadata for %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tempo_track.c:171</name>
+    <message>
+        <source>Failed to change BPM</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tempo_track.c:191</name>
+    <message>
+        <source>Invalid BPM Value</source>
+        <translation type="obsolete">Geçersiz değer</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tempo_track.c:84</name>
+    <message>
+        <source>Tempo</source>
+        <translation type="vanished">Tempo</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track.c:1908</name>
+    <message>
+        <source>Failed creating audio clip from file at %s</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track.c:2024</name>
+    <message>
+        <source>Failed to instantiate plugin</source>
+        <translation type="obsolete">İstemci başlatılamıyor</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track.c:2711</name>
+    <message>
+        <source>Failed to rename track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track.c:3011</name>
+    <message>
+        <source>Failed to instantiate plugin</source>
+        <translation type="obsolete">İstemci başlatılamıyor</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track.c:3663</name>
+    <message>
+        <source>Duplicate Track</source>
+        <translation type="obsolete">Parçayı _Çoğalt</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track.c:3665</name>
+    <message>
+        <source>Duplicate Tracks</source>
+        <translation type="obsolete">Parçaları _Çoğalt</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track.c:3698</name>
+    <message>
+        <source>Change Color...</source>
+        <translation type="obsolete">Akorları değiştir</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track.c:3728</name>
+    <message>
+        <source>New direct out</source>
+        <translation type="obsolete">Yeni Grup</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track.c:425</name>
+    <message>
+        <source>Failed to clone modulator plugin</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track.c:449</name>
+    <message>
+        <source>Failed to clone channel</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/track_lane.c:89</name>
+    <message>
+        <source>Failed to rename lane</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tracklist.c:1216</name>
+    <message>
+        <source>Failed to create MIDI track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tracklist.c:1231</name>
+    <message>
+        <source>Failed to add region %d to track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tracklist.c:1243</name>
+    <message>
+        <source>Failed to create region %d inside track %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tracklist.c:1571</name>
+    <message>
+        <source>Failed to copy track inside</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tracklist.c:1586</name>
+    <message>
+        <source>Failed to clone track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tracklist.c:1606</name>
+    <message>
+        <source>Failed to copy tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tracklist.c:1698</name>
+    <message>
+        <source>Failed to clone track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/dsp/tracklist.c:1718</name>
+    <message>
+        <source>Failed to move tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/arranger_object.c:1682</name>
+    <message>
+        <source>Failed to edit object</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/arranger_object.c:3087</name>
+    <message>
+        <source>Failed to rename object</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/arranger_selections.c:2311</name>
+    <message>
+        <source>Failed to add region</source>
+        <translation type="obsolete">İşlem geri alınamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/arranger_selections.c:2344</name>
+    <message>
+        <source>Failed to paste selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/event_manager.c:1131</name>
+    <message>
+        <source>Plugin preset saved.</source>
+        <translation type="vanished">Eklenti önayarı kaydedildi.</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/event_manager.c:1134</name>
+    <message>
+        <source>Plugin preset loaded.</source>
+        <translation type="vanished">Eklenti önayarı yüklendi.</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/event_manager.c:264</name>
+    <message>
+        <source>Plugin Crashed</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/file_manager.c:83</name>
+    <message>
+        <source>Home</source>
+        <translation type="vanished">Ana sayfa</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/mixer_selections.c:605</name>
+    <message>
+        <source>Failed to paste plugins</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/tracklist_selections.c:673</name>
+    <message>
+        <source>Failed to clone track &apos;%s&apos;</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/backend/tracklist_selections.c:706</name>
+    <message>
+        <source>Failed to paste tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:1329</name>
+    <message>
+        <source>Create Object</source>
+        <translation type="obsolete">Yeni proje oluştur</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:1332</name>
+    <message>
+        <source>Create</source>
+        <translation type="obsolete">Yeni proje oluştur</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:1629</name>
+    <message>
+        <source>Failed to move selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:1645</name>
+    <message>
+        <source>Failed to move selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:1686</name>
+    <message>
+        <source>Failed to move selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:1702</name>
+    <message>
+        <source>Failed to move chords</source>
+        <translation type="vanished">Akorlar taşınamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:1745</name>
+    <message>
+        <source>Failed to move selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:1763</name>
+    <message>
+        <source>Failed to move selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:2014</name>
+    <message>
+        <source>Failed to create region</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:2318</name>
+    <message>
+        <source>Automation value</source>
+        <translation type="obsolete">Otomasyon Noktası</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3470</name>
+    <message>
+        <source>Failed to delete selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3554</name>
+    <message>
+        <source>Failed to duplicate automation</source>
+        <translation type="vanished">Otomasyon çoğaltılamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3574</name>
+    <message>
+        <source>Failed to create objects</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3618</name>
+    <message>
+        <source>Failed to edit selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3656</name>
+    <message>
+        <source>Failed to edit selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3673</name>
+    <message>
+        <source>Failed to edit selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3701</name>
+    <message>
+        <source>Failed to resize objects</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3720</name>
+    <message>
+        <source>Failed to resize objects</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3728</name>
+    <message>
+        <source>Failed to move MIDI notes</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3767</name>
+    <message>
+        <source>Failed to move MIDI notes</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3785</name>
+    <message>
+        <source>Failed to duplicate MIDI notes</source>
+        <translation type="vanished">MIDI notları çoğaltılamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3863</name>
+    <message>
+        <source>Failed to move chords</source>
+        <translation type="vanished">Akorlar taşınamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3881</name>
+    <message>
+        <source>Failed to duplicate chords</source>
+        <translation type="vanished">Akorlar çoğaltılamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:3900</name>
+    <message>
+        <source>Failed to create objects</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:4050</name>
+    <message>
+        <source>Failed to edit timeline objects</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:4069</name>
+    <message>
+        <source>Failed to resize timeline objects</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:4088</name>
+    <message>
+        <source>Failed to resize timeline objects</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:4105</name>
+    <message>
+        <source>Failed to resize selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:4246</name>
+    <message>
+        <source>Failed to move objects</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:4276</name>
+    <message>
+        <source>Failed to link or copy selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/arranger.c:4294</name>
+    <message>
+        <source>Failed to create objects</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/automation_arranger.c:201</name>
+    <message>
+        <source>Edit</source>
+        <translation type="vanished">Düzenle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/balance_control.c:207</name>
+    <message>
+        <source>Balance</source>
+        <translation type="obsolete">İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/balance_control.c:291</name>
+    <message>
+        <source>Invalid Value</source>
+        <translation type="obsolete">Geçersiz değer</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/balance_control.c:297</name>
+    <message>
+        <source>Invalid Value</source>
+        <translation type="obsolete">Geçersiz değer</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/bot_bar.c:308</name>
+    <message>
+        <source>Invalid Value</source>
+        <translation type="obsolete">Geçersiz değer</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/bot_bar.c:415</name>
+    <message>
+        <source>Audio</source>
+        <translation type="vanished">Ses</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/bot_bar.c:421</name>
+    <message>
+        <source>Off</source>
+        <translation type="vanished">Kapalı</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation type="vanished">Açık</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/bot_dock_edge.c:219</name>
+    <message>
+        <source>Chord pad</source>
+        <translation type="vanished">Akor pedi</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/cc_bindings_tree.c:131</name>
+    <message>
+        <source>On</source>
+        <translation type="vanished">Açık</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/channel.c:591</name>
+    <message>
+        <source>Edit</source>
+        <translation type="vanished">Düzenle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/channel_send_selector.c:126</name>
+    <message>
+        <source>Failed to connect send</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/channel_send_selector.c:153</name>
+    <message>
+        <source>Failed to connect send</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/channel_send_selector.c:187</name>
+    <message>
+        <source>Failed to connect send</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/channel_send_selector.c:95</name>
+    <message>
+        <source>Failed to disconnect send</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/channel_slot.c:592</name>
+    <message>
+        <source>Normal</source>
+        <translation type="vanished">Normal</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/channel_slot.c:598</name>
+    <message>
+        <source>Change Load Behavior</source>
+        <translation type="obsolete">Akorları değiştir</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/channel_slot.c:601</name>
+    <message>
+        <source>Plugin</source>
+        <translation type="vanished">Eklenti</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/channel_slot.c:623</name>
+    <message>
+        <source>Edit</source>
+        <translation type="vanished">Düzenle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/channel_slot.c:634</name>
+    <message>
+        <source>Select</source>
+        <translation type="obsolete">_Hepsini Seç</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/chord_pack_browser.c:151</name>
+    <message>
+        <source>No preset selected</source>
+        <translation type="vanished">Önayar seçilmedi</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/chord_pad_panel.c:86</name>
+    <message>
+        <source>Preset Packs</source>
+        <translation type="vanished">Önayar Paketleri</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/add_tracks_to_group_dialog.c:61</name>
+    <message>
+        <source>Enter group name</source>
+        <translation type="vanished">Grup adını girin</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/add_tracks_to_group_dialog.c:66</name>
+    <message>
+        <source>Group name</source>
+        <translation type="vanished">Grup adı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/add_tracks_to_group_dialog.c:68</name>
+    <message>
+        <source>New Group</source>
+        <translation type="vanished">Yeni Grup</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/ask_to_check_for_updates_dialog.c:35</name>
+    <message>
+        <source>_No</source>
+        <translation type="obsolete">Hayır</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/bug_report_dialog.c:265</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:1016</name>
+    <message>
+        <source>Export</source>
+        <translation type="obsolete">_Dışa Aktar</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:1045</name>
+    <message>
+        <source>&lt;name&gt;.&lt;format&gt;</source>
+        <translation type="vanished">&lt;ad&gt;.&lt;biçim&gt;</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:1046</name>
+    <message>
+        <source>&lt;date&gt;_&lt;name&gt;.&lt;format&gt;</source>
+        <translation type="vanished">&lt;tarih&gt;_&lt;ad&gt;.&lt;biçim&gt;</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:1118</name>
+    <message>
+        <source>Loop</source>
+        <translation type="obsolete">Döngü</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:1120</name>
+    <message>
+        <source>Custom</source>
+        <translation type="obsolete">Özel eklenti</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:1261</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:1262</name>
+    <message>
+        <source>_Export</source>
+        <translation type="vanished">_Dışa Aktar</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:276</name>
+    <message>
+        <source>
+1 more file...</source>
+        <translation type="vanished">
+1 dosya daha...</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:281</name>
+    <message>
+        <source>
+%zu more files...</source>
+        <translation type="obsolete">
+%d dosya daha...</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:374</name>
+    <message>
+        <source>The following files will be created:</source>
+        <translation type="vanished">Aşağıdaki dosyalar oluşturulacak:</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_dialog.c:375</name>
+    <message>
+        <source>in the directory:</source>
+        <translation type="vanished">dizinde:</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_midi_file_dialog.c:112</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+    <message>
+        <source>_Export</source>
+        <translation type="vanished">_Dışa Aktar</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_midi_file_dialog.c:150</name>
+    <message>
+        <source>Part of parent track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_midi_file_dialog.c:84</name>
+    <message>
+        <source>Failed to export MIDI regions.</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/export_progress_dialog.c:83</name>
+    <message>
+        <source>Exporting %s</source>
+        <translation type="obsolete">Dışa Farklı Aktar</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/file_import_progress_dialog.c:119</name>
+    <message>
+        <source>Failed to import files</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/file_import_progress_dialog.c:229</name>
+    <message>
+        <source>File Import</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/file_import_progress_dialog.c:231</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/file_import_progress_dialog.c:30</name>
+    <message>
+        <source>Imported %d of %d files...</source>
+        <translation type="obsolete">
+%d dosya daha...</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/file_import_progress_dialog.c:80</name>
+    <message>
+        <source>Imported %d files</source>
+        <translation type="obsolete">Desteklenmeyen dosyaları göster</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/file_import_progress_dialog.c:84</name>
+    <message>
+        <source>Failed to import regions</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/midi_function_dialog.c:158</name>
+    <message>
+        <source>Velocity</source>
+        <translation type="vanished">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/midi_function_dialog.c:307</name>
+    <message>
+        <source>_Apply</source>
+        <translation type="obsolete">%s uygula</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/midi_function_dialog.c:312</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/midi_function_dialog.c:87</name>
+    <message>
+        <source>Start Velocity</source>
+        <translation type="obsolete">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/midi_function_dialog.c:99</name>
+    <message>
+        <source>End Velocity</source>
+        <translation type="obsolete">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/port_info.c:68</name>
+    <message>
+        <source>Default Value</source>
+        <translation type="obsolete">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/port_info.c:81</name>
+    <message>
+        <source>N/A</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/port_selector_dialog.c:67</name>
+    <message>
+        <source>Failed to connect %s to %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/save_chord_preset_dialog.c:115</name>
+    <message>
+        <source>Save Chord Preset</source>
+        <translation type="vanished">Akor Önayarını Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/save_chord_preset_dialog.c:130</name>
+    <message>
+        <source>_Save</source>
+        <translation type="vanished">_Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/save_chord_preset_dialog.c:131</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/save_chord_preset_dialog.c:138</name>
+    <message>
+        <source>Preset Name</source>
+        <translation type="vanished">Önayar Adı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/scripting_dialog.c:92</name>
+    <message>
+        <source>Language</source>
+        <translation type="vanished">Dil</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/scripting_dialog.c:95</name>
+    <message>
+        <source>Select the language of the script</source>
+        <translation type="obsolete">Zrythm arayüzünün dili</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/track_icon_chooser_dialog.c:158</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/dialogs/welcome_message_dialog.c:77</name>
+    <message>
+        <source>Welcome</source>
+        <translation type="vanished">Hoş geldiniz</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/digital_meter.c:434</name>
+    <message>
+        <source>normal</source>
+        <translation type="vanished">normal</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/digital_meter.c:437</name>
+    <message>
+        <source>dotted</source>
+        <translation type="vanished">noktalı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/digital_meter.c:440</name>
+    <message>
+        <source>triplet</source>
+        <translation type="vanished">üçlü</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/drag_dest_box.c:262</name>
+    <message>
+        <source>Failed to import files</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/editor_ruler.c:212</name>
+    <message>
+        <source>Failed to edit position</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/editor_toolbar.c:118</name>
+    <message>
+        <source>Plugin Effect</source>
+        <translation type="vanished">Eklenti Efekti</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/editor_toolbar.c:166</name>
+    <message>
+        <source>Apply %s</source>
+        <translation type="vanished">%s uygula</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/editor_toolbar.c:168</name>
+    <message>
+        <source>Apply %s with previous settings</source>
+        <translation type="vanished">Önceki ayarlarla %s uygula</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/editor_toolbar.c:190</name>
+    <message>
+        <source>Apply %s</source>
+        <translation type="vanished">%s uygula</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/editor_toolbar.c:192</name>
+    <message>
+        <source>Apply %s with previous settings</source>
+        <translation type="vanished">Önceki ayarlarla %s uygula</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/editor_toolbar.c:207</name>
+    <message>
+        <source>Apply %s</source>
+        <translation type="vanished">%s uygula</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/editor_toolbar.c:209</name>
+    <message>
+        <source>Apply %s with previous settings</source>
+        <translation type="vanished">Önceki ayarlarla %s uygula</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/editor_toolbar.c:242</name>
+    <message>
+        <source>Highlight Chord</source>
+        <translation type="vanished">Akoru Vurgula</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/editor_toolbar.c:44</name>
+    <message>
+        <source>Apply function</source>
+        <translation type="vanished">İşlevi uygula</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/event_viewer.c:564</name>
+    <message>
+        <source>Fade out</source>
+        <translation type="obsolete">Doğrusal azaltma</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/event_viewer.c:605</name>
+    <message>
+        <source>Velocity</source>
+        <translation type="vanished">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/fader.c:396</name>
+    <message>
+        <source>Invalid value</source>
+        <translation type="vanished">Geçersiz değer</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/fader.c:429</name>
+    <message>
+        <source>Fader Value</source>
+        <translation type="obsolete">Doğrusal azaltma</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/file_auditioner_controls.c:207</name>
+    <message>
+        <source>Show unsupported files</source>
+        <translation type="vanished">Desteklenmeyen dosyaları göster</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/file_auditioner_controls.c:210</name>
+    <message>
+        <source>Show hidden files</source>
+        <translation type="vanished">Gizli dosyaları göster</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/file_chooser_button.c:47</name>
+    <message>
+        <source>Select path</source>
+        <translation type="vanished">Yol seç</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:287</name>
+    <message>
+        <source>Zrythm</source>
+        <translation type="vanished">Zrythm</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:473</name>
+    <message>
+        <source>Select Project</source>
+        <translation type="obsolete">Son proje dizini</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:508</name>
+    <message>
+        <source>Open a Project</source>
+        <translation type="obsolete">Proje aç</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:655</name>
+    <message>
+        <source>Zrythm</source>
+        <translation type="vanished">Zrythm</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:754</name>
+    <message>
+        <source>Language</source>
+        <translation type="vanished">Dil</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:755</name>
+    <message>
+        <source>Preferred language</source>
+        <translation type="obsolete">Kullanıcı arayüzü dili</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:767</name>
+    <message>
+        <source>User path</source>
+        <translation type="obsolete">_Hepsini Seç</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:768</name>
+    <message>
+        <source>Location to save user files</source>
+        <translation type="vanished">Kullanıcı dosyalarının kaydedileceği konum</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:770</name>
+    <message>
+        <source>Select a directory</source>
+        <translation type="obsolete">Son proje dizini</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:834</name>
+    <message>
+        <source>Select parent directory to save the project in</source>
+        <translation type="vanished">Projeyi kaydetmek için üst dizini seçin</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/greeter.c:98</name>
+    <message>
+        <source>Project loading failed</source>
+        <translation type="obsolete">Proje kaydedildi.</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/inspector_port.c:264</name>
+    <message>
+        <source>Failed to set control %s to %f</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:176</name>
+    <message>
+        <source>Invalid Position</source>
+        <translation type="obsolete">Geçersiz konum</translation>
+    </message>
+    <message>
+        <source>Invalid position</source>
+        <translation type="vanished">Geçersiz konum</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:182</name>
+    <message>
+        <source>Invalid Position</source>
+        <translation type="obsolete">Geçersiz konum</translation>
+    </message>
+    <message>
+        <source>Failed to parse position</source>
+        <translation type="vanished">Konum ayıklanamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:231</name>
+    <message>
+        <source>Fade out</source>
+        <translation type="obsolete">Doğrusal azaltma</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:246</name>
+    <message>
+        <source>Invalid Name</source>
+        <translation type="obsolete">Geçersiz ad</translation>
+    </message>
+    <message>
+        <source>Invalid name</source>
+        <translation type="vanished">Geçersiz ad</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:249</name>
+    <message>
+        <source>Velocity</source>
+        <translation type="vanished">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:255</name>
+    <message>
+        <source>Invalid Velocity</source>
+        <translation type="obsolete">Geçersiz hız</translation>
+    </message>
+    <message>
+        <source>Invalid velocity</source>
+        <translation type="vanished">Geçersiz hız</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:274</name>
+    <message>
+        <source>Invalid Pitch</source>
+        <translation type="obsolete">Geçersiz</translation>
+    </message>
+    <message>
+        <source>Invalid pitch</source>
+        <translation type="obsolete">Geçersiz</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:296</name>
+    <message>
+        <source>Invalid Value</source>
+        <translation type="obsolete">Geçersiz değer</translation>
+    </message>
+    <message>
+        <source>Invalid value</source>
+        <translation type="vanished">Geçersiz değer</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:316</name>
+    <message>
+        <source>Invalid Value</source>
+        <translation type="obsolete">Geçersiz değer</translation>
+    </message>
+    <message>
+        <source>Invalid value</source>
+        <translation type="vanished">Geçersiz değer</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:500</name>
+    <message>
+        <source>Add Bookmark</source>
+        <translation type="vanished">Yer İmi Ekle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:591</name>
+    <message>
+        <source>On</source>
+        <translation type="vanished">Açık</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:689</name>
+    <message>
+        <source>N/A</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:700</name>
+    <message>
+        <source>N/A</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:711</name>
+    <message>
+        <source>N/A</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:722</name>
+    <message>
+        <source>N/A</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:733</name>
+    <message>
+        <source>N/A</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:736</name>
+    <message>
+        <source>Fade out</source>
+        <translation type="obsolete">Doğrusal azaltma</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:744</name>
+    <message>
+        <source>N/A</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:761</name>
+    <message>
+        <source>Velocity</source>
+        <translation type="vanished">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/item_factory.c:81</name>
+    <message>
+        <source>Failed to enable binding</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/left_dock_edge.c:186</name>
+    <message>
+        <source>Plugin Inspector</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/main_notebook.c:111</name>
+    <message>
+        <source>Port Connections</source>
+        <translation type="obsolete">Bağlantıyı sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/main_window.c:120</name>
+    <message>
+        <source>Failed to save project</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/main_window.c:148</name>
+    <message>
+        <source>Save Changes?</source>
+        <translation type="obsolete">Kaydedilmemiş değişiklikler</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/main_window.c:153</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/main_window.c:154</name>
+    <message>
+        <source>_Save</source>
+        <translation type="vanished">_Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/midi_arranger.c:456</name>
+    <message>
+        <source>Selection</source>
+        <translation type="obsolete">Seçimi _Temizle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/midi_channel_selection_dropdown.c:106</name>
+    <message>
+        <source>Channel %d</source>
+        <translation type="obsolete">Kanal ayarları</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/midi_channel_selection_dropdown.c:76</name>
+    <message>
+        <source>Channels</source>
+        <translation type="obsolete">Paneller</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/modulator_inner.c:71</name>
+    <message>
+        <source>Failed to delete plugins</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/monitor_section.c:126</name>
+    <message>
+        <source>Failed to unmute all tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/monitor_section.c:156</name>
+    <message>
+        <source>Failed to unlisten all tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/monitor_section.c:202</name>
+    <message>
+        <source>Failed to connect to left monitor output port</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/monitor_section.c:209</name>
+    <message>
+        <source>Failed to connect to right monitor output port</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/monitor_section.c:272</name>
+    <message>
+        <source>Mute</source>
+        <translation type="vanished">Sesi Kapat</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/monitor_section.c:35</name>
+    <message>
+        <source>Mute</source>
+        <translation type="vanished">Sesi Kapat</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/monitor_section.c:96</name>
+    <message>
+        <source>Failed to unsolo all tracks</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/piano_roll_keys.c:191</name>
+    <message>
+        <source>chord</source>
+        <translation type="vanished">akor</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/piano_roll_keys.c:508</name>
+    <message>
+        <source>Select notes in pitch</source>
+        <translation type="obsolete">Yol seç</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/piano_roll_keys.c:513</name>
+    <message>
+        <source>Append notes in pitch to selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/piano_roll_keys.c:519</name>
+    <message>
+        <source>Selection</source>
+        <translation type="obsolete">Seçimi _Temizle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/plugin_properties_expander.c:117</name>
+    <message>
+        <source>Failed to apply preset</source>
+        <translation type="vanished">Önayar uygulanamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/plugin_properties_expander.c:143</name>
+    <message>
+        <source>None</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/plugin_properties_expander.c:144</name>
+    <message>
+        <source>None</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/plugin_properties_expander.c:213</name>
+    <message>
+        <source>Presets</source>
+        <translation type="vanished">Önayarlar</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/plugin_properties_expander.c:232</name>
+    <message>
+        <source>Save</source>
+        <translation type="vanished">Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/plugin_properties_expander.c:234</name>
+    <message>
+        <source>Save preset</source>
+        <translation type="vanished">Önayarları kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/plugin_properties_expander.c:238</name>
+    <message>
+        <source>Load preset</source>
+        <translation type="vanished">Önayar yükle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/plugin_properties_expander.c:77</name>
+    <message>
+        <source>Load Preset</source>
+        <translation type="vanished">Önayar Yükle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/plugin_properties_expander.c:79</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/popovers/automatable_selector_popover.c:153</name>
+    <message>
+        <source>Tempo</source>
+        <translation type="vanished">Tempo</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/popovers/automatable_selector_popover.c:323</name>
+    <message>
+        <source>MIDI FX</source>
+        <translation type="vanished">MIDI FX</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/popovers/automatable_selector_popover.c:326</name>
+    <message>
+        <source>Instrument</source>
+        <translation type="vanished">Enstrüman</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/popovers/automatable_selector_popover.c:342</name>
+    <message>
+        <source>MIDI</source>
+        <translation type="vanished">MIDI</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/popovers/automatable_selector_popover.c:363</name>
+    <message>
+        <source>Tempo</source>
+        <translation type="vanished">Tempo</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/popovers/snap_grid_popover.c:302</name>
+    <message>
+        <source>Object Length Type</source>
+        <translation type="obsolete">Proje adı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/popovers/track_filter_popover.c:261</name>
+    <message>
+        <source>Track name</source>
+        <translation type="obsolete">Önayar Paket Adı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/popovers/track_filter_popover.c:282</name>
+    <message>
+        <source>Disabled Tracks</source>
+        <translation type="obsolete">Parçaları _Çoğalt</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/port_connection_row.c:123</name>
+    <message>
+        <source>Delete connection</source>
+        <translation type="vanished">Bağlantıyı sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/port_connection_row.c:36</name>
+    <message>
+        <source>Failed to enable connection</source>
+        <translation type="obsolete">Bağlantıyı etkinleştir/devre dışı bırak</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/port_connection_row.c:51</name>
+    <message>
+        <source>Failed to disconnect</source>
+        <translation type="obsolete">PulseAudio Hatası: Bağlanamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/port_connection_row.c:94</name>
+    <message>
+        <source>Enable/disable connection</source>
+        <translation type="vanished">Bağlantıyı etkinleştir/devre dışı bırak</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/port_connections_tree.c:194</name>
+    <message>
+        <source>On</source>
+        <translation type="vanished">Açık</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/preferences.c:167</name>
+    <message>
+        <source>Reset Settings?</source>
+        <translation type="obsolete">Seçimi _Temizle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/preferences.c:173</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/preferences.c:672</name>
+    <message>
+        <source>Paths</source>
+        <translation type="vanished">Yollar</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/preferences.c:673</name>
+    <message>
+        <source>Plugins</source>
+        <translation type="vanished">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/preferences.c:917</name>
+    <message>
+        <source>Preferences</source>
+        <translation type="vanished">Tercihler</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/right_dock_edge.c:102</name>
+    <message>
+        <source>File Browser</source>
+        <translation type="vanished">Dosya Tarayıcı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/right_dock_edge.c:111</name>
+    <message>
+        <source>Monitor Section</source>
+        <translation type="vanished">İzleme Bölümü</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/right_dock_edge.c:118</name>
+    <message>
+        <source>Chord Preset Browser</source>
+        <translation type="vanished">Akor Önayar Tarayıcı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/right_dock_edge.c:129</name>
+    <message>
+        <source>File Browser</source>
+        <translation type="vanished">Dosya Tarayıcı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/route_target_selector.c:112</name>
+    <message>
+        <source>None</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/route_target_selector.c:204</name>
+    <message>
+        <source>None</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/route_target_selector.c:60</name>
+    <message>
+        <source>Failed to change direct out to %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/route_target_selector.c:61</name>
+    <message>
+        <source>None</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/route_target_selector.c:77</name>
+    <message>
+        <source>None</source>
+        <translation type="vanished">Yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/route_target_selector.c:87</name>
+    <message>
+        <source>Master</source>
+        <translation type="vanished">Master</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/route_target_selector.c:91</name>
+    <message>
+        <source>Groups</source>
+        <translation type="obsolete">Yeni Grup</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/route_target_selector.c:94</name>
+    <message>
+        <source>Instruments</source>
+        <translation type="obsolete">Enstrüman</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/scale_selector_window.c:45</name>
+    <message>
+        <source>Failed to edit scale</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/snap_grid.c:42</name>
+    <message>
+        <source>Off</source>
+        <translation type="vanished">Kapalı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:1055</name>
+    <message>
+        <source>Functions</source>
+        <translation type="obsolete">Seçimler</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:1112</name>
+    <message>
+        <source>Move to Lane</source>
+        <translation type="obsolete">Sesi Kapat</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:1115</name>
+    <message>
+        <source>Automation Region</source>
+        <translation type="obsolete">Otomasyon Noktası</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:1140</name>
+    <message>
+        <source>Edit</source>
+        <translation type="vanished">Düzenle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:1297</name>
+    <message>
+        <source>Failed to add region to track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:1306</name>
+    <message>
+        <source>Failed to create selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:1352</name>
+    <message>
+        <source>Failed to import files</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:309</name>
+    <message>
+        <source>Failed to create region</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:807</name>
+    <message>
+        <source>Fade Preset</source>
+        <translation type="obsolete">Soldurma Ön Ayarı</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:850</name>
+    <message>
+        <source>Failed to edit selections</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:973</name>
+    <message>
+        <source>Loop Selection</source>
+        <translation type="obsolete">Seçimi _Temizle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:981</name>
+    <message>
+        <source>Edit</source>
+        <translation type="vanished">Düzenle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/timeline_arranger.c:997</name>
+    <message>
+        <source>Change Color...</source>
+        <translation type="obsolete">Akorları değiştir</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:318</name>
+    <message>
+        <source>Hide instrument UI</source>
+        <translation type="vanished">Enstrüman arayüzünü gizle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:322</name>
+    <message>
+        <source>Show instrument UI</source>
+        <translation type="vanished">Enstrüman arayüzünü göster</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:329</name>
+    <message>
+        <source>Unmute</source>
+        <translation type="vanished">Sesi Aç</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:333</name>
+    <message>
+        <source>Mute</source>
+        <translation type="vanished">Sesi Kapat</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:353</name>
+    <message>
+        <source>Mono compatibility</source>
+        <translation type="vanished">Mono uyumluluk</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:699</name>
+    <message>
+        <source>Edit</source>
+        <translation type="vanished">Düzenle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:708</name>
+    <message>
+        <source>Append Track Objects to Selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:720</name>
+    <message>
+        <source>Append Lane Objects to Selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:731</name>
+    <message>
+        <source>Append Lane Automation Regions to Selection</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:737</name>
+    <message>
+        <source>Selection</source>
+        <translation type="obsolete">Seçimi _Temizle</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:826</name>
+    <message>
+        <source>Inherit</source>
+        <translation type="vanished">Miras al</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:844</name>
+    <message>
+        <source>Piano Roll</source>
+        <translation type="vanished">Piyano Rulosu</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track.c:855</name>
+    <message>
+        <source>Show used lanes</source>
+        <translation type="obsolete">Desteklenmeyen dosyaları göster</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/track_properties_expander.c:94</name>
+    <message>
+        <source>Instrument</source>
+        <translation type="vanished">Enstrüman</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/tracklist.c:338</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/tracklist.c:372</name>
+    <message>
+        <source>Unsupported</source>
+        <translation type="obsolete">Desteklenmeyen dosyaları göster</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/tracklist.c:74</name>
+    <message>
+        <source>Import File...</source>
+        <translation type="obsolete">
+1 dosya daha...</translation>
+    </message>
+</context>
+<context>
+    <name>src/gui/widgets/velocity_settings.c:64</name>
+    <message>
+        <source>Velocity</source>
+        <translation type="vanished">Hız</translation>
+    </message>
+</context>
+<context>
+    <name>src/guile/actions/channel_send_action.c:32</name>
+    <message>
+        <source>Failed to create audio send</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/guile/actions/port_connection_action.c:34</name>
+    <message>
+        <source>Failed to connect ports</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/io/audio_file.c:147</name>
+    <message>
+        <source>Failed to open audio file at &apos;%s&apos;: %s (error code %i)</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/io/audio_file.c:172</name>
+    <message>
+        <source>Failed to open audio file</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/io/audio_file.c:205</name>
+    <message>
+        <source>Failed to close audio file after reading info</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/io/audio_file.c:242</name>
+    <message>
+        <source>Failed to open audio file</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/io/audio_file.c:307</name>
+    <message>
+        <source>Failed to close audio file at &apos;%s&apos;: %s (error code %i)</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/io/file_import.c:143</name>
+    <message>
+        <source>Failed to get track from hash %u</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/io/file_import.c:182</name>
+    <message>
+        <source>Failed to create a MIDI region for file %s</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/cached_plugin_descriptors.c:32</name>
+    <message>
+        <source>Failed to serialize cached plugin descriptors</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/carla_native_plugin.c:1858</name>
+    <message>
+        <source>Failed to load Carla state</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/carla_native_plugin.c:2256</name>
+    <message>
+        <source>State file %s doesn&apos;t exist</source>
+        <translation type="vanished">Durum dosyası %s yok</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/carla_native_plugin.c:611</name>
+    <message>
+        <source>Preset %u</source>
+        <translation type="vanished">Önayar %u</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/collections.c:30</name>
+    <message>
+        <source>Failed to serialize plugin collections</source>
+        <translation type="obsolete">Bağlantıyı etkinleştir/devre dışı bırak</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2/lv2_gtk.c:239</name>
+    <message>
+        <source>Delete Preset?</source>
+        <translation type="vanished">Önayar Silinsin mi?</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2/lv2_gtk.c:244</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2/lv2_gtk.c:499</name>
+    <message>
+        <source>Failed to Open UI</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2/lv2_gtk.c:58</name>
+    <message>
+        <source>Save State</source>
+        <translation type="vanished">Durumu Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2/lv2_gtk.c:61</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2/lv2_gtk.c:62</name>
+    <message>
+        <source>_Save</source>
+        <translation type="vanished">_Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2/lv2_state.c:397</name>
+    <message>
+        <source>Failed to apply LV2 preset</source>
+        <translation type="vanished">LV2 önayarı uygulanamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2_plugin.c:2145</name>
+    <message>
+        <source>Failed to find preset with URI &lt;%s&gt;</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2_plugin.c:2162</name>
+    <message>
+        <source>Failed to load state from %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2_plugin.c:2208</name>
+    <message>
+        <source>Failed to dlopen %s: %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/lv2_plugin.c:2217</name>
+    <message>
+        <source>Failed to get dlinfo for %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin.c:1498</name>
+    <message>
+        <source>Failed saving Carla plugin state</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin.c:2067</name>
+    <message>
+        <source>Failed saving Carla plugin state</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin.c:2091</name>
+    <message>
+        <source>Failed to create plugin clone for %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin.c:449</name>
+    <message>
+        <source>Failed to apply preset</source>
+        <translation type="vanished">Önayar uygulanamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin_gtk.c:155</name>
+    <message>
+        <source>Failed to apply preset</source>
+        <translation type="vanished">Önayar uygulanamadı</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin_gtk.c:295</name>
+    <message>
+        <source>Save Preset</source>
+        <translation type="vanished">Önayarları Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin_gtk.c:297</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin_gtk.c:298</name>
+    <message>
+        <source>_Save</source>
+        <translation type="vanished">_Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin_gtk.c:83</name>
+    <message>
+        <source>Save State</source>
+        <translation type="vanished">Durumu Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin_gtk.c:86</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/plugins/plugin_gtk.c:87</name>
+    <message>
+        <source>_Save</source>
+        <translation type="vanished">_Kaydet</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:1045</name>
+    <message>
+        <source>Failed to write audio pool to disk</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:1057</name>
+    <message>
+        <source>Failed to clone project</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:301</name>
+    <message>
+        <source>Failed to create backup directory %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:490</name>
+    <message>
+        <source>Unable to read file at %s</source>
+        <translation type="obsolete">Dosya okunamıyor: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:506</name>
+    <message>
+        <source>Failed to decompress project file at %s</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:630</name>
+    <message>
+        <source>Failed to save project</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:784</name>
+    <message>
+        <source>Failed to serialize project</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:797</name>
+    <message>
+        <source>Failed to compress project file</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:838</name>
+    <message>
+        <source>Backup saved.</source>
+        <translation type="vanished">Yedek kaydedildi.</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:841</name>
+    <message>
+        <source>Backup saved.</source>
+        <translation type="vanished">Yedek kaydedildi.</translation>
+    </message>
+</context>
+<context>
+    <name>src/project.c:851</name>
+    <message>
+        <source>Project saved.</source>
+        <translation type="vanished">Proje kaydedildi.</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:1081</name>
+    <message>
+        <source>Project Upgraded</source>
+        <translation type="obsolete">Proje kaydedildi.</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:1158</name>
+    <message>
+        <source>Newer backup found:
+  %s.
+Use the newer backup?</source>
+        <translation type="vanished">Daha yeni yedek bulundu:
+  %s.
+Daha yeni yedek kullanılsın mı?</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:261</name>
+    <message>
+        <source>Failed to deserialize v1 project file</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:273</name>
+    <message>
+        <source>Failed to serialize v1 project file</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:304</name>
+    <message>
+        <source>Failed to deserialize v2/3 project file</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:341</name>
+    <message>
+        <source>Failed to serialize v3 project file</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:373</name>
+    <message>
+        <source>Failed to deserialize v4 project file</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:394</name>
+    <message>
+        <source>Failed to serialize v4 project file</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:424</name>
+    <message>
+        <source>Failed to deserialize v5 project file</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:432</name>
+    <message>
+        <source>Failed to convert v5 YAML project file to JSON</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:574</name>
+    <message>
+        <source>Master</source>
+        <translation type="vanished">Master</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:675</name>
+    <message>
+        <source>Failed to save project</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:739</name>
+    <message>
+        <source>Failed to get existing text</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:766</name>
+    <message>
+        <source>Invalid project: missing version</source>
+        <translation type="obsolete">Geçersiz konum</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:785</name>
+    <message>
+        <source>Failed to upgrade YAML project schema</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:799</name>
+    <message>
+        <source>Failed to upgrade project schema to JSON</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:829</name>
+    <message>
+        <source>Failed to deserialize project YAML</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/project/project_init_flow_manager.c:970</name>
+    <message>
+        <source>Failed to initialize the audio file pool</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/chord_preset.c:107</name>
+    <message>
+        <source>_Delete</source>
+        <translation type="vanished">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/chord_preset.c:47</name>
+    <message>
+        <source>Chords</source>
+        <translation type="vanished">Akorlar</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/chord_preset_pack.c:121</name>
+    <message>
+        <source>_Delete</source>
+        <translation type="vanished">_Sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/chord_preset_pack_manager.c:118</name>
+    <message>
+        <source>Most Often Used Chords</source>
+        <translation type="vanished">En Sık Kullanılan Akorlar</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/chord_preset_pack_manager.c:686</name>
+    <message>
+        <source>Failed to serialize chord preset packs</source>
+        <translation type="obsolete">Proje dosyasının sıkıştırması açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:349</name>
+    <message>
+        <source>Failed to move track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:361</name>
+    <message>
+        <source>Failed to set direct out</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:374</name>
+    <message>
+        <source>Failed to rename track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:410</name>
+    <message>
+        <source>Failed to rename track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:422</name>
+    <message>
+        <source>Failed to move track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:435</name>
+    <message>
+        <source>Failed to move track</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:447</name>
+    <message>
+        <source>Failed to set direct out</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:461</name>
+    <message>
+        <source>Failed to connect L port</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:475</name>
+    <message>
+        <source>Failed to connect R port</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:533</name>
+    <message>
+        <source>_No</source>
+        <translation type="obsolete">Hayır</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:571</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+    <message>
+        <source>_No</source>
+        <translation type="obsolete">Hayır</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:637</name>
+    <message>
+        <source>Failed to serialize plugin settings</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/settings/plugin_settings.c:647</name>
+    <message>
+        <source>Failed to write plugin settings file</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/utils/audio.c:164</name>
+    <message>
+        <source>Seek error %d: %s</source>
+        <translation type="obsolete">ALSA Hatası: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/utils/dialogs.c:25</name>
+    <message>
+        <source>_Cancel</source>
+        <translation type="vanished">_İptal Et</translation>
+    </message>
+</context>
+<context>
+    <name>src/utils/error.c:22</name>
+    <message>
+        <source>Details</source>
+        <translation type="vanished">Ayrıntılar</translation>
+    </message>
+</context>
+<context>
+    <name>src/utils/gtk.c:1001</name>
+    <message>
+        <source>Port Connections</source>
+        <translation type="obsolete">Bağlantıyı sil</translation>
+    </message>
+</context>
+<context>
+    <name>src/utils/gtk.c:976</name>
+    <message>
+        <source>Chord Pad</source>
+        <translation type="vanished">Akor Pedi</translation>
+    </message>
+</context>
+<context>
+    <name>src/utils/gtk.c:982</name>
+    <message>
+        <source>Plugin Inspector</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>src/utils/gtk.c:988</name>
+    <message>
+        <source>File Browser</source>
+        <translation type="vanished">Dosya Tarayıcı</translation>
+    </message>
+</context>
+<context>
+    <name>src/utils/gtk.c:990</name>
+    <message>
+        <source>Chord Preset Browser</source>
+        <translation type="vanished">Akor Önayar Tarayıcı</translation>
+    </message>
+</context>
+<context>
+    <name>src/utils/resampler.c:112</name>
+    <message>
+        <source>Failed to create soxr instance: %s</source>
+        <translation type="obsolete">Dosya açılamadı: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/utils/resampler.c:121</name>
+    <message>
+        <source>Failed to set soxr input function: %s</source>
+        <translation type="obsolete">Kanal gönderme işlemi gerçekleştirilemedi: %s</translation>
+    </message>
+</context>
+<context>
+    <name>src/zrythm_app.c:156</name>
+    <message>
+        <source>%s has crashed. </source>
+        <translation type="vanished">%s çöktü. </translation>
+    </message>
+</context>
+<context>
+    <name>src/zrythm_app.c:228</name>
+    <message>
+        <source>Changelog</source>
+        <translation type="obsolete">Akorları değiştir</translation>
+    </message>
+</context>
+<context>
+    <name>src/zrythm_app.c:382</name>
+    <message>
+        <source>No Project Selected</source>
+        <translation type="obsolete">Proje seçilmedi</translation>
+    </message>
+</context>
+<context>
+    <name>src/zrythm_app.c:409</name>
+    <message>
+        <source>Loading Project</source>
+        <translation type="obsolete">Önayar Yükle</translation>
+    </message>
+</context>
+<context>
+    <name>src/zrythm_app.c:475</name>
+    <message>
+        <source>Scanning Plugins</source>
+        <translation type="obsolete">Eklentiler</translation>
+    </message>
+</context>
+<context>
+    <name>src/zrythm_app.c:706</name>
+    <message>
+        <source>Icon Theme Not Found</source>
+        <translation type="obsolete">Simge teması</translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::dsp::MusicalScale</name>
+    <message>
+        <source>Chromatic</source>
+        <translation type="obsolete">Kromatik</translation>
+    </message>
+    <message>
+        <source>Major</source>
+        <translation type="obsolete">Majör</translation>
+    </message>
+    <message>
+        <source>Minor</source>
+        <translation type="obsolete">Minör</translation>
+    </message>
+    <message>
+        <source>Ionian</source>
+        <translation type="obsolete">İyonyan</translation>
+    </message>
+    <message>
+        <source>Dorian</source>
+        <translation type="obsolete">Doryan</translation>
+    </message>
+    <message>
+        <source>Phrygian</source>
+        <translation type="obsolete">Frigyen</translation>
+    </message>
+    <message>
+        <source>Lydian</source>
+        <translation type="obsolete">Lidyan</translation>
+    </message>
+    <message>
+        <source>Mixolydian</source>
+        <translation type="obsolete">Miksolidyen</translation>
+    </message>
+    <message>
+        <source>Aeolian</source>
+        <translation type="obsolete">Aeoliyen</translation>
+    </message>
+    <message>
+        <source>Locrian</source>
+        <translation type="obsolete">Lokriyen</translation>
+    </message>
+    <message>
+        <source>Melodic Minor</source>
+        <translation type="obsolete">Melodik Minör</translation>
+    </message>
+    <message>
+        <source>Harmonic Minor</source>
+        <translation type="obsolete">Harmonik Minör</translation>
+    </message>
+    <message>
+        <source>Whole Tone</source>
+        <translation type="obsolete">Tam Ton</translation>
+    </message>
+    <message>
+        <source>Major Pentatonic</source>
+        <translation type="obsolete">Pentatonik Majör</translation>
+    </message>
+    <message>
+        <source>Minor Pentatonic</source>
+        <translation type="obsolete">Pentatonik Minör</translation>
+    </message>
+    <message>
+        <source>Octatonic Half Whole</source>
+        <translation type="obsolete">Oktatonik Yarım Tam</translation>
+    </message>
+    <message>
+        <source>Octatonic Whole Half</source>
+        <translation type="obsolete">Oktatonik Tam Yarım</translation>
+    </message>
+    <message>
+        <source>Acoustic</source>
+        <translation type="obsolete">Akustik</translation>
+    </message>
+    <message>
+        <source>Harmonic Major</source>
+        <translation type="obsolete">Harmonik Majör</translation>
+    </message>
+    <message>
+        <source>Phrygian Dominant</source>
+        <translation type="obsolete">Frigyen Dominant</translation>
+    </message>
+    <message>
+        <source>Major Locrian</source>
+        <translation type="obsolete">Lokriyen Majör</translation>
+    </message>
+    <message>
+        <source>Augmented</source>
+        <translation type="obsolete">Artırılmış</translation>
+    </message>
+    <message>
+        <source>Double Harmonic</source>
+        <translation type="obsolete">Çift Harmonik</translation>
+    </message>
+    <message>
+        <source>Chinese</source>
+        <translation type="obsolete">Çince</translation>
+    </message>
+    <message>
+        <source>Diminished</source>
+        <translation type="obsolete">Azaltılmış</translation>
+    </message>
+    <message>
+        <source>Dominant Diminished</source>
+        <translation type="obsolete">Dominant Azaltılmış</translation>
+    </message>
+    <message>
+        <source>Egyptian</source>
+        <translation type="obsolete">Mısırlı</translation>
+    </message>
+    <message>
+        <source>Eight Tone Spanish</source>
+        <translation type="obsolete">İspanyol Sekiz Ton</translation>
+    </message>
+    <message>
+        <source>Enigmatic</source>
+        <translation type="obsolete">Enigmatik</translation>
+    </message>
+    <message>
+        <source>Geez</source>
+        <translation type="obsolete">Tanrım</translation>
+    </message>
+    <message>
+        <source>Hindu</source>
+        <translation type="obsolete">Hint</translation>
+    </message>
+    <message>
+        <source>Hirajoshi</source>
+        <translation type="obsolete">Hirajoshi</translation>
+    </message>
+    <message>
+        <source>Hungarian Gypsy</source>
+        <translation type="obsolete">Macar Çingene</translation>
+    </message>
+    <message>
+        <source>Insen</source>
+        <translation type="obsolete">Insen</translation>
+    </message>
+    <message>
+        <source>Neapolitan Major</source>
+        <translation type="obsolete">Napoliten Majör</translation>
+    </message>
+    <message>
+        <source>Neapolitan Minor</source>
+        <translation type="obsolete">Napoliten Minör</translation>
+    </message>
+    <message>
+        <source>Romanian Minor</source>
+        <translation type="obsolete">Roman Minör</translation>
+    </message>
+    <message>
+        <source>Altered</source>
+        <translation type="obsolete">Değiştirimiş</translation>
+    </message>
+    <message>
+        <source>Maqam</source>
+        <translation type="obsolete">Maqam</translation>
+    </message>
+    <message>
+        <source>Yo</source>
+        <translation type="obsolete">Yo</translation>
+    </message>
+    <message>
+        <source>Bebop Locrian</source>
+        <translation type="obsolete">Lokriyen Bebop</translation>
+    </message>
+    <message>
+        <source>Bebop Dominant</source>
+        <translation type="obsolete">Dominant Bebop</translation>
+    </message>
+    <message>
+        <source>Bebop Major</source>
+        <translation type="obsolete">Bebop Majör</translation>
+    </message>
+    <message>
+        <source>Super Locrian</source>
+        <translation type="obsolete">Süper Lokriyen</translation>
+    </message>
+    <message>
+        <source>Enigmatic Minor</source>
+        <translation type="obsolete">Enikmatik Minör</translation>
+    </message>
+    <message>
+        <source>Composite</source>
+        <translation type="obsolete">Kompozit</translation>
+    </message>
+    <message>
+        <source>Bhairav</source>
+        <translation type="obsolete">Bhairav</translation>
+    </message>
+    <message>
+        <source>Hungarian Minor</source>
+        <translation type="obsolete">Macar Minör</translation>
+    </message>
+    <message>
+        <source>Persian</source>
+        <translation type="obsolete">Pers</translation>
+    </message>
+    <message>
+        <source>Iwato</source>
+        <translation type="obsolete">Iwato</translation>
+    </message>
+    <message>
+        <source>Kumoi</source>
+        <translation type="obsolete">Kumoi</translation>
+    </message>
+    <message>
+        <source>Pelog</source>
+        <translation type="obsolete">Pelog</translation>
+    </message>
+    <message>
+        <source>Prometheus</source>
+        <translation type="obsolete">Prometheus</translation>
+    </message>
+    <message>
+        <source>Prometheus Neapolitan</source>
+        <translation type="obsolete">Prometheus Napoliten</translation>
+    </message>
+    <message>
+        <source>Prometheus Liszt</source>
+        <translation type="obsolete">Prometheus Liszt</translation>
+    </message>
+    <message>
+        <source>Balinese</source>
+        <translation type="obsolete">Bali</translation>
+    </message>
+    <message>
+        <source>RagaTodi</source>
+        <translation type="obsolete">RagaTodi</translation>
+    </message>
+    <message>
+        <source>Japanese 1</source>
+        <translation type="obsolete">Japon 1</translation>
+    </message>
+    <message>
+        <source>Japanese 2</source>
+        <translation type="obsolete">Japon 2</translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::dsp::SnapGrid</name>
+    <message>
+        <location filename="../src/dsp/snap_grid.cpp" line="88"/>
+        <source>Adaptive</source>
+        <translation type="unfinished">Adaptif</translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::dsp::notes</name>
+    <message>
+        <location filename="../src/dsp/note_type.cpp" line="19"/>
+        <source>bar</source>
+        <translation type="unfinished">bar</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/note_type.cpp" line="20"/>
+        <source>beat</source>
+        <translation type="unfinished">beat</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/note_type.cpp" line="33"/>
+        <source>normal</source>
+        <translation type="unfinished">normal</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/note_type.cpp" line="34"/>
+        <source>dotted</source>
+        <translation type="unfinished">noktalı</translation>
+    </message>
+    <message>
+        <location filename="../src/dsp/note_type.cpp" line="35"/>
+        <source>triplet</source>
+        <translation type="unfinished">üçlü</translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::engine::session</name>
+    <message>
+        <source>None</source>
+        <translation type="obsolete">Yok</translation>
+    </message>
+    <message>
+        <source>1 bar</source>
+        <translation type="obsolete">1 bar</translation>
+    </message>
+    <message>
+        <source>2 bars</source>
+        <translation type="obsolete">2 bar</translation>
+    </message>
+    <message>
+        <source>4 bars</source>
+        <translation type="obsolete">4 bar</translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::gui::ProjectManager</name>
+    <message>
+        <source>Failed to load project</source>
+        <translation type="vanished">Proje yüklenemedi</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="344"/>
+        <source>Verifying project directory...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="354"/>
+        <source>Reading project file...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="361"/>
+        <source>Parsing project data...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="378"/>
+        <location filename="../src/gui/backend/project_manager.cpp" line="509"/>
+        <source>Failed to load project data. See the log for details.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="408"/>
+        <source>Creating project...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="427"/>
+        <source>Deserializing project data...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="439"/>
+        <source>Setting up project...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="472"/>
+        <source>Rebuilding audio graph...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="478"/>
+        <source>Starting engine...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="495"/>
+        <source>Project loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/project_manager.cpp" line="542"/>
+        <source>unknown error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/gui/backend/project_manager.cpp" line="550"/>
+        <source>%n plugin(s) failed to load</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::gui::ProjectTemplatesModel</name>
+    <message>
+        <location filename="../src/gui/backend/project_templates_model.cpp" line="25"/>
+        <location filename="../src/gui/backend/project_templates_model.cpp" line="65"/>
+        <source>Blank Project</source>
+        <translation>Boş proje</translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::gui::ZrythmApplication</name>
+    <message>
+        <source>{}-{}
+{}
+
+{} comes with ABSOLUTELY NO WARRANTY!
+
+This is free software, and you are welcome to redistribute it
+under certain conditions. See the file &apos;COPYING&apos; for details.
+
+Write comments and bugs to {}
+Support this project at {}
+
+</source>
+        <translation type="vanished">{}-{}
+{}
+
+{} KESİNLİKLE GARANTİ İLE GELMEMEKTEDİR!
+
+Bu ücretsiz bir yazılımdır ve belirli koşullar altında
+yeniden dağıtabilirsiniz. Ayrıntılar için &apos;COPYING&apos; dosyasına bakın.
+
+Yorumlarınızı ve buglarınızı {} adresine yazın
+Bu projeyi {} adresinden destekleyebilirsiniz
+
+</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="201"/>
+        <source>Project Loading Failed</source>
+        <translation type="unfinished">Proje Yükleme Başarısız</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="403"/>
+        <source>Audio Device Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="415"/>
+        <source>Audio Device Initialization Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="434"/>
+        <source>Open project</source>
+        <translation>Projeyi aç</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="435"/>
+        <source>Create new project</source>
+        <translation>Yeni proje oluştur</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="437"/>
+        <source>Create new project with template</source>
+        <translation>Şablonla yeni proje oluştur</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="440"/>
+        <source>Use dummy audio/midi engine</source>
+        <translation>Sahte ses/midi motoru kullan</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="445"/>
+        <source>Project file (.zpj) or project directory to open</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::plugins::ClapPlugin</name>
+    <message>
+        <location filename="../src/plugins/clap_plugin.cpp" line="618"/>
+        <source>Failed to load CLAP plugin from %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::plugins::Lv2Plugin</name>
+    <message>
+        <location filename="../src/plugins/lv2_plugin.cpp" line="1266"/>
+        <source>LV2 descriptor has no path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/plugins/lv2_plugin.cpp" line="1275"/>
+        <source>Failed to load LV2 plugin from %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/plugins/lv2_plugin.cpp" line="1304"/>
+        <location filename="../src/plugins/lv2_plugin.cpp" line="2845"/>
+        <source>Instantiation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/plugins/lv2_plugin.cpp" line="1332"/>
+        <source>Cannot re-configure LV2 plugin during processing</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::plugins::PluginScanManager</name>
+    <message>
+        <location filename="../src/plugins/plugin_scan_manager.cpp" line="132"/>
+        <source>Scanning...</source>
+        <translation type="unfinished">Taranıyor...</translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::plugins::PluginScanner</name>
+    <message>
+        <source>Scanning...</source>
+        <translation type="vanished">Taranıyor...</translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::plugins::Vst3Plugin</name>
+    <message>
+        <location filename="../src/plugins/vst3_plugin.cpp" line="960"/>
+        <source>Failed to load VST3 plugin from %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/plugins/vst3_plugin.cpp" line="2446"/>
+        <location filename="../src/plugins/vst3_plugin.cpp" line="2461"/>
+        <source>Program %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::structure::tracks::TrackLane</name>
+    <message>
+        <source>Lane {}</source>
+        <translation type="obsolete">Çizgi {}</translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::utils</name>
+    <message>
+        <source>bar</source>
+        <translation type="obsolete">bar</translation>
+    </message>
+    <message>
+        <source>beat</source>
+        <translation type="obsolete">beat</translation>
+    </message>
+    <message>
+        <source>normal</source>
+        <translation type="obsolete">normal</translation>
+    </message>
+    <message>
+        <source>dotted</source>
+        <translation type="obsolete">noktalı</translation>
+    </message>
+    <message>
+        <source>triplet</source>
+        <translation type="obsolete">üçlü</translation>
+    </message>
+</context>
+<context>
+    <name>zrythm::utils::exceptions::ZrythmException</name>
+    <message>
+        <source>Error</source>
+        <translation type="obsolete">Hata</translation>
+    </message>
+</context>
+</TS>

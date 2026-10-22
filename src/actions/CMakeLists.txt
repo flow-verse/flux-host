@@ -1,0 +1,77 @@
+# SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+qt_add_library(zrythm_actions_lib STATIC)
+
+target_sources(zrythm_actions_lib
+  PRIVATE
+    arranger_object_creator.cpp
+    arranger_object_selection_operator.cpp
+    chord_pad_bank_operator.cpp
+    clip_operator.cpp
+    file_importer.cpp
+    qobject_property_operator.cpp
+    parameter_operator.cpp
+    plugin_importer.cpp
+    plugin_operator.cpp
+    track_collection_operator.cpp
+    track_creator.cpp
+    track_operator.cpp
+    uuid_property_operator.cpp
+  PUBLIC
+    FILE_SET HEADERS
+    BASE_DIRS ".."
+    FILES
+      arranger_object_creator.h
+      arranger_object_selection_operator.h
+      chord_pad_bank_operator.h
+      clip_operator.h
+      file_importer.h
+      qobject_property_operator.h
+      parameter_operator.h
+      plugin_importer.h
+      plugin_operator.h
+      track_collection_operator.h
+      track_creator.h
+      track_operator.h
+      uuid_property_operator.h
+)
+
+target_include_directories(zrythm_actions_lib
+  PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+set_target_properties(zrythm_actions_lib PROPERTIES
+  UNITY_BUILD ${ZRYTHM_UNITY_BUILD}
+  VERIFY_INTERFACE_HEADER_SETS ${ZRYTHM_VERIFY_INTERFACE_HEADER_SETS}
+)
+
+target_precompile_headers(zrythm_actions_lib REUSE_FROM zrythm_undo_lib)
+
+target_link_libraries(zrythm_actions_lib
+  PUBLIC
+    ${zrythm_link_libs}
+    zrythm_commands_lib
+    zrythm_controllers_lib
+    zrythm_structure_project_lib
+    zrythm_undo_lib
+    zrythm::include_dirs
+    zrythm::all_compile_options
+)
+
+# create a plugin so that types get exposed to QML
+qt_add_qml_module(zrythm_actions_lib
+  URI ZrythmActions
+  VERSION 1.0
+  IMPORTS
+    TARGET zrythm_utils_lib
+    TARGET zrythm_dsp_lib
+    TARGET zrythm_arrangement_lib
+    TARGET zrythm_structure_scenes_lib
+    TARGET zrythm_structure_tracks_lib
+    TARGET zrythm_structure_project_lib
+    TARGET zrythm_controllers_lib
+    TARGET zrythm_undo_lib
+  OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ZrythmActions
+)
+set_target_properties(zrythm_actions_libplugin PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)

@@ -1,0 +1,60 @@
+// SPDX-FileCopyrightText: © 2024 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include <filesystem>
+
+#include "utils/utf8_string.h"
+
+#include <QObject>
+#include <QtQmlIntegration/qqmlintegration.h>
+
+namespace juce
+{
+class FileSearchPath;
+}
+
+namespace zrythm::utils
+{
+
+class FilePathList : public QObject
+{
+  Q_OBJECT
+  Q_PROPERTY (
+    QStringList paths READ getPaths WRITE setPaths NOTIFY pathsChanged FINAL)
+
+public:
+  FilePathList (QObject * parent = nullptr);
+  FilePathList (juce::FileSearchPath paths, QObject * parent = nullptr);
+
+  Q_SIGNAL void pathsChanged ();
+
+  QStringList getPaths () const;
+  void        setPaths (const QStringList &paths);
+
+  Q_INVOKABLE void addPath (const QString &path);
+  Q_INVOKABLE void clear ();
+
+  void                 add_path (const std::filesystem::path &path);
+  void                 add_path (const Utf8String &path);
+  void                 add_paths (const juce::FileSearchPath &paths);
+  juce::FileSearchPath get_as_juce_file_search_path () const;
+
+  /**
+   * @brief For debugging.
+   */
+  void print (const utils::Utf8String &title) const;
+
+  auto begin () const { return paths_.begin (); }
+  auto end () const { return paths_.end (); }
+  auto begin () { return paths_.begin (); }
+  auto end () { return paths_.end (); }
+
+  bool empty () const { return paths_.empty (); }
+
+private:
+  std::vector<std::filesystem::path> paths_;
+};
+
+} // namespace zrythm::utils

@@ -1,0 +1,66 @@
+# SPDX-FileCopyrightText: © 2020 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+[Icon Theme]
+Name=Zrythm Dark
+Comment=Zrythm Dark by the Zrythm authors
+Inherits=default
+Directories=scalable/actions,scalable/apps,scalable/devices,scalable/emotes,scalable/mimetypes,scalable/places,scalable/status,scalable/tracktypes
+
+[scalable/actions]
+Size=48
+Type=Scalable
+MinSize=1
+MaxSize=256
+Context=Actions
+
+[scalable/apps]
+Size=48
+Type=Scalable
+MinSize=1
+MaxSize=256
+Context=Applications
+
+[scalable/devices]
+Size=48
+Type=Scalable
+MinSize=1
+MaxSize=256
+Context=Devices
+
+[scalable/emotes]
+Size=48
+Type=Scalable
+MinSize=1
+MaxSize=256
+Context=Emotes
+
+[scalable/mimetypes]
+Size=48
+Type=Scalable
+MinSize=1
+MaxSize=256
+Context=MimeTypes
+
+[scalable/places]
+Size=48
+Type=Scalable
+MinSize=1
+MaxSize=256
+Context=Places
+
+[scalable/status]
+Size=48
+Type=Scalable
+MinSize=1
+MaxSize=256
+Context=Status
+
+# These will be shown when selecting a track icon.
+# They can be symlinks of existing icons.
+[scalable/tracktypes]
+Size=48
+Type=Scalable
+MinSize=1
+MaxSize=256
+Context=TrackTypes

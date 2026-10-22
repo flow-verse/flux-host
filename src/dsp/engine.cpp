@@ -1,0 +1,822 @@
+// SPDX-FileCopyrightText: © 2018-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+/*
+ * This file incorporates work (namely, the preroll-related cycle splitting
+ * logic) covered by the following copyright and permission notice:
+ *
+ * ---
+ *
+ * Copyright (C) 1999-2002 Paul Davis
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * ---
+ */
+
+#include <algorithm>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <thread>
+
+#include "dsp/engine.h"
+#include "dsp/midi_device_buffer.h"
+#include "utils/enum_utils.h"
+#include "utils/float_ranges.h"
+#include "utils/logger.h"
+#include "utils/tracy.h"
+
+namespace zrythm::dsp
+{
+
+int
+AudioEngine::sampleRate () const
+{
+  return sample_rate ().in (units::sample_rate);
+}
+
+int
+AudioEngine::blockLength () const
+{
+  return block_length ().in<int> (units::samples);
+}
+
+units::sample_rate_t
+AudioEngine::sample_rate () const
+{
+  return hw_interface_.get_device_info ().sample_rate;
+}
+
+units::sample_u32_t
+AudioEngine::block_length () const
+{
+  return hw_interface_.get_device_info ().block_length;
+}
+
+utils::Utf8String
+AudioEngine::device_name () const
+{
+  return hw_interface_.get_device_info ().device_name;
+}
+
+AudioEngine::AudioEngine (
+  dsp::Transport          &transport,
+  IHardwareAudioInterface &hw_interface,
+  IHardwareMidiInterface  &midi_interface,
+  dsp::DspGraphDispatcher &graph_dispatcher,
+  const dsp::TempoMap     &tempo_map,
+  QObject *                parent)
+    : QObject (parent), transport_ (transport), tempo_map_ (tempo_map),
+      graph_dispatcher_ (graph_dispatcher), hw_interface_ (hw_interface),
+      midi_interface_ (midi_interface),
+      midi_in_ (
+        std::make_unique<dsp::MidiPort> (u8"MIDI in", dsp::PortFlow::Input)),
+      midi_panic_processor_ (
+        utils::make_qobject_unique<dsp::MidiPanicProcessor> (local_registry_)),
+      audio_callback_ (
+        std::make_unique<AudioCallback> (
+          [this] (
+            std::span<const float * const> inputChannels,
+            std::span<float * const>       outputChannels,
+            units::sample_u32_t            numSamples) {
+            current_hw_input_ = inputChannels;
+
+            ScopedFrame audio_frame{ "Audio" };
+
+            block_start_time_ = au::milli (units::seconds) (
+              juce::Time::getMillisecondCounterHiRes ());
+
+            juce::AudioProcessLoadMeasurer::ScopedTimer scoped_timer{
+              load_measurer_
+            };
+
+            auto       processing_lock = try_get_processing_lock ();
+            const auto process_status =
+              this->process (processing_lock, numSamples);
+            current_hw_input_ = {};
+            if (process_status == ProcessReturnStatus::ProcessCompleted)
+              {
+                // Note: the monitor output source below requires the
+                // processing graph to be operational. We are guarding against
+                // other cases by checking the process() return status
+                if (
+                  monitor_out_source_ != nullptr
+                  && monitor_out_source_->buffers () != nullptr)
+                  {
+                    const auto samples = numSamples.in<size_t> (units::samples);
+                    if (!outputChannels.empty ())
+                      {
+                        utils::float_ranges::copy (
+                          { outputChannels[0], samples },
+                          { monitor_out_source_->buffers ()->getReadPointer (0, 0),
+                            samples });
+                      }
+                    if (outputChannels.size () > 1)
+                      {
+                        utils::float_ranges::copy (
+                          { outputChannels[1], samples },
+                          { monitor_out_source_->buffers ()->getReadPointer (1, 0),
+                            samples });
+                      }
+                  }
+              }
+          },
+          [this] () {
+            const auto info = hw_interface_.get_device_info ();
+            cached_device_info_ = info;
+
+            // The previous processors are still referenced by the current
+            // graph's nodes: retire them only after the recalculation below
+            // releases the old node collection
+            auto old_audio_input_processor = std::move (audio_input_processor_);
+            audio_input_processor_ = utils::make_qobject_unique<
+              AudioInputProcessor> (
+              [this] () -> std::span<const float * const> {
+                return current_hw_input_;
+              },
+              info.input_channel_count, local_registry_, this);
+            midi_interface_.set_device_change_callback ([this] () {
+              // Processors for removed devices must outlive the
+              // recalculation performed below, which releases the old node
+              // collection still referencing them
+              std::vector<utils::QObjectUniquePtr<MidiInputProcessor>>
+                removed_processors;
+              execute_function_with_paused_processing_synchronously (
+                [this, &removed_processors] () {
+                  removed_processors =
+                    update_midi_processors (midi_interface_.device_buffers ());
+                },
+                true);
+            });
+            auto removed_midi_processors =
+              update_midi_processors (midi_interface_.device_buffers ());
+            graph_dispatcher_.recalc_graph (false);
+            Q_EMIT sampleRateChanged (info.sample_rate.in (units::sample_rate));
+            Q_EMIT blockLengthChanged (
+              info.block_length.in<int> (units::samples));
+            audio_callback_active_ = true;
+          },
+          [this] () {
+            midi_interface_.set_device_change_callback (std::nullopt);
+            graph_dispatcher_.clear_graph ();
+            midi_input_processors_.clear ();
+            cached_device_info_.reset ();
+            audio_callback_active_ = false;
+          }))
+{
+  midi_in_->set_symbol (u8"midi_in");
+  z_debug ("Audio engine created");
+}
+
+void
+AudioEngine::
+  wait_for_pause (EngineState &state, bool force_pause, bool with_fadeout)
+{
+  z_debug ("waiting for engine to pause...");
+
+  state.running_ = run_.load ();
+  state.playing_ = transport_.isRolling ();
+  state.looping_ = transport_.loopEnabled ();
+  if (!state.running_)
+    {
+      z_debug ("engine not running - won't wait for pause");
+      return;
+    }
+
+  if (with_fadeout && state.running_)
+    {
+// TODO (or use graph cross-fade)
+#if 0
+      z_debug (
+        "setting fade out samples and waiting for remaining samples to become 0");
+      control_room_->monitor_fader_->request_fade_out ();
+      const auto start_time = SteadyClock::now ();
+      const auto max_time_to_wait = std::chrono::seconds (2);
+      while (control_room_->monitor_fader_->has_fade_out_samples_left ())
+        {
+          std::this_thread::sleep_for (std::chrono::microseconds (100));
+          if (SteadyClock::now () - start_time > max_time_to_wait)
+            {
+              /* abort */
+              control_room_->monitor_fader_->abort_fade_out ();
+              break;
+            }
+        }
+#endif
+    }
+
+  /* send panic */
+  panic_all ();
+
+  if (state.playing_)
+    {
+      transport_.pause_for_engine_internal ();
+
+      if (force_pause)
+        {
+          transport_.setPlayState (dsp::Transport::PlayState::Paused);
+        }
+      else
+        {
+          // Best-effort drain of an in-flight audio cycle that has already
+          // latched the pause request. This may exit immediately if no cycle
+          // has latched it yet - the flush cycle below is what actually
+          // applies the pause.
+          constexpr auto kPauseDrainTimeout = std::chrono::seconds (2);
+          const auto     start_time = std::chrono::steady_clock::now ();
+          while (
+            transport_.effective_rt_play_state ()
+            == dsp::Transport::PlayState::PauseRequested)
+            {
+              if (
+                std::chrono::steady_clock::now () - start_time
+                >= kPauseDrainTimeout)
+                {
+                  // The audio callback is likely wedged - continue anyway;
+                  // the flush cycle below applies the pause
+                  z_warning ("timed out waiting for the audio thread to pause");
+                  break;
+                }
+              std::this_thread::sleep_for (std::chrono::microseconds (100));
+            }
+        }
+    }
+
+  z_debug ("setting run to false and waiting for cycle to finish...");
+  run_.store (false);
+  {
+    // Note: if the audio callback is wedged while holding the lock, this
+    // still blocks indefinitely - the drain timeout above only bounds the
+    // polling phase
+    auto lock = get_processing_lock ();
+  }
+  z_debug ("cycle finished");
+
+  // control_room_->monitor_fader_->abort_fade_out ();
+
+  if (audio_callback_active_)
+    {
+      /* run 1 more time to flush panic messages */
+      auto                         lock = get_processing_lock ();
+      dsp::PlayheadProcessingGuard playhead_processing_guard{
+        transport_.playhead ()->playhead ()
+      };
+      auto current_transport_state = transport_.get_snapshot ();
+      preprocess (current_transport_state, lock);
+
+      auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+        transport_.get_playhead_position_in_audio_thread (), units::samples (1));
+
+      graph_dispatcher_.start_cycle (
+        current_transport_state, time_nfo, remaining_latency_preroll_, false,
+        tempo_map_);
+      advance_playhead_after_processing (
+        current_transport_state, playhead_processing_guard, units::samples (0),
+        units::samples (1));
+    }
+}
+
+void
+
+AudioEngine::resume (const EngineState &state)
+{
+  z_debug ("resuming engine...");
+  if (!state.running_)
+    {
+      z_debug ("engine was not running - won't resume");
+      return;
+    }
+  transport_.setLoopEnabled (state.looping_);
+  if (state.playing_)
+    {
+      // Resume from the current position: the engine-internal pause did not
+      // move the playhead. Any tempo change made during the pause was handled
+      // by the tempoEventsChanged handler, which re-anchors a paused playhead
+      // to its musical position
+      transport_.requestRoll ();
+    }
+  // when not playing, the transport was never touched during the pause so
+  // there is nothing to restore
+
+  // z_debug ("restarting engine: setting fade in samples");
+  // control_room_->monitor_fader_->request_fade_in ();
+
+  run_.store (state.running_);
+}
+
+void
+AudioEngine::activate ()
+{
+  activate_impl (true);
+
+  // Pause, recalculate the graph and resume
+  execute_function_with_paused_processing_synchronously ([] () { }, true);
+}
+
+void
+AudioEngine::deactivate ()
+{
+  activate_impl (false);
+}
+
+std::vector<utils::QObjectUniquePtr<MidiInputProcessor>>
+AudioEngine::update_midi_processors (
+  const IHardwareMidiInterface::BufferMap &active_buffers)
+{
+  std::vector<utils::QObjectUniquePtr<MidiInputProcessor>> removed_processors;
+
+  // Remove processors for devices no longer active
+  for (
+    auto it = midi_input_processors_.begin ();
+    it != midi_input_processors_.end ();)
+    {
+      if (active_buffers.contains (it->first))
+        {
+          ++it;
+        }
+      else
+        {
+          removed_processors.push_back (std::move (it->second));
+          it = midi_input_processors_.erase (it);
+        }
+    }
+
+  // Create processors for new devices
+  for (const auto &[ident, buffer] : active_buffers)
+    {
+      if (!midi_input_processors_.contains (ident))
+        {
+          midi_input_processors_.emplace (
+            ident,
+            utils::make_qobject_unique<MidiInputProcessor> (
+              buffer, local_registry_, this));
+        }
+    }
+
+  return removed_processors;
+}
+
+void
+AudioEngine::activate_impl (const bool activate)
+{
+  const auto new_state = activate ? State::Active : State::Initialized;
+  if (state_.load () == new_state)
+    {
+      return;
+    }
+
+  z_debug ("Setting engine status to: {}", new_state);
+  if (activate)
+    {
+      load_measurer_.reset (sampleRate (), blockLength ());
+
+      hw_interface_.add_audio_callback (audio_callback_.get ());
+    }
+  else
+    {
+      // This check and the OfflineRenderSession flag transitions both
+      // run on the main thread, so a session cannot begin between the
+      // check and the teardown below
+      if (offline_render_active_.load ())
+        {
+          z_warning (
+            "an offline render owns processing; refusing engine "
+            "deactivation");
+          return;
+        }
+
+      EngineState state{};
+      wait_for_pause (state, true, true);
+
+      hw_interface_.remove_audio_callback (audio_callback_.get ());
+    }
+
+  state_ = new_state;
+
+  z_debug ("New engine status: {}", new_state);
+}
+
+EngineProcessingLockGuard::EngineProcessingLockGuard (
+  moodycamel::LightweightSemaphore &sem,
+  std::atomic<std::thread::id>     &owner,
+  bool                              try_acquire)
+    : owner_ (owner)
+{
+  // Check before acquiring: re-entrancy is a bug in both modes (in blocking
+  // mode the offending thread could never make progress, so check before
+  // blocking)
+  if (owner_.load (std::memory_order_acquire) == std::this_thread::get_id ())
+    {
+      static constexpr auto message =
+        "re-entrant acquisition of the non-recursive engine processing lock";
+      // Logged for the thread name, source location and backtrace, then
+      // repeated on stderr: the log's console sink writes to stdout, and
+      // the error sink only aborts outside test builds
+      z_error ("{}", message);
+      std::fprintf (stderr, "%s\n", message);
+      std::abort ();
+    }
+  // force_acquire = true blocks until acquired; false only tries once
+  lock_.emplace (sem, !try_acquire);
+  if (lock_->is_acquired ())
+    {
+      owner_.store (std::this_thread::get_id (), std::memory_order_release);
+    }
+}
+
+EngineProcessingLockGuard::~EngineProcessingLockGuard ()
+{
+  if (lock_->is_acquired ())
+    {
+      owner_.store (std::thread::id{}, std::memory_order_release);
+    }
+}
+
+EngineProcessingLockGuard
+AudioEngine::get_processing_lock ()
+{
+  return EngineProcessingLockGuard (process_lock_, process_lock_owner_);
+}
+
+EngineProcessingLockGuard
+AudioEngine::try_get_processing_lock () noexcept
+{
+  return EngineProcessingLockGuard (process_lock_, process_lock_owner_, true);
+}
+
+void
+AudioEngine::preprocess (
+  dsp::Transport::TransportSnapshot &transport_snapshot,
+  const EngineProcessingLockGuard   &processing_lock) noexcept
+{
+  assert (processing_lock.is_acquired ());
+  assert (cached_device_info_.has_value ());
+  const auto block_length = cached_device_info_->block_length;
+
+  const auto update_transport_play_state =
+    [&] (dsp::ITransport::PlayState play_state) {
+      transport_.set_play_state_rt_safe (play_state);
+      transport_snapshot.set_play_state (play_state);
+    };
+
+  if (
+    transport_snapshot.get_play_state ()
+    == dsp::Transport::PlayState::PauseRequested)
+    {
+      update_transport_play_state (dsp::Transport::PlayState::Paused);
+    }
+  else if (
+    transport_snapshot.get_play_state ()
+      == dsp::Transport::PlayState::RollRequested
+    && transport_snapshot.metronome_countin_frames_remaining ()
+         == units::samples (0))
+    {
+      update_transport_play_state (dsp::Transport::PlayState::Rolling);
+      remaining_latency_preroll_ =
+        graph_dispatcher_.get_max_route_playback_latency ();
+    }
+
+  // Clear all buffers
+  midi_in_->clear_buffer (0, block_length.in (units::samples));
+}
+
+auto
+AudioEngine::process (
+  const EngineProcessingLockGuard &processing_lock,
+  const units::sample_u32_t        total_frames_to_process) noexcept
+  -> ProcessReturnStatus
+{
+  if (total_frames_to_process == units::samples (0))
+    {
+      return ProcessReturnStatus::ProcessFailed;
+    }
+
+  if (!run_.load ()) [[unlikely]]
+    {
+      // z_info ("skipping processing...");
+      return ProcessReturnStatus::ProcessSkipped;
+    }
+
+  // Skip the cycle before touching any shared state when the lock was not
+  // acquired (e.g., the main thread is flushing or recalculating the graph)
+  if (!processing_lock.is_acquired ()) [[unlikely]]
+    {
+      return ProcessReturnStatus::ProcessSkipped;
+    }
+
+  // The playhead's processing state may only be touched with the processing
+  // lock held
+  dsp::PlayheadProcessingGuard playhead_processing_guard{
+    transport_.playhead ()->playhead ()
+  };
+
+  for (const auto &mip : midi_input_processors_ | std::views::values)
+    {
+      mip->set_block_start_time (block_start_time_);
+    }
+
+  // We create a temporary ITransport snapshot and inject it here (graph
+  // nodes will use this instead of the main Transport instance, thus
+  // avoiding the need to synchronize access to it)
+  auto current_transport_state = transport_.get_snapshot ();
+
+  const auto consume_metronome_countin_samples =
+    [&] (const units::sample_t samples) {
+      transport_.consume_metronome_countin_samples (samples);
+      current_transport_state.consume_metronome_countin_samples (samples);
+    };
+
+  const auto consume_recording_preroll_samples =
+    [&] (const units::sample_t samples) {
+      transport_.consume_recording_preroll_samples (samples);
+      current_transport_state.consume_recording_preroll_samples (samples);
+    };
+
+  /* run pre-process code */
+  preprocess (current_transport_state, processing_lock);
+
+  /* puts MIDI in events in the MIDI in port */
+  // receive_midi_events (total_frames_to_process);
+
+  /* process HW processor to get audio/MIDI data from hardware */
+  // hw_in_processor_->process (total_frames_to_process);
+
+  auto total_frames_remaining = total_frames_to_process;
+
+  /* --- handle preroll --- */
+  dsp::graph::ProcessBlockInfo split_time_nfo = {
+    .transport_position_ =
+      current_transport_state.get_playhead_position_in_audio_thread (),
+    .buffer_offset_ = units::samples (0),
+    .nframes_ = units::samples (0),
+  };
+
+  while (remaining_latency_preroll_ > units::samples (0))
+    {
+      auto num_preroll_frames =
+        std::min (total_frames_remaining, remaining_latency_preroll_);
+
+      /* loop through each route */
+      for (const auto start_node : graph_dispatcher_.current_trigger_nodes ())
+        {
+          const auto route_latency = start_node.get ().route_playback_latency_;
+
+          if (remaining_latency_preroll_ > route_latency + num_preroll_frames)
+            {
+              /* this route will no-roll for the complete pre-roll cycle */
+            }
+          else if (remaining_latency_preroll_ > route_latency)
+            {
+              /* route may need partial no-roll and partial roll from
+               * (transport_sample - remaining_latency_preroll_) .. +
+               * num_preroll_frames.
+               * shorten and split the process cycle */
+              num_preroll_frames = std::min (
+                num_preroll_frames, remaining_latency_preroll_ - route_latency);
+
+              /* this route will do a partial roll from num_preroll_frames */
+            }
+          else
+            {
+              /* this route will do a normal roll for the complete pre-roll
+               * cycle */
+            }
+        }
+
+      /* offset to start processing at in this cycle */
+      auto preroll_offset = total_frames_to_process - total_frames_remaining;
+      assert (preroll_offset + num_preroll_frames <= total_frames_to_process);
+
+      split_time_nfo.buffer_offset_ = preroll_offset;
+      split_time_nfo.nframes_ = num_preroll_frames;
+      graph_dispatcher_.start_cycle (
+        current_transport_state, split_time_nfo, remaining_latency_preroll_,
+        true, tempo_map_);
+
+      remaining_latency_preroll_ -= num_preroll_frames;
+      total_frames_remaining -= num_preroll_frames;
+
+      if (total_frames_remaining == units::samples (0))
+        break;
+
+    } /* while latency preroll frames remaining */
+
+  /* if we still have frames to process (i.e., if preroll finished completely
+   * and can start processing normally) */
+  if (total_frames_remaining > units::samples (0))
+    {
+      [&] () {
+        auto cur_offset = total_frames_to_process - total_frames_remaining;
+
+        /* split at countin */
+        if (
+          current_transport_state.metronome_countin_frames_remaining ()
+          > units::samples (0))
+          {
+            const auto countin_frames = std::min (
+              total_frames_remaining,
+              current_transport_state.metronome_countin_frames_remaining ()
+                .as<uint32_t> (units::samples));
+
+            /* process for countin frames */
+            split_time_nfo.buffer_offset_ = cur_offset;
+            split_time_nfo.nframes_ = countin_frames;
+            graph_dispatcher_.start_cycle (
+              current_transport_state, split_time_nfo,
+              remaining_latency_preroll_, true, tempo_map_);
+            consume_metronome_countin_samples (countin_frames);
+
+            /* adjust total frames remaining to process and current offset */
+            total_frames_remaining -= countin_frames;
+            if (total_frames_remaining == units::samples (0))
+              return;
+            cur_offset += countin_frames;
+          }
+
+        /* split at preroll */
+        if (
+          current_transport_state.metronome_countin_frames_remaining ()
+            == units::samples (0)
+          && current_transport_state.has_recording_preroll_frames_remaining ())
+          {
+            auto preroll_frames = std::min (
+              total_frames_remaining,
+              current_transport_state.recording_preroll_frames_remaining ()
+                .as<uint32_t> (units::samples));
+
+            /* process for preroll frames */
+            split_time_nfo.buffer_offset_ = cur_offset;
+            split_time_nfo.nframes_ = preroll_frames;
+            graph_dispatcher_.start_cycle (
+              current_transport_state, split_time_nfo,
+              remaining_latency_preroll_, true, tempo_map_);
+            consume_recording_preroll_samples (preroll_frames);
+
+            /* process for remaining frames */
+            cur_offset += preroll_frames;
+            const auto remaining_frames =
+              total_frames_remaining - preroll_frames;
+            if (remaining_frames > units::samples (0))
+              {
+                split_time_nfo.buffer_offset_ = cur_offset;
+                split_time_nfo.nframes_ = remaining_frames;
+                graph_dispatcher_.start_cycle (
+                  current_transport_state, split_time_nfo,
+                  remaining_latency_preroll_, true, tempo_map_);
+              }
+          }
+        else
+          {
+            /* run the cycle for the remaining frames - this will also play the
+             * queued metronome events (if any) */
+            split_time_nfo.buffer_offset_ = cur_offset;
+            split_time_nfo.nframes_ = total_frames_remaining;
+            graph_dispatcher_.start_cycle (
+              current_transport_state, split_time_nfo,
+              remaining_latency_preroll_, true, tempo_map_);
+          }
+      }();
+    }
+
+  /* run post-process code for the number of frames remaining after handling
+   * preroll (if any) */
+  advance_playhead_after_processing (
+    current_transport_state, playhead_processing_guard, total_frames_remaining,
+    total_frames_to_process);
+
+  cycle_.fetch_add (1);
+
+  return ProcessReturnStatus::ProcessCompleted;
+}
+
+void
+AudioEngine::advance_playhead_after_processing (
+  dsp::Transport::TransportSnapshot  &transport_snapshot,
+  const dsp::PlayheadProcessingGuard &playhead_guard,
+  const units::sample_u32_t           roll_nframes,
+  const units::sample_u32_t           nframes) noexcept
+{
+  /* move the playhead if rolling and not pre-rolling */
+  if (
+    transport_snapshot.get_play_state () == dsp::ITransport::PlayState::Rolling
+    && remaining_latency_preroll_ == units::samples (0))
+    {
+      transport_.add_to_playhead_in_audio_thread (
+        transport_snapshot, roll_nframes);
+      transport_snapshot.set_position (
+        transport_.get_playhead_position_in_audio_thread ());
+    }
+}
+
+AudioEngine::OfflineRenderSession::OfflineRenderSession (AudioEngine &engine)
+    : engine_ (engine)
+{
+  engine_.wait_for_pause (state_, false, true);
+  engine_.offline_render_active_.store (true);
+}
+
+AudioEngine::OfflineRenderSession::~OfflineRenderSession ()
+{
+  finish ();
+}
+
+void
+AudioEngine::OfflineRenderSession::finish () noexcept
+{
+  if (finished_.exchange (true))
+    return;
+  engine_.offline_render_active_.store (false);
+  // Each step runs on its own: a failed graph recalculation must not
+  // keep the engine paused
+  try
+    {
+      // FIXME: this is needed because node caches are not per-graph and
+      // they were destroyed via the renderer.
+      engine_.graph_dispatcher_.recalc_graph (false);
+    }
+  catch (...)
+    {
+      z_warning ("graph recalculation after the offline render failed");
+    }
+  try
+    {
+      engine_.resume (state_);
+    }
+  catch (...)
+    {
+      z_critical ("resuming the engine after the offline render failed");
+    }
+}
+
+void
+AudioEngine::execute_function_with_paused_processing_synchronously (
+  const std::function<void ()> &func,
+  bool                          recalculate_graph)
+{
+  if (offline_render_active_.load ())
+    {
+      // This check and the OfflineRenderSession flag transitions both
+      // run on the main thread, so a session cannot begin between the
+      // check and the work below
+      // The pause this function relies on is already in effect for the
+      // render, but the render thread is processing the same instances:
+      // the function must not run until the render finishes
+      z_warning (
+        "an offline render owns processing; refusing the "
+        "paused-processing function call");
+      return;
+    }
+
+  EngineState state{};
+  wait_for_pause (state, false, true);
+
+  // Resume on all paths: a throwing function must not strand the engine in
+  // the paused state
+  try
+    {
+      func ();
+      if (recalculate_graph)
+        {
+          graph_dispatcher_.recalc_graph (false);
+        }
+    }
+  catch (...)
+    {
+      resume (state);
+      throw;
+    }
+  resume (state);
+}
+
+void
+AudioEngine::panic_all ()
+{
+  z_info ("~ midi panic all ~");
+  midi_panic_processor_->request_panic ();
+}
+
+AudioEngine::~AudioEngine ()
+{
+  z_debug ("Destroying audio engine...");
+
+  if (state_ == State::Active)
+    {
+      deactivate ();
+    }
+
+  z_debug ("Audio engine destroyed");
+}
+}

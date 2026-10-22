@@ -1,0 +1,404 @@
+{
+  glib_cond
+  Memcheck:Cond
+  ...
+  obj:/usr/lib/libglib-2.0.so.0.6000.7
+  ...
+}
+
+{
+  recompute_visible_regions
+  Memcheck:Cond
+  fun:recompute_visible_regions_internal
+  ...
+}
+
+{
+  recompute_visible_regions
+  Memcheck:Cond
+  ...
+  fun:cairo_region_create_rectangle
+  ...
+}
+
+{
+  sord
+  Memcheck:Leak
+  fun:malloc
+  fun:sord_*
+  ...
+}
+
+{
+  sord_with_zix
+  Memcheck:Leak
+  fun:malloc
+  fun:zix_*
+  fun:sord_*
+  ...
+}
+
+{
+  lilv
+  Memcheck:Leak
+  fun:malloc
+  fun:lilv_*
+  ...
+}
+
+{
+  g_object_set
+  Memcheck:Leak
+  fun:realloc
+  fun:g_realloc
+  ...
+  fun:g_object_set
+  ...
+}
+
+{
+  g_object_set_malloc
+  Memcheck:Leak
+  fun:malloc
+  fun:g_malloc
+  ...
+  fun:g_object_set
+  ...
+}
+
+{
+  gtk_widget_init_template
+  Memcheck:Leak
+  ...
+  fun:gtk_widget_init_template
+  ...
+}
+
+{
+  gtk_scrolled_window_set_vadj
+  Memcheck:Leak
+  ...
+  fun:g_object_set
+  fun:gtk_scrolled_window_set_vadjustment
+  ...
+}
+
+{
+  gtk_scrolled_window_set_hadj
+  Memcheck:Leak
+  ...
+  fun:g_object_set
+  fun:gtk_scrolled_window_set_hadjustment
+  ...
+}
+
+{
+  pango_pixel_extents
+  Memcheck:Leak
+  ...
+  fun:pango_layout_get_pixel_extents
+  ...
+}
+
+{
+   helm_lv2_instantiation
+   Memcheck:Cond
+   ...
+   obj:*/helm-synth.lv2/helm-synth.so
+   fun:lilv_plugin_instantiate
+}
+
+{
+   helm_lv2_feature
+   Memcheck:Cond
+   ...
+   fun:*juce*
+   fun:*Juce*_LV2_Feature
+}
+
+{
+   helm_addr8
+   Memcheck:Addr8
+   ...
+   fun:*Helm*
+   ...
+   fun:lilv_instance_run
+   ...
+}
+
+{
+   helm_free
+   Memcheck:Free
+   ...
+   obj:*/helm-synth.lv2/helm-synth.so
+   fun:lilv_instance_free
+   ...
+}
+
+{
+   lsp_plugins_cond
+   Memcheck:Cond
+   ...
+   obj:*/lsp-plugins.lv2/lsp-plugins-lv2.so
+   ...
+}
+
+{
+   clone_libgc_cond
+   Memcheck:Cond
+   ...
+   obj:*/libgc.so*
+   ...
+   fun:start_thread
+   fun:clone
+}
+
+{
+   g_thread_self_race
+   Helgrind:Race
+   fun:g_private_get
+   fun:g_thread_self
+   ...
+}
+
+{
+   g_string_new_in_log_race
+   Helgrind:Race
+   ...
+   fun:g_slice_alloc
+   fun:g_string_sized_new
+   fun:log_writer_format_fields
+   fun:log_writer
+   fun:g_log_structured_array
+   fun:g_log_structured_standard
+   ...
+}
+
+{
+   g_string_free_race
+   Helgrind:Race
+   fun:memset
+   fun:g_slice_free1
+   fun:g_string_free
+   ...
+}
+
+{
+   g_string_new_sized_new_race
+   Helgrind:Race
+   ...
+   fun:g_string_sized_new
+   ...
+   fun:log_writer_format_fields
+   fun:log_writer
+   fun:g_log_structured_array
+   fun:g_log_structured_standard
+   ...
+}
+
+{
+   g_string_free_race
+   Helgrind:Race
+   ...
+   fun:g_string_free
+   ...
+   fun:log_writer
+   fun:g_log_structured_array
+   fun:g_log_structured_standard
+   ...
+}
+
+{
+   g_string_insert_len_race
+   Helgrind:Race
+   fun:g_string_insert_len
+   fun:log_writer_format_fields
+   fun:log_writer
+   fun:g_log_structured_array
+   fun:g_log_structured_standard
+   ...
+}
+
+{
+   start_thread_g_private_set_race
+   Helgrind:Race
+   fun:g_private_set
+   obj:*/libglib-2.*
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+
+{
+   g_application_register_race
+   Helgrind:Race
+   ...
+   fun:g_application_register
+   ...
+}
+
+{
+   g_main_context_check_race
+   Helgrind:Race
+   obj:*/libglib-2.0.*
+   fun:g_main_context_check
+   obj:*/libglib-2.0.*
+   fun:g_main_context_iteration
+   obj:*/libglib-2.0.*
+   obj:*/libglib-2.0.*
+   ...
+   fun:start_thread
+   fun:clone
+}
+
+{
+   g_main_context_release_race
+   Helgrind:Race
+   fun:g_main_context_release
+   obj:*/libglib-2.0.*
+   fun:g_main_context_iteration
+   obj:*/libglib-2.0.*
+   obj:*/libglib-2.0.*
+   ...
+   fun:start_thread
+   fun:clone
+}
+
+{
+   g_main_context_check_race
+   Helgrind:Race
+   ...
+   fun:g_main_context_check
+   ...
+}
+
+{
+   g_main_context_dispatch_race
+   Helgrind:Race
+   ...
+   fun:g_main_context_dispatch
+   ...
+}
+
+{
+   g_main_context_prepare_race
+   Helgrind:Race
+   ...
+   fun:g_main_context_prepare
+   ...
+}
+
+{
+   g_main_context_acquire_race
+   Helgrind:Race
+   ...
+   fun:g_main_context_acquire
+   ...
+}
+
+{
+   g_source_attach_race
+   Helgrind:Race
+   ...
+   fun:g_source_attach
+   ...
+}
+
+{
+   log_writer_format_fields_race
+   Helgrind:Race
+   ...
+   fun:strdup_convert
+   fun:log_writer_format_fields
+   ...
+}
+
+{
+   unknown_glib_race1
+   Helgrind:Race
+   obj:*/libglib-2.0.*
+   obj:*/libglib-2.0.*
+   obj:*/valgrind/*
+   fun:start_thread
+   fun:clone
+}
+
+{
+   g_queue_peek_tail_link_race
+   Helgrind:Race
+   fun:g_queue_peek_tail_link
+   ...
+}
+
+{
+   g_queue_pop_tail_race
+   Helgrind:Race
+   fun:g_queue_pop_tail
+   ...
+}
+
+{
+   g_source_ref_race
+   Helgrind:Race
+   fun:g_source_ref
+   ...
+}
+
+{
+   adw_init_race
+   Helgrind:Race
+   ...
+   fun:adw_init
+   ...
+}
+
+{
+   g_vol_monitor4
+   Memcheck:Addr4
+   ...
+   fun:g_dbus_connection_signal_unsubscribe
+   fun:g_dbus_proxy_finalize
+   ...
+   fun:g_object_unref
+   ...
+   fun:g_io_module_load
+   ...
+   fun:g_io_extension_point_get_extensions
+   ...
+   fun:g_volume_monitor_get
+   ...
+}
+
+{
+   g_vol_monitor8
+   Memcheck:Addr8
+   ...
+   fun:g_dbus_connection_signal_unsubscribe
+   fun:g_dbus_proxy_finalize
+   ...
+   fun:g_object_unref
+   ...
+   fun:g_io_module_load
+   ...
+   fun:g_io_extension_point_get_extensions
+   ...
+   fun:g_volume_monitor_get
+   ...
+}
+
+{
+   g_vol_monitor1
+   Memcheck:Addr1
+   ...
+   fun:g_dbus_connection_signal_unsubscribe
+   fun:g_dbus_proxy_finalize
+   ...
+   fun:g_object_unref
+   ...
+   fun:g_io_module_load
+   ...
+   fun:g_io_extension_point_get_extensions
+   ...
+   fun:g_volume_monitor_get
+   ...
+}

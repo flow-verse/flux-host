@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: © 2021, 2024, 2026 Alexandros Theodotou
+# SPDX-License-Identifier: FSFAP
+---
+# prefix with '-' to disable checks
+Checks: >
+  bugprone-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -llvm-include-order,
+  -clang-diagnostic-unused-parameter,
+  -readability-magic-numbers,
+  -readability-identifier-naming,
+  -readability-identifier-length,
+  -readability-braces-around-statements,
+  -readability-uppercase-literal-suffix,
+  -readability-redundant-access-specifiers,
+  -modernize-use-nodiscard
+  -modernize-use-trailing-return-type
+WarningsAsErrors: >
+  bugprone-undelegated-constructor,
+  bugprone-string-constructor,
+  bugprone-forward-declaration-namespace,
+  bugprone-use-after-move,
+  bugprone-unused-raii,
+  modernize-use-override,
+  readability-redundant-declaration,
+  readability-redundant-inline-specifier,
+  readability-use-std-min-max,
+  modernize-use-constraints,
+  cppcoreguidelines-pro-type-member-init,
+  readability-convert-member-functions-to-static,
+  readability-redundant-string-cstr,
+  readability-redundant-casting,
+  readability-implicit-bool-conversion,
+  readability-use-anyofallof,
+  clang-diagnostic-reorder-ctor,
+  clang-analyzer-deadcode.DeadStores,
+  clang-analyzer-cplusplus.Move,
+  cppcoreguidelines-pro-type-static-cast-downcast,
+  cppcoreguidelines-avoid-const-or-ref-data-members,
+  cppcoreguidelines-narrowing-conversions
+FormatStyle: file
+CheckOptions:
+  - key: cert-dcl16-c.NewSuffixes
+    value: 'L;LL;LU;LLU'
+  - key: bugprone-argument-comment.StrictMode
+    value: '1'
+  - key: performance-move-const-arg.CheckTriviallyCopyableMove
+    value: '1'
+  - key: modernize-use-nullptr.NullMacros
+    value: 'NULL'
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+HeaderFilterRegex: '.*(ext|dsp\\/vamp-ports|glibmm).*$'
+...

@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: © 2019 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: GFDL-1.3-invariants-or-later
+#
+# This is part of the Zrythm Manual.
+# See the file index.rst for copying conditions.
+
+_build
+*.swp
+*.log
+*.mo
+_rendered
+*~
+
+# Generated CSS file
+_static/css/custom.css
+_static/css/custom.css.map

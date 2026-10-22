@@ -1,0 +1,622 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <atomic>
+#include <filesystem>
+#include <thread>
+
+#include "plugins/faust/faust_plugin.h"
+#include "plugins/lv2_plugin.h"
+#include "plugins/lv2_plugin_format.h"
+#include "plugins/lv2_world.h"
+#include "plugins/plugin_configuration.h"
+#include "plugins/plugin_descriptor.h"
+#include "plugins/plugin_factory.h"
+#include "plugins/plugin_format_utils.h"
+#include "utils/object_registry.h"
+#include "utils/registry_utils.h"
+
+#include <QTest>
+
+#include "helpers/mock_plugin_host_window.h"
+#include "helpers/scoped_juce_qapplication.h"
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+namespace zrythm::plugins
+{
+
+class PluginFactoryTest
+    : public ::testing::Test,
+      private test_helpers::ScopedJuceQApplication
+{
+protected:
+  void SetUp () override
+  {
+    registry_ = std::make_unique<utils::ObjectRegistry> ();
+    dispatcher_context_ = std::make_unique<QObject> ();
+    main_dispatcher_ = std::make_unique<utils::MainThreadClosureDispatcher> (
+      *dispatcher_context_, std::chrono::milliseconds{ 10 });
+    factory_ = create_factory ();
+  }
+
+  void TearDown () override
+  {
+    factory_.reset ();
+    main_dispatcher_.reset ();
+    dispatcher_context_.reset ();
+    registry_.reset ();
+  }
+
+  // Helper to create a mock async plugin instance function
+  JucePlugin::CreatePluginInstanceAsyncFunc create_mock_async_func ()
+  {
+    return
+      [] (
+        const juce::PluginDescription &, double, int,
+        std::function<void (
+          std::unique_ptr<juce::AudioPluginInstance>, const juce::String &)>
+          callback) {
+        // Simulate async failure for now - can be customized in tests
+        callback (nullptr, "Mock plugin not found");
+      };
+  }
+
+  // Helper to create a mock window provider
+  PluginHostWindowFactory create_mock_window_provider ()
+  {
+    return test_helpers::make_mock_plugin_host_window_factory (
+      std::make_shared<test_helpers::MockPluginHostWindowState> ());
+  }
+
+  // Helper to create a test plugin descriptor
+  std::unique_ptr<PluginDescriptor> create_test_descriptor (
+    Protocol::ProtocolType protocol = Protocol::ProtocolType::Internal)
+  {
+    auto descriptor = std::make_unique<PluginDescriptor> ();
+    descriptor->name_ = u8"Test Plugin";
+    descriptor->author_ = u8"Test Author";
+    descriptor->protocol_ = protocol;
+    descriptor->num_audio_ins_ = 2;
+    descriptor->num_audio_outs_ = 2;
+    descriptor->num_midi_ins_ = 1;
+    descriptor->num_midi_outs_ = 1;
+    return descriptor;
+  }
+
+  // Helper to create a test plugin configuration
+  std::unique_ptr<PluginConfiguration> create_test_configuration (
+    Protocol::ProtocolType protocol = Protocol::ProtocolType::Internal)
+  {
+    auto descriptor = create_test_descriptor (protocol);
+    auto config = std::make_unique<PluginConfiguration> ();
+    config->descr_ = std::move (descriptor);
+    return config;
+  }
+
+  // Helper to create a factory with default dependencies
+  std::unique_ptr<PluginFactory> create_factory ()
+  {
+    auto factory_deps = PluginFactory::CommonFactoryDependencies{
+      .registry = *registry_,
+      .create_plugin_instance_async_func_ = create_mock_async_func (),
+      .sample_rate_provider_ = [this] () { return sample_rate_; },
+      .buffer_size_provider_ = [this] () { return buffer_size_; },
+      .top_level_window_provider_ = create_mock_window_provider (),
+      .main_thread_dispatcher_ = *main_dispatcher_,
+    };
+
+    return std::make_unique<PluginFactory> (std::move (factory_deps));
+  }
+
+  std::unique_ptr<utils::ObjectRegistry>              registry_;
+  std::unique_ptr<QObject>                            dispatcher_context_;
+  std::unique_ptr<utils::MainThreadClosureDispatcher> main_dispatcher_;
+  std::unique_ptr<PluginFactory>                      factory_;
+
+  units::sample_rate_t sample_rate_{ units::sample_rate (48000) };
+  units::sample_u32_t  buffer_size_{ units::samples (1024) };
+};
+
+// Test basic factory construction
+TEST_F (PluginFactoryTest, Construction)
+{
+  EXPECT_NE (factory_, nullptr);
+}
+
+// Test plugin creation for different types using public API
+TEST_F (PluginFactoryTest, CreateDifferentPluginTypes)
+{
+  // Test FaustPlugin creation
+  auto internal_config =
+    create_test_configuration (Protocol::ProtocolType::Internal);
+  auto internal_finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+
+  auto internal_plugin_ref = factory_->create_plugin_from_setting (
+    *internal_config, internal_finish_options);
+  auto * internal_plugin = internal_plugin_ref.get_object_as<FaustPlugin> ();
+  EXPECT_NE (internal_plugin, nullptr);
+  EXPECT_EQ (internal_plugin->get_protocol (), Protocol::ProtocolType::Internal);
+  EXPECT_TRUE (utils::contains (*registry_, internal_plugin->get_uuid ()));
+
+  // Test ClapPlugin creation
+  auto clap_config = create_test_configuration (Protocol::ProtocolType::CLAP);
+  auto clap_finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+
+  auto clap_plugin_ref =
+    factory_->create_plugin_from_setting (*clap_config, clap_finish_options);
+  auto * clap_plugin = clap_plugin_ref.get_object_as<ClapPlugin> ();
+  EXPECT_NE (clap_plugin, nullptr);
+  EXPECT_EQ (clap_plugin->get_protocol (), Protocol::ProtocolType::CLAP);
+  EXPECT_TRUE (utils::contains (*registry_, clap_plugin->get_uuid ()));
+
+  // Test Vst3Plugin creation
+  auto vst3_config = create_test_configuration (Protocol::ProtocolType::VST3);
+  auto vst3_finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+
+  auto vst3_plugin_ref =
+    factory_->create_plugin_from_setting (*vst3_config, vst3_finish_options);
+  auto * vst3_plugin = vst3_plugin_ref.get_object_as<Vst3Plugin> ();
+  EXPECT_NE (vst3_plugin, nullptr);
+  EXPECT_EQ (vst3_plugin->get_protocol (), Protocol::ProtocolType::VST3);
+  EXPECT_TRUE (utils::contains (*registry_, vst3_plugin->get_uuid ()));
+}
+
+// Test create_plugin_from_setting with different protocols
+TEST_F (PluginFactoryTest, CreatePluginFromSetting)
+{
+  // Test Internal protocol
+  auto internal_config =
+    create_test_configuration (Protocol::ProtocolType::Internal);
+  auto internal_finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+
+  auto internal_plugin_ref = factory_->create_plugin_from_setting (
+    *internal_config, internal_finish_options);
+  auto * internal_plugin = internal_plugin_ref.get_object_as<FaustPlugin> ();
+  EXPECT_NE (internal_plugin, nullptr);
+  EXPECT_EQ (internal_plugin->get_protocol (), Protocol::ProtocolType::Internal);
+
+  // Test CLAP protocol
+  auto clap_config = create_test_configuration (Protocol::ProtocolType::CLAP);
+  auto clap_finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+
+  auto clap_plugin_ref =
+    factory_->create_plugin_from_setting (*clap_config, clap_finish_options);
+  auto * clap_plugin = clap_plugin_ref.get_object_as<ClapPlugin> ();
+  EXPECT_NE (clap_plugin, nullptr);
+  EXPECT_EQ (clap_plugin->get_protocol (), Protocol::ProtocolType::CLAP);
+
+  // Test VST3 protocol (should use Vst3Plugin)
+  auto vst3_config = create_test_configuration (Protocol::ProtocolType::VST3);
+  auto vst3_finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+
+  auto vst3_plugin_ref =
+    factory_->create_plugin_from_setting (*vst3_config, vst3_finish_options);
+  auto * vst3_plugin = vst3_plugin_ref.get_object_as<Vst3Plugin> ();
+  EXPECT_NE (vst3_plugin, nullptr);
+  EXPECT_EQ (vst3_plugin->get_protocol (), Protocol::ProtocolType::VST3);
+}
+
+// Test plugin registration in registry
+TEST_F (PluginFactoryTest, PluginRegistration)
+{
+  // Create multiple plugins and verify they're all registered
+  const int                                 num_plugins = 5;
+  std::vector<plugins::PluginUuidReference> plugin_refs;
+
+  for (int i = 0; i < num_plugins; ++i)
+    {
+      auto config = create_test_configuration (Protocol::ProtocolType::Internal);
+      config->descr_->name_ = utils::Utf8String::from_utf8_encoded_string (
+        fmt::format ("Test Plugin {}", i));
+
+      auto finish_options = PluginFactory::InstantiationFinishOptions{
+        .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+        .handler_context_ = nullptr
+      };
+
+      auto ref = factory_->create_plugin_from_setting (*config, finish_options);
+      plugin_refs.push_back (ref);
+    }
+
+  // Verify all plugins are registered
+  for (const auto &ref : plugin_refs)
+    {
+      EXPECT_TRUE (utils::contains (*registry_, ref.id ()));
+
+      // Verify we can retrieve the plugin
+      EXPECT_NE (&utils::get_typed<Plugin> (*registry_, ref.id ()), nullptr);
+    }
+}
+
+// Test that newly created plugins have proper configuration
+TEST_F (PluginFactoryTest, PluginConfigurationApplied)
+{
+  auto config = create_test_configuration (Protocol::ProtocolType::Internal);
+  config->descr_->name_ = u8"Custom Test Plugin";
+  config->descr_->author_ = u8"Custom Author";
+
+  // Use create_plugin_from_setting to apply configuration
+  auto finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+
+  auto plugin_ref =
+    factory_->create_plugin_from_setting (*config, finish_options);
+  auto * plugin = plugin_ref.get_object_as<FaustPlugin> ();
+
+  EXPECT_NE (plugin, nullptr);
+  EXPECT_EQ (plugin->get_name (), u8"Custom Test Plugin");
+  EXPECT_EQ (plugin->get_protocol (), Protocol::ProtocolType::Internal);
+}
+
+// The instantiation-finished handler fires even for a failed instantiation
+TEST_F (PluginFactoryTest, InstantiationFinishedHandlerCalledForFailedLoad)
+{
+  bool                                        handler_called = false;
+  std::optional<plugins::PluginUuidReference> received_ref;
+
+  auto finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ =
+      [&received_ref, &handler_called] (
+        plugins::PluginUuidReference ref, bool, const QString &) {
+        handler_called = true;
+        received_ref = ref;
+      },
+    .handler_context_ = factory_.get ()
+  };
+
+  // Vst3Plugin instantiation is synchronous: loading the nonexistent test
+  // descriptor fails and fires the handler before this returns
+  auto vst3_config = create_test_configuration (Protocol::ProtocolType::VST3);
+  auto vst3_plugin_ref =
+    factory_->create_plugin_from_setting (*vst3_config, finish_options);
+  auto * vst3_plugin = vst3_plugin_ref.get_object_as<Vst3Plugin> ();
+
+  EXPECT_NE (vst3_plugin, nullptr);
+  EXPECT_TRUE (utils::contains (*registry_, vst3_plugin->get_uuid ()));
+
+  EXPECT_TRUE (handler_called);
+  EXPECT_EQ (received_ref->id (), vst3_plugin_ref.id ());
+}
+
+// Test factory dependencies are properly used
+TEST_F (PluginFactoryTest, FactoryDependenciesUsed)
+{
+  auto config = create_test_configuration (Protocol::ProtocolType::Internal);
+  auto finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+
+  auto plugin_ref =
+    factory_->create_plugin_from_setting (*config, finish_options);
+  auto * plugin = plugin_ref.get_object_as<FaustPlugin> ();
+
+  EXPECT_NE (plugin, nullptr);
+
+  // Verify plugin is in registry
+  EXPECT_TRUE (utils::contains (*registry_, plugin->get_uuid ()));
+}
+
+// Test multiple plugins can be created independently
+TEST_F (PluginFactoryTest, MultiplePluginsIndependent)
+{
+  // Create configs for different plugin types
+  auto internal_config =
+    create_test_configuration (Protocol::ProtocolType::Internal);
+  auto clap_config = create_test_configuration (Protocol::ProtocolType::CLAP);
+  auto vst3_config = create_test_configuration (Protocol::ProtocolType::VST3);
+
+  auto finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+
+  // Create plugins
+  auto ref1 =
+    factory_->create_plugin_from_setting (*internal_config, finish_options);
+  auto ref2 =
+    factory_->create_plugin_from_setting (*clap_config, finish_options);
+  auto ref3 =
+    factory_->create_plugin_from_setting (*vst3_config, finish_options);
+
+  // Verify each plugin is independent
+  auto * plugin1 = ref1.get_object_as<FaustPlugin> ();
+  auto * plugin2 = ref2.get_object_as<ClapPlugin> ();
+  auto * plugin3 = ref3.get_object_as<Vst3Plugin> ();
+
+  EXPECT_NE (plugin1, nullptr);
+  EXPECT_NE (plugin2, nullptr);
+  EXPECT_NE (plugin3, nullptr);
+
+  EXPECT_EQ (plugin1->get_protocol (), Protocol::ProtocolType::Internal);
+  EXPECT_EQ (plugin2->get_protocol (), Protocol::ProtocolType::CLAP);
+  EXPECT_EQ (plugin3->get_protocol (), Protocol::ProtocolType::VST3);
+
+  // All should be registered
+  EXPECT_TRUE (utils::contains (*registry_, plugin1->get_uuid ()));
+  EXPECT_TRUE (utils::contains (*registry_, plugin2->get_uuid ()));
+  EXPECT_TRUE (utils::contains (*registry_, plugin3->get_uuid ()));
+
+  // Verify they have different UUIDs
+  EXPECT_NE (plugin1->get_uuid (), plugin2->get_uuid ());
+  EXPECT_NE (plugin2->get_uuid (), plugin3->get_uuid ());
+  EXPECT_NE (plugin1->get_uuid (), plugin3->get_uuid ());
+}
+
+// An LV2 load failure at configuration time reaches the factory's
+// instantiation-finished handler while it is still connected
+TEST_F (PluginFactoryTest, Lv2LoadFailureReachesInstantiationHandler)
+{
+  auto factory_deps = PluginFactory::CommonFactoryDependencies{
+    .registry = *registry_,
+    .create_plugin_instance_async_func_ = create_mock_async_func (),
+    .sample_rate_provider_ = [this] () { return sample_rate_; },
+    .buffer_size_provider_ = [this] () { return buffer_size_; },
+    .top_level_window_provider_ = create_mock_window_provider (),
+    .main_thread_dispatcher_ = *main_dispatcher_,
+    .lv2_world_ =
+      std::make_shared<Lv2World> (Lv2PluginFormat::get_spec_bundles_dir ()),
+  };
+  auto factory = std::make_unique<PluginFactory> (std::move (factory_deps));
+
+  auto config = create_test_configuration (Protocol::ProtocolType::LV2);
+  config->descr_->path_or_id_ =
+    std::filesystem::path ("/nonexistent/bundle.lv2");
+
+  std::atomic<bool> handler_called{ false };
+  std::atomic<bool> handler_successful{ true };
+  auto              finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ =
+      [&handler_called, &handler_successful] (
+        plugins::PluginUuidReference, bool successful, const QString &) {
+        handler_called.store (true);
+        handler_successful.store (successful);
+      },
+    .handler_context_ = nullptr
+  };
+
+  const auto plugin_ref =
+    factory->create_plugin_from_setting (*config, finish_options);
+  EXPECT_TRUE (handler_called.load ());
+  EXPECT_FALSE (handler_successful.load ());
+}
+
+// Test sample rate and buffer size providers
+TEST_F (PluginFactoryTest, SampleRateAndBufferSizeProviders)
+{
+  // Create custom providers
+  constexpr auto custom_sample_rate = units::sample_rate (44100);
+  constexpr auto custom_buffer_size = units::samples (512);
+
+  auto factory_deps = PluginFactory::CommonFactoryDependencies{
+    .registry = *registry_,
+    .create_plugin_instance_async_func_ = create_mock_async_func (),
+    .sample_rate_provider_ =
+      [custom_sample_rate] () { return custom_sample_rate; },
+    .buffer_size_provider_ =
+      [custom_buffer_size] () { return custom_buffer_size; },
+    .top_level_window_provider_ = create_mock_window_provider (),
+    .main_thread_dispatcher_ = *main_dispatcher_,
+    .lv2_world_ =
+      std::make_shared<Lv2World> (Lv2PluginFormat::get_spec_bundles_dir ()),
+  };
+
+  auto custom_factory =
+    std::make_unique<PluginFactory> (std::move (factory_deps));
+
+  // A real fixture bundle: the LV2 backend instantiates eagerly at
+  // configuration time using the providers' values
+  auto lv2_config = create_test_configuration (Protocol::ProtocolType::LV2);
+  lv2_config->descr_->path_or_id_ =
+    std::filesystem::path (TEST_LV2_SEARCH_PATHS) / "eg-amp.lv2";
+  lv2_config->descr_->unique_id_ =
+    get_hash_for_range (std::string ("http://lv2plug.in/plugins/eg-amp"));
+
+  bool handler_called = false;
+  bool handler_successful = false;
+  auto finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ =
+      [&handler_called, &handler_successful] (
+        plugins::PluginUuidReference, bool successful, const QString &) {
+        handler_called = true;
+        handler_successful = successful;
+      },
+    .handler_context_ = nullptr
+  };
+
+  auto plugin_ref =
+    custom_factory->create_plugin_from_setting (*lv2_config, finish_options);
+  auto * plugin = plugin_ref.get_object_as<Lv2Plugin> ();
+
+  EXPECT_NE (plugin, nullptr);
+  EXPECT_TRUE (utils::contains (*registry_, plugin->get_uuid ()));
+  EXPECT_TRUE (handler_called);
+  EXPECT_TRUE (handler_successful);
+  EXPECT_FALSE (plugin->get_all_output_ports ().empty ());
+}
+
+// Test error handling for invalid configurations
+TEST_F (PluginFactoryTest, ErrorHandling)
+{
+  // Test with null descriptor (should not crash)
+  auto invalid_config = std::make_unique<PluginConfiguration> ();
+  // invalid_config->descr_ is null
+
+  auto finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+
+  EXPECT_THROW (
+    factory_->create_plugin_from_setting (*invalid_config, finish_options),
+    std::logic_error);
+}
+
+TEST_F (PluginFactoryTest, MainThreadServicesAreWiredByBuilder)
+{
+  QObject                            context;
+  utils::MainThreadClosureDispatcher dispatcher (
+    context, std::chrono::milliseconds{ 10 });
+  bool latency_recalc_called = false;
+
+  auto factory_deps = PluginFactory::CommonFactoryDependencies{
+    .registry = *registry_,
+    .create_plugin_instance_async_func_ = create_mock_async_func (),
+    .sample_rate_provider_ = [this] () { return sample_rate_; },
+    .buffer_size_provider_ = [this] () { return buffer_size_; },
+    .top_level_window_provider_ = create_mock_window_provider (),
+    .main_thread_dispatcher_ = dispatcher,
+    .main_thread_callbacks_ =
+      PluginHostMainThreadCallbacks{
+                                        .latency_recalc_ =
+          [&latency_recalc_called] { latency_recalc_called = true; },
+                                        .with_paused_processing_ = {} }
+  };
+  auto factory = std::make_unique<PluginFactory> (std::move (factory_deps));
+
+  auto config = create_test_configuration (Protocol::ProtocolType::Internal);
+  auto finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+  auto plugin_ref =
+    factory->create_plugin_from_setting (*config, finish_options);
+  auto * plugin = plugin_ref.get_object_as<FaustPlugin> ();
+  ASSERT_NE (plugin, nullptr);
+
+  plugin->notify_latency_changed ();
+  dispatcher.process_pending ();
+  EXPECT_TRUE (latency_recalc_called);
+}
+
+TEST_F (PluginFactoryTest, LatencyNotifyFromOtherThreadIsPosted)
+{
+  QObject                            context;
+  utils::MainThreadClosureDispatcher dispatcher (
+    context, std::chrono::milliseconds{ 10 });
+  std::atomic<bool> latency_recalc_called{ false };
+
+  auto factory_deps = PluginFactory::CommonFactoryDependencies{
+    .registry = *registry_,
+    .create_plugin_instance_async_func_ = create_mock_async_func (),
+    .sample_rate_provider_ = [this] () { return sample_rate_; },
+    .buffer_size_provider_ = [this] () { return buffer_size_; },
+    .top_level_window_provider_ = create_mock_window_provider (),
+    .main_thread_dispatcher_ = dispatcher,
+    .main_thread_callbacks_ =
+      PluginHostMainThreadCallbacks{
+                                        .latency_recalc_ =
+          [&latency_recalc_called] { latency_recalc_called.store (true); },
+                                        .with_paused_processing_ = {} }
+  };
+  auto factory = std::make_unique<PluginFactory> (std::move (factory_deps));
+
+  auto config = create_test_configuration (Protocol::ProtocolType::Internal);
+  auto finish_options = PluginFactory::InstantiationFinishOptions{
+    .handler_ = [] (plugins::PluginUuidReference, bool, const QString &) { },
+    .handler_context_ = nullptr
+  };
+  auto plugin_ref =
+    factory->create_plugin_from_setting (*config, finish_options);
+  auto * plugin = plugin_ref.get_object_as<FaustPlugin> ();
+  ASSERT_NE (plugin, nullptr);
+
+  {
+    std::jthread poster ([plugin] { plugin->notify_latency_changed (); });
+  }
+
+  EXPECT_TRUE (
+    QTest::qWaitFor (
+      [&latency_recalc_called] { return latency_recalc_called.load (); }, 2000));
+}
+
+TEST_F (PluginFactoryTest, LatencyNotifyInvokesCallback)
+{
+  QObject                            context;
+  utils::MainThreadClosureDispatcher dispatcher (
+    context, std::chrono::seconds{ 10 });
+  bool latency_recalc_called = false;
+
+  auto plugin = std::make_unique<FaustPlugin> (*registry_);
+  plugin->set_main_thread_services (
+    dispatcher,
+    PluginHostMainThreadCallbacks{
+      .latency_recalc_ =
+        [&latency_recalc_called] { latency_recalc_called = true; },
+      .with_paused_processing_ = {} });
+
+  plugin->notify_latency_changed ();
+  dispatcher.process_pending ();
+  EXPECT_TRUE (latency_recalc_called);
+}
+
+TEST_F (PluginFactoryTest, PendingActionRunsWhilePluginIsAlive)
+{
+  QObject                            context;
+  utils::MainThreadClosureDispatcher dispatcher (
+    context, std::chrono::seconds{ 10 });
+  bool action_ran = false;
+
+  auto plugin = std::make_unique<FaustPlugin> (*registry_);
+  plugin->set_main_thread_services (dispatcher, {});
+
+  {
+    std::jthread poster ([&] {
+      EXPECT_TRUE (plugin->post_main_thread_action ([&action_ran] {
+        action_ran = true;
+      }));
+    });
+  }
+
+  dispatcher.process_pending ();
+  EXPECT_TRUE (action_ran);
+}
+
+TEST_F (PluginFactoryTest, PendingActionIsDroppedAfterPluginDeath)
+{
+  QObject                            context;
+  utils::MainThreadClosureDispatcher dispatcher (
+    context, std::chrono::seconds{ 10 });
+  bool action_ran = false;
+
+  auto plugin = std::make_unique<FaustPlugin> (*registry_);
+  plugin->set_main_thread_services (dispatcher, {});
+
+  {
+    std::jthread poster ([&] {
+      EXPECT_TRUE (plugin->post_main_thread_action ([&action_ran] {
+        action_ran = true;
+      }));
+    });
+  }
+
+  // Destroy the plugin before the pump runs
+  plugin.reset ();
+
+  dispatcher.process_pending ();
+  EXPECT_FALSE (action_ran);
+}
+
+} // namespace zrythm::plugins

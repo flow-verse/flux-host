@@ -1,0 +1,261 @@
+// SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "dsp/midi_event.h"
+#include "structure/tracks/piano_roll_track.h"
+
+#include <QObject>
+#include <QSignalSpy>
+
+#include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
+
+namespace zrythm::structure::tracks
+{
+
+class PianoRollTrackTest : public ::testing::Test
+{
+protected:
+  void SetUp () override { track_ = std::make_unique<PianoRollTrackMixin> (); }
+
+  void TearDown () override { track_.reset (); }
+
+  std::unique_ptr<PianoRollTrackMixin> track_;
+};
+
+TEST_F (PianoRollTrackTest, ConstructionAndInitialState)
+{
+  EXPECT_NE (track_, nullptr);
+  EXPECT_EQ (track_->midiChannel (), 1);
+  EXPECT_FALSE (track_->drumMode ());
+  EXPECT_FALSE (track_->passthroughMidiInput ());
+}
+
+TEST_F (PianoRollTrackTest, MidiChannelProperty)
+{
+  // Test getter/setter
+  track_->setMidiChannel (5);
+  EXPECT_EQ (track_->midiChannel (), 5);
+
+  // Test signal emission
+  QSignalSpy spy (track_.get (), &PianoRollTrackMixin::midiChannelChanged);
+  track_->setMidiChannel (10);
+  EXPECT_EQ (spy.count (), 1);
+  EXPECT_EQ (spy.takeFirst ().at (0).toUInt (), 10u);
+
+  // Test no signal on same value
+  spy.clear ();
+  track_->setMidiChannel (10);
+  EXPECT_EQ (spy.count (), 0);
+
+  // Test edge cases
+  track_->setMidiChannel (0);
+  EXPECT_EQ (track_->midiChannel (), 1);
+  track_->setMidiChannel (255);
+  EXPECT_EQ (track_->midiChannel (), 16);
+}
+
+TEST_F (PianoRollTrackTest, DrumModeProperty)
+{
+  // Test getter/setter
+  track_->setDrumMode (true);
+  EXPECT_TRUE (track_->drumMode ());
+
+  // Test signal emission
+  QSignalSpy spy (track_.get (), &PianoRollTrackMixin::drumModeChanged);
+  track_->setDrumMode (false);
+  EXPECT_EQ (spy.count (), 1);
+  EXPECT_FALSE (spy.takeFirst ().at (0).toBool ());
+
+  // Test no signal on same value
+  spy.clear ();
+  track_->setDrumMode (false);
+  EXPECT_EQ (spy.count (), 0);
+}
+
+TEST_F (PianoRollTrackTest, PassthroughMidiInputProperty)
+{
+  // Test getter/setter
+  track_->setPassthroughMidiInput (true);
+  EXPECT_TRUE (track_->passthroughMidiInput ());
+
+  // Test signal emission
+  QSignalSpy spy (
+    track_.get (), &PianoRollTrackMixin::passthroughMidiInputChanged);
+  track_->setPassthroughMidiInput (false);
+  EXPECT_EQ (spy.count (), 1);
+  EXPECT_FALSE (spy.takeFirst ().at (0).toBool ());
+
+  // Test no signal on same value
+  spy.clear ();
+  track_->setPassthroughMidiInput (false);
+  EXPECT_EQ (spy.count (), 0);
+}
+
+TEST_F (PianoRollTrackTest, QmlProperties)
+{
+  // Test QML property access
+  EXPECT_EQ (track_->property ("midiChannel").toUInt (), 1u);
+  EXPECT_EQ (track_->property ("drumMode").toBool (), false);
+  EXPECT_EQ (track_->property ("passthroughMidiInput").toBool (), false);
+
+  // Test setting via QML properties
+  track_->setProperty ("midiChannel", 7);
+  track_->setProperty ("drumMode", true);
+  track_->setProperty ("passthroughMidiInput", true);
+
+  EXPECT_EQ (track_->midiChannel (), 7);
+  EXPECT_TRUE (track_->drumMode ());
+  EXPECT_TRUE (track_->passthroughMidiInput ());
+}
+
+TEST_F (PianoRollTrackTest, MultiplePropertiesChangedSignals)
+{
+  QSignalSpy midi_spy (track_.get (), &PianoRollTrackMixin::midiChannelChanged);
+  QSignalSpy drum_spy (track_.get (), &PianoRollTrackMixin::drumModeChanged);
+  QSignalSpy passthrough_spy (
+    track_.get (), &PianoRollTrackMixin::passthroughMidiInputChanged);
+
+  // Change multiple properties
+  track_->setMidiChannel (5);
+  track_->setDrumMode (true);
+  track_->setPassthroughMidiInput (true);
+
+  EXPECT_EQ (midi_spy.count (), 1);
+  EXPECT_EQ (drum_spy.count (), 1);
+  EXPECT_EQ (passthrough_spy.count (), 1);
+
+  // Change to same values - no signals
+  midi_spy.clear ();
+  drum_spy.clear ();
+  passthrough_spy.clear ();
+
+  track_->setMidiChannel (5);
+  track_->setDrumMode (true);
+  track_->setPassthroughMidiInput (true);
+
+  EXPECT_EQ (midi_spy.count (), 0);
+  EXPECT_EQ (drum_spy.count (), 0);
+  EXPECT_EQ (passthrough_spy.count (), 0);
+}
+
+TEST_F (PianoRollTrackTest, JsonSerializationRoundtrip)
+{
+  // Set all publicly accessible properties
+  track_->setMidiChannel (12);
+  track_->setDrumMode (true);
+  track_->setPassthroughMidiInput (true);
+
+  // Serialize to JSON
+  nlohmann::json j = *track_;
+
+  // Create new track from JSON
+  auto deserialized_track = std::make_unique<PianoRollTrackMixin> ();
+  from_json (j, *deserialized_track);
+
+  // Verify all publicly accessible properties
+  EXPECT_EQ (deserialized_track->midiChannel (), 12);
+  EXPECT_TRUE (deserialized_track->drumMode ());
+  EXPECT_TRUE (deserialized_track->passthroughMidiInput ());
+}
+
+TEST_F (PianoRollTrackTest, JsonSerializationDefaultState)
+{
+  nlohmann::json j = *track_;
+
+  // Create new track from JSON
+  auto deserialized_track = std::make_unique<PianoRollTrackMixin> ();
+  from_json (j, *deserialized_track);
+
+  // Verify default state
+  EXPECT_EQ (deserialized_track->midiChannel (), 1);
+  EXPECT_FALSE (deserialized_track->drumMode ());
+  EXPECT_FALSE (deserialized_track->passthroughMidiInput ());
+}
+
+TEST_F (PianoRollTrackTest, TransformMidiInputsFunc)
+{
+  auto events = dsp::MidiEventBuffer::make_reserved ();
+
+  // Add some MIDI events with different channels
+  {
+    const auto _ev =
+      dsp::midi_event::make_note_on (0, 60, 100, units::samples (0u));
+    events.push_back (_ev.time_, _ev.data ());
+  }
+  {
+    const auto _ev =
+      dsp::midi_event::make_note_on (1, 61, 100, units::samples (1u));
+    events.push_back (_ev.time_, _ev.data ());
+  }
+  {
+    const auto _ev =
+      dsp::midi_event::make_note_on (2, 62, 100, units::samples (2u));
+    events.push_back (_ev.time_, _ev.data ());
+  }
+
+  // Test with passthrough disabled (default) - should change all channels to
+  // track's MIDI channel
+  track_->setMidiChannel (5);
+  track_->setPassthroughMidiInput (false);
+  track_->transform_midi_inputs_func (events);
+
+  // All events should now have channel 4 (0-based)
+  EXPECT_EQ (events.size (), 3);
+  {
+    auto it = events.begin ();
+    EXPECT_EQ ((*it).data ()[0], 0x94);
+    ++it;
+    EXPECT_EQ ((*it).data ()[0], 0x94);
+    ++it;
+    EXPECT_EQ ((*it).data ()[0], 0x94);
+  }
+
+  // Test with passthrough enabled - should leave channels unchanged
+  events.clear ();
+  {
+    const auto _ev =
+      dsp::midi_event::make_note_on (0, 60, 100, units::samples (0u));
+    events.push_back (_ev.time_, _ev.data ());
+  }
+  {
+    const auto _ev =
+      dsp::midi_event::make_note_on (1, 61, 100, units::samples (1u));
+    events.push_back (_ev.time_, _ev.data ());
+  }
+  {
+    const auto _ev =
+      dsp::midi_event::make_note_on (2, 62, 100, units::samples (2u));
+    events.push_back (_ev.time_, _ev.data ());
+  }
+
+  track_->setPassthroughMidiInput (true);
+  track_->transform_midi_inputs_func (events);
+
+  // Channels should remain unchanged
+  EXPECT_EQ (events.size (), 3);
+  {
+    auto it = events.begin ();
+    EXPECT_EQ ((*it).data ()[0], 0x90);
+    ++it;
+    EXPECT_EQ ((*it).data ()[0], 0x91);
+    ++it;
+    EXPECT_EQ ((*it).data ()[0], 0x92);
+  }
+
+  // Test with different track MIDI channel
+  events.clear ();
+  {
+    const auto _ev =
+      dsp::midi_event::make_note_on (0, 60, 100, units::samples (0u));
+    events.push_back (_ev.time_, _ev.data ());
+  }
+
+  track_->setMidiChannel (12);
+  track_->setPassthroughMidiInput (false);
+  track_->transform_midi_inputs_func (events);
+
+  // Event should now have channel 11 (0-based)
+  EXPECT_EQ (events.front ().data ()[0], 0x9B);
+}
+} // namespace zrythm::structure::tracks

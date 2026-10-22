@@ -1,0 +1,21 @@
+{
+  "cmake.useCMakePresets": "always",
+  "cmake.configureOnOpen": false,
+  "cmake.clearOutputBeforeBuild": false,
+  "cmake.configureArgs": ["-DCMAKE_LINKER_TYPE=MOLD", "-DZRYTHM_DEBUG_QML=ON"],
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/conanbuild/Debug",
+    "--clang-tidy",
+    "--enable-config",
+    "--header-insertion=never",
+    "--query-driver=/usr/bin/clang,/usr/bin/clang++,/usr/bin/gcc,/usr/bin/g++"
+  ],
+  "clangd.checkUpdates": true,
+  "clang-tidy.buildPath": "conanbuild/Debug",
+  "qt-qml.qmlls.customArgs": [
+    "-v",
+  ],
+  "[qml]": {
+    "editor.formatOnSave": false,
+  },
+}

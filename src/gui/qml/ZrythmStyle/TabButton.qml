@@ -1,0 +1,90 @@
+// SPDX-FileCopyrightText: © 2024, 2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-FileCopyrightText: Copyright (C) 2017 The Qt Company Ltd.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import QtQuick
+import QtQuick.Controls.impl
+import QtQuick.Templates as T
+import ZrythmStyle
+
+T.TabButton {
+  id: control
+
+  readonly property color iconLabelColor: control.checked ? ZrythmTheme.polarityTextColor(control.palette.highlight) : control.palette.buttonText
+
+  font: ZrythmTheme.semiBoldTextFont
+  implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding)
+  implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
+  opacity: ZrythmTheme.getOpacity(control.enabled, control.Window.active)
+  padding: 4
+  spacing: 4
+
+  background: Rectangle {
+    readonly property bool isBeginning: control.TabBar.index === 0
+    readonly property bool isEnd: control.TabBar.index === control.TabBar.tabBar.count - 1
+    readonly property real radiusToUse: height / 2
+
+    bottomLeftRadius: isBeginning ? radiusToUse : 0
+    bottomRightRadius: isEnd ? radiusToUse : 0
+    color: {
+      let c = control.checked ? control.palette.highlight : control.palette.button;
+      if (control.down)
+        return ZrythmTheme.getStrongerColor(c);
+      else if (control.visualFocus || (control.hovered && !control.checked))
+        return ZrythmTheme.getColorBlendedTowardsContrast(c);
+      return c;
+    }
+    implicitHeight: ZrythmTheme.buttonHeight
+    topLeftRadius: isBeginning ? radiusToUse : 0
+    topRightRadius: isEnd ? radiusToUse : 0
+
+    Behavior on border.color {
+      animation: ZrythmTheme.propertyAnimation
+    }
+    Behavior on border.width {
+      animation: ZrythmTheme.propertyAnimation
+    }
+    Behavior on color {
+      animation: ZrythmTheme.propertyAnimation
+    }
+
+    border {
+      color: control.palette.highlight
+      width: control.visualFocus ? 2 : 0
+    }
+  }
+  contentItem: IconLabel {
+    color: control.iconLabelColor
+    display: control.display
+    font: control.font
+    icon: control.icon
+    mirrored: control.mirrored
+    spacing: control.spacing
+    text: control.text
+  }
+
+  icon {
+    color: iconLabelColor
+    height: ZrythmTheme.buttonHeight - 2 * padding
+    width: ZrythmTheme.buttonHeight - 2 * padding
+  }
+
+  // Switch to this tab when a drag hovers for a brief moment, without
+  // consuming the drop so the drag continues to its final target (e.g. drag
+  // from chord pad to editor).
+  DropArea {
+    anchors.fill: parent
+
+    onDropped: drop => drop.accepted = false
+    onEntered: dragSwitchTimer.start()
+    onExited: dragSwitchTimer.stop()
+
+    Timer {
+      id: dragSwitchTimer
+
+      interval: Qt.styleHints.startDragTime
+
+      onTriggered: control.TabBar.tabBar.currentIndex = control.TabBar.index
+    }
+  }
+}

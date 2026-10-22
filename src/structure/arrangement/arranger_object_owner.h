@@ -1,0 +1,220 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include "dsp/file_audio_source.h"
+#include "structure/arrangement/arranger_object.h"
+#include "structure/arrangement/arranger_object_list_model.h"
+#include "utils/registry_utils.h"
+#include "utils/serialization.h"
+
+#include <nlohmann/json.hpp>
+
+#define DEFINE_ARRANGER_OBJECT_OWNER_QML_PROPERTIES( \
+  ClassType, QPropertyName, ChildType) \
+public: \
+  Q_PROPERTY ( \
+    zrythm::structure::arrangement::ArrangerObjectListModel * QPropertyName \
+      READ QPropertyName CONSTANT) \
+  structure::arrangement::ArrangerObjectListModel * QPropertyName () const \
+  { \
+    return ArrangerObjectOwner<ChildType>::get_model (); \
+  }
+
+namespace zrythm::structure::arrangement
+{
+template <FinalArrangerObjectSubclass ChildT> class ArrangerObjectOwner
+{
+public:
+  using ArrangerObjectChildType = ChildT;
+  template <typename T>
+  explicit ArrangerObjectOwner (utils::IObjectRegistry &registry, T &derived)
+    requires std::derived_from<T, QObject>
+      : registry_ (registry)
+  {
+    if constexpr (std::derived_from<T, ArrangerObject>)
+      {
+        list_model_ = utils::make_qobject_unique<ArrangerObjectListModel> (
+          children_, derived);
+      }
+    else
+      {
+        list_model_ = utils::make_qobject_unique<ArrangerObjectListModel> (
+          children_, &derived);
+      }
+  }
+  virtual ~ArrangerObjectOwner () = default;
+  Q_DISABLE_COPY_MOVE (ArrangerObjectOwner)
+
+  auto &get_children_vector () const
+  {
+    return children_.get<random_access_index> ();
+  }
+
+  auto get_children_view () const
+  {
+    const auto &vec_ref = children_.get<random_access_index> ();
+    return vec_ref
+           | std::views::transform (
+             &ArrangerObjectUuidReference::get_object_as<ChildT>);
+  }
+
+  auto get_sorted_children_view () const
+  {
+    const auto &vec_ref = children_.get<sorted_index> ();
+    return vec_ref
+           | std::views::transform (
+             &ArrangerObjectUuidReference::get_object_as<ChildT>);
+  }
+
+  void add_ticks_to_children (dsp::ContentTick ticks)
+  {
+    for (auto * child : get_children_view ())
+      {
+        child->position ()->addTicks (ticks.asDouble ());
+      }
+  }
+
+  /**
+   * @brief O(1) lookup if an object with the given ID exists.
+   */
+  bool contains_object (const ArrangerObject::Uuid &id) const
+  {
+    return children_.get<uuid_hash_index> ().contains (id);
+  }
+
+  ArrangerObjectListModel * get_model () const { return list_model_.get (); }
+
+  ArrangerObjectUuidReference remove_object (const ArrangerObject::Uuid &id)
+  {
+    auto &container = ArrangerObjectOwner<ChildT>::children_;
+    auto &random_access_idx = container.template get<random_access_index> ();
+    auto  it_to_remove = std::ranges::find (
+      random_access_idx, id, &ArrangerObjectUuidReference::id);
+    if (it_to_remove == random_access_idx.end ())
+      {
+        throw std::runtime_error (
+          fmt::format ("object to remove not found: {}", id));
+      }
+    z_trace ("removing object: {}", id);
+
+    auto       obj_ref = *it_to_remove;
+    const auto remove_idx =
+      std::distance (random_access_idx.begin (), it_to_remove);
+
+    // Remove from model first to handle Qt signals properly
+    ArrangerObjectOwner<ChildT>::list_model_->removeRows (
+      static_cast<int> (remove_idx), 1);
+
+    return obj_ref;
+  }
+
+  void insert_object (const ArrangerObjectUuidReference &obj_ref, int idx)
+  {
+    ArrangerObjectOwner<ChildT>::list_model_->insertObject (obj_ref, idx);
+  }
+
+  void add_object (const ArrangerObjectUuidReference &obj_ref)
+  {
+    ArrangerObjectOwner<ChildT>::insert_object (
+      obj_ref,
+      static_cast<int> (ArrangerObjectOwner<ChildT>::children_.size ()));
+    on_object_added ();
+  }
+
+  /**
+   * @brief Called after an object was added to this owner.
+   *
+   * Does nothing by default; owners override it to maintain invariants
+   * that depend on the presence of children.
+   */
+  virtual void on_object_added () { }
+
+  void clear_objects () { list_model_->clear (); }
+
+  /**
+   * @brief Get the children field name to be used during
+   * serialization/deserialization.
+   *
+   * This is used because a class may derive from this multiple times so make
+   * sure the field name is unique.
+   *
+   * @return std::string
+   */
+  virtual std::string
+  get_field_name_for_serialization (const ChildT *) const = 0;
+
+  friend void init_from (
+    ArrangerObjectOwner       &obj,
+    const ArrangerObjectOwner &other,
+    utils::ObjectCloneType     clone_type)
+  {
+    if (clone_type == utils::ObjectCloneType::NewIdentity)
+      {
+        obj.children_.reserve (other.children_.size ());
+        for (const auto &child : other.get_children_view ())
+          {
+            // FIXME: not ideal to have child-specific logic here...
+            std::optional<ArrangerObjectUuidReference> clone_ref;
+            if constexpr (std::is_same_v<ChildT, AudioSourceObject>)
+              {
+                clone_ref = utils::clone_object (
+                  *child, obj.registry_, utils::ObjectCloneType::NewIdentity,
+                  child->get_tempo_map_wrapper (), obj.registry_,
+                  child->audio_source_ref ());
+              }
+            else if constexpr (ClipObject<ChildT>)
+              {
+                clone_ref = utils::clone_object (
+                  *child, obj.registry_, utils::ObjectCloneType::NewIdentity,
+                  child->get_tempo_map_wrapper (), obj.registry_);
+              }
+            else if constexpr (std::is_same_v<ChildT, Marker>)
+              {
+                clone_ref = utils::clone_object (
+                  *child, obj.registry_, utils::ObjectCloneType::NewIdentity,
+                  child->get_tempo_map_wrapper (), child->markerType ());
+              }
+            else
+              {
+                clone_ref = utils::clone_object (
+                  *child, obj.registry_, utils::ObjectCloneType::NewIdentity,
+                  child->get_tempo_map_wrapper ());
+              }
+
+            if (clone_ref)
+              {
+                obj.add_object (*clone_ref);
+              }
+          }
+      }
+  }
+
+private:
+  friend void to_json (nlohmann::json &j, const ArrangerObjectOwner &obj)
+  {
+    const auto children_field_name =
+      obj.get_field_name_for_serialization (static_cast<ChildT *> (nullptr));
+    j[children_field_name] = obj.children_;
+  }
+  friend void from_json (const nlohmann::json &j, ArrangerObjectOwner &obj)
+  {
+    const auto children_field_name =
+      obj.get_field_name_for_serialization (static_cast<ChildT *> (nullptr));
+    for (const auto &child_json : j.at (children_field_name))
+      {
+        const auto uuid = child_json.template get<ArrangerObjectUuid> ();
+        ArrangerObjectUuidReference obj_ref{ uuid, obj.registry_ };
+        obj.add_object (obj_ref);
+      }
+  }
+
+private:
+  utils::IObjectRegistry                          &registry_;
+  ArrangerObjectRefMultiIndexContainer             children_;
+  utils::QObjectUniquePtr<ArrangerObjectListModel> list_model_;
+
+  BOOST_DESCRIBE_CLASS (ArrangerObjectOwner<ChildT>, (), (), (), (children_))
+};
+} // namespace zrythm::structure::arrangement

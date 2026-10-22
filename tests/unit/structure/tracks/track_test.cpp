@@ -1,0 +1,397 @@
+// SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "dsp/timebase.h"
+#include "structure/tracks/track.h"
+
+#include <QSignalSpy>
+
+#include "unit/structure/tracks/mock_track.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+namespace zrythm::structure::tracks
+{
+
+class TrackTest : public ::testing::Test
+{
+protected:
+  std::unique_ptr<MockTrack> createMockTrack (
+    Track::Type              type,
+    dsp::PortType            in_type = dsp::PortType::Audio,
+    dsp::PortType            out_type = dsp::PortType::Audio,
+    MockTrack::TrackFeatures features =
+      MockTrack::TrackFeatures::Automation | MockTrack::TrackFeatures::Lanes
+      | MockTrack::TrackFeatures::Modulators
+      | MockTrack::TrackFeatures::Recording)
+  {
+    return mock_track_factory_.createMockTrack (
+      type, in_type, out_type, features);
+  }
+
+  MockTrackFactory mock_track_factory_;
+};
+
+TEST_F (TrackTest, TrackTypeEnum)
+{
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::Instrument),
+    static_cast<int> (Track::get_type_for_class<InstrumentTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::Audio),
+    static_cast<int> (Track::get_type_for_class<AudioTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::Midi),
+    static_cast<int> (Track::get_type_for_class<MidiTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::Chord),
+    static_cast<int> (Track::get_type_for_class<ChordTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::Master),
+    static_cast<int> (Track::get_type_for_class<MasterTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::Modulator),
+    static_cast<int> (Track::get_type_for_class<ModulatorTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::Marker),
+    static_cast<int> (Track::get_type_for_class<MarkerTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::Folder),
+    static_cast<int> (Track::get_type_for_class<FolderTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::AudioBus),
+    static_cast<int> (Track::get_type_for_class<AudioBusTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::MidiBus),
+    static_cast<int> (Track::get_type_for_class<MidiBusTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::AudioGroup),
+    static_cast<int> (Track::get_type_for_class<AudioGroupTrack> ()));
+  EXPECT_EQ (
+    static_cast<int> (Track::Type::MidiGroup),
+    static_cast<int> (Track::get_type_for_class<MidiGroupTrack> ()));
+}
+
+TEST_F (TrackTest, TrackTypeProperties)
+{
+  EXPECT_TRUE (Track::type_has_piano_roll (Track::Type::Instrument));
+  EXPECT_TRUE (Track::type_has_piano_roll (Track::Type::Midi));
+  EXPECT_FALSE (Track::type_has_piano_roll (Track::Type::Audio));
+  EXPECT_FALSE (Track::type_has_piano_roll (Track::Type::Master));
+
+  EXPECT_TRUE (Track::type_has_inputs (Track::Type::Instrument));
+  EXPECT_TRUE (Track::type_has_inputs (Track::Type::Midi));
+  EXPECT_TRUE (Track::type_has_inputs (Track::Type::Audio));
+  EXPECT_FALSE (Track::type_has_inputs (Track::Type::Master));
+
+  EXPECT_TRUE (Track::type_can_be_group_target (Track::Type::AudioGroup));
+  EXPECT_TRUE (Track::type_can_be_group_target (Track::Type::MidiGroup));
+  EXPECT_TRUE (Track::type_can_be_group_target (Track::Type::Instrument));
+  EXPECT_TRUE (Track::type_can_be_group_target (Track::Type::Master));
+  EXPECT_FALSE (Track::type_can_be_group_target (Track::Type::Audio));
+}
+
+TEST_F (TrackTest, TrackTypeCompatibility)
+{
+  EXPECT_TRUE (
+    Track::type_can_have_clip_type (
+      Track::Type::Audio, arrangement::ArrangerObject::Type::AudioClip));
+  EXPECT_FALSE (
+    Track::type_can_have_clip_type (
+      Track::Type::Midi, arrangement::ArrangerObject::Type::AudioClip));
+  EXPECT_TRUE (
+    Track::type_can_have_clip_type (
+      Track::Type::Midi, arrangement::ArrangerObject::Type::MidiClip));
+  EXPECT_TRUE (
+    Track::type_can_have_clip_type (
+      Track::Type::Instrument, arrangement::ArrangerObject::Type::MidiClip));
+  EXPECT_TRUE (
+    Track::type_can_have_clip_type (
+      Track::Type::Chord, arrangement::ArrangerObject::Type::ChordClip));
+  EXPECT_TRUE (
+    Track::type_can_have_clip_type (
+      Track::Type::Audio, arrangement::ArrangerObject::Type::AutomationClip));
+
+  EXPECT_TRUE (
+    Track::type_is_compatible_for_moving (
+      Track::Type::Midi, Track::Type::Instrument));
+  EXPECT_TRUE (
+    Track::type_is_compatible_for_moving (
+      Track::Type::Instrument, Track::Type::Midi));
+  EXPECT_TRUE (
+    Track::type_is_compatible_for_moving (
+      Track::Type::Audio, Track::Type::Audio));
+  EXPECT_FALSE (
+    Track::type_is_compatible_for_moving (Track::Type::Audio, Track::Type::Midi));
+}
+
+TEST_F (TrackTest, TrackCopyableAndDeletable)
+{
+  EXPECT_FALSE (Track::type_is_copyable (Track::Type::Master));
+  EXPECT_FALSE (Track::type_is_deletable (Track::Type::Master));
+  EXPECT_FALSE (Track::type_is_copyable (Track::Type::Chord));
+  EXPECT_FALSE (Track::type_is_deletable (Track::Type::Chord));
+  EXPECT_FALSE (Track::type_is_copyable (Track::Type::Modulator));
+  EXPECT_FALSE (Track::type_is_deletable (Track::Type::Modulator));
+  EXPECT_FALSE (Track::type_is_copyable (Track::Type::Marker));
+  EXPECT_FALSE (Track::type_is_deletable (Track::Type::Marker));
+
+  EXPECT_TRUE (Track::type_is_copyable (Track::Type::Audio));
+  EXPECT_TRUE (Track::type_is_deletable (Track::Type::Audio));
+  EXPECT_TRUE (Track::type_is_copyable (Track::Type::Instrument));
+  EXPECT_TRUE (Track::type_is_deletable (Track::Type::Instrument));
+  EXPECT_TRUE (Track::type_is_copyable (Track::Type::Midi));
+  EXPECT_TRUE (Track::type_is_deletable (Track::Type::Midi));
+  EXPECT_TRUE (Track::type_is_copyable (Track::Type::AudioGroup));
+  EXPECT_TRUE (Track::type_is_deletable (Track::Type::AudioGroup));
+  EXPECT_TRUE (Track::type_is_copyable (Track::Type::MidiGroup));
+  EXPECT_TRUE (Track::type_is_deletable (Track::Type::MidiGroup));
+}
+
+TEST_F (TrackTest, QmlProperties)
+{
+  auto track = createMockTrack (Track::Type::Audio);
+
+  // Name
+  EXPECT_EQ (track->name (), QString ());
+  track->setName ("Test Track");
+  EXPECT_EQ (track->name (), QString ("Test Track"));
+
+  // Color
+  EXPECT_EQ (track->color (), QColor (0, 0, 0));
+  track->setColor (QColor (255, 0, 0));
+  EXPECT_EQ (track->color (), QColor (255, 0, 0));
+
+  // Comment
+  EXPECT_EQ (track->comment (), QString ());
+  track->setComment ("Test comment");
+  EXPECT_EQ (track->comment (), QString ("Test comment"));
+
+  // Icon
+  EXPECT_EQ (track->icon (), QString ());
+  track->setIcon ("test-icon");
+  EXPECT_EQ (track->icon (), QString ("test-icon"));
+
+  // Visible
+  EXPECT_TRUE (track->visible ());
+  track->setVisible (false);
+  EXPECT_FALSE (track->visible ());
+
+  // Enabled
+  EXPECT_TRUE (track->enabled ());
+  track->setEnabled (false);
+  EXPECT_FALSE (track->enabled ());
+
+  // Height
+  EXPECT_EQ (track->height (), Track::DEF_HEIGHT);
+  track->setHeight (100.0);
+  EXPECT_EQ (track->height (), 100.0);
+}
+
+TEST_F (TrackTest, TrackComponents)
+{
+  auto track = createMockTrack (Track::Type::Instrument);
+
+  // Channel
+  EXPECT_NE (track->channel (), nullptr);
+
+  // Automation tracklist
+  EXPECT_NE (track->automationTracklist (), nullptr);
+
+  // Modulators
+  EXPECT_NE (track->modulators (), nullptr);
+
+  // Lanes
+  EXPECT_NE (track->lanes (), nullptr);
+}
+
+TEST_F (TrackTest, TrackHeightCalculations)
+{
+  auto track = createMockTrack (Track::Type::Audio);
+
+  // Default height
+  EXPECT_EQ (track->height (), Track::DEF_HEIGHT);
+  EXPECT_EQ (track->fullVisibleHeight (), Track::DEF_HEIGHT);
+
+  // Set height
+  track->setHeight (100.0);
+  EXPECT_EQ (track->height (), 100.0);
+  EXPECT_EQ (track->fullVisibleHeight (), 100.0);
+
+  // Minimum height
+  track->setHeight (Track::MIN_HEIGHT - 1);
+  EXPECT_EQ (track->height (), Track::MIN_HEIGHT);
+}
+
+TEST_F (TrackTest, TrackTypeSpecificBehavior)
+{
+  // Audio track
+  {
+    auto audio_track = createMockTrack (Track::Type::Audio);
+    EXPECT_FALSE (audio_track->has_piano_roll ());
+    EXPECT_TRUE (audio_track->is_audio ());
+    EXPECT_FALSE (audio_track->is_midi ());
+    EXPECT_FALSE (audio_track->is_instrument ());
+  }
+
+  // MIDI track
+  {
+    auto midi_track = createMockTrack (
+      Track::Type::Midi, dsp::PortType::Midi, dsp::PortType::Midi);
+    EXPECT_TRUE (midi_track->has_piano_roll ());
+    EXPECT_FALSE (midi_track->is_audio ());
+    EXPECT_TRUE (midi_track->is_midi ());
+    EXPECT_FALSE (midi_track->is_instrument ());
+  }
+
+  // Instrument track
+  {
+    auto instrument_track = createMockTrack (
+      Track::Type::Instrument, dsp::PortType::Midi, dsp::PortType::Audio);
+    EXPECT_TRUE (instrument_track->has_piano_roll ());
+    EXPECT_FALSE (instrument_track->is_audio ());
+    EXPECT_FALSE (instrument_track->is_midi ());
+    EXPECT_TRUE (instrument_track->is_instrument ());
+  }
+
+  // Master track
+  {
+    auto master_track = createMockTrack (Track::Type::Master);
+    EXPECT_FALSE (master_track->has_piano_roll ());
+    EXPECT_TRUE (master_track->is_master ());
+    EXPECT_FALSE (master_track->is_deletable ());
+    EXPECT_FALSE (master_track->is_copyable ());
+  }
+}
+
+TEST_F (TrackTest, FullVisibleHeightChangesWhenLanesAdded)
+{
+  auto track = createMockTrack (Track::Type::Audio);
+  ASSERT_NE (track->lanes (), nullptr);
+  ASSERT_EQ (track->lanes ()->size (), 2);
+  track->lanes ()->setLanesVisible (true);
+
+  QSignalSpy spy (track.get (), &Track::fullVisibleHeightChanged);
+  const auto initial_height = track->fullVisibleHeight ();
+
+  track->lanes ()->addLane ();
+  EXPECT_EQ (track->lanes ()->size (), 3);
+  EXPECT_GE (spy.count (), 1);
+  EXPECT_GT (track->fullVisibleHeight (), initial_height);
+}
+
+TEST_F (TrackTest, FullVisibleHeightChangesWhenLaneHeightChanges)
+{
+  auto track = createMockTrack (Track::Type::Audio);
+  ASSERT_NE (track->lanes (), nullptr);
+  track->lanes ()->setLanesVisible (true);
+
+  QSignalSpy spy (track.get (), &Track::fullVisibleHeightChanged);
+  const auto initial_height = track->fullVisibleHeight ();
+
+  track->lanes ()->at (0)->setHeight (200.0);
+  EXPECT_GE (spy.count (), 1);
+  EXPECT_GT (track->fullVisibleHeight (), initial_height);
+}
+
+TEST_F (TrackTest, FullVisibleHeightChangesWhenLanesRemoved)
+{
+  auto track = createMockTrack (Track::Type::Audio);
+  ASSERT_NE (track->lanes (), nullptr);
+  track->lanes ()->setLanesVisible (true);
+  track->lanes ()->addLane ();
+  ASSERT_EQ (track->lanes ()->size (), 3);
+
+  QSignalSpy spy (track.get (), &Track::fullVisibleHeightChanged);
+  const auto height_before = track->fullVisibleHeight ();
+
+  track->lanes ()->removeLane (2);
+  EXPECT_EQ (track->lanes ()->size (), 2);
+  EXPECT_GE (spy.count (), 1);
+  EXPECT_LT (track->fullVisibleHeight (), height_before);
+}
+
+TEST_F (TrackTest, FullVisibleHeightChangesWhenLanesVisibilityToggles)
+{
+  auto track = createMockTrack (Track::Type::Audio);
+  ASSERT_NE (track->lanes (), nullptr);
+
+  QSignalSpy spy (track.get (), &Track::fullVisibleHeightChanged);
+
+  track->lanes ()->setLanesVisible (true);
+  EXPECT_GE (spy.count (), 1);
+
+  const auto visible_height = track->fullVisibleHeight ();
+  track->lanes ()->setLanesVisible (false);
+  EXPECT_GE (spy.count (), 2);
+  EXPECT_LT (track->fullVisibleHeight (), visible_height);
+}
+
+// TODO
+#if 0
+TEST_F (TrackTest, PluginDescriptorValidation)
+{
+  // Test plugin descriptor validation for different slot types
+  plugins::PluginDescriptor descriptor;
+
+  // Audio plugin
+  descriptor.num_audio_outs_ = 2;
+  descriptor.num_midi_outs_ = 0;
+  descriptor.num_midi_ins_ = 0;
+
+  EXPECT_TRUE (
+    Track::is_plugin_descriptor_valid_for_slot_type (
+      descriptor, plugins::PluginSlotType::Insert, Track::Type::Audio));
+  EXPECT_FALSE (
+    Track::is_plugin_descriptor_valid_for_slot_type (
+      descriptor, plugins::PluginSlotType::MidiFx, Track::Type::Audio));
+
+  // MIDI plugin
+  descriptor.num_audio_outs_ = 0;
+  descriptor.num_midi_outs_ = 1;
+  descriptor.num_midi_ins_ = 1;
+  descriptor.category_ = plugins::PluginCategory::MIDI;
+
+  EXPECT_TRUE (
+    Track::is_plugin_descriptor_valid_for_slot_type (
+      descriptor, plugins::PluginSlotType::MidiFx, Track::Type::Midi));
+  EXPECT_TRUE (
+    Track::is_plugin_descriptor_valid_for_slot_type (
+      descriptor, plugins::PluginSlotType::Insert, Track::Type::Midi));
+
+  // Instrument plugin
+  descriptor.num_audio_outs_ = 2;
+  descriptor.num_midi_outs_ = 0;
+  descriptor.num_midi_ins_ = 1;
+  descriptor.category_ = plugins::PluginCategory::Instrument;
+
+  EXPECT_TRUE (
+    Track::is_plugin_descriptor_valid_for_slot_type (
+      descriptor, plugins::PluginSlotType::Instrument, Track::Type::Instrument));
+  EXPECT_FALSE (
+    Track::is_plugin_descriptor_valid_for_slot_type (
+      descriptor, plugins::PluginSlotType::Instrument, Track::Type::Audio));
+}
+#endif
+
+TEST_F (TrackTest, TimebaseProviderDefaultsToMusical)
+{
+  auto track = createMockTrack (Track::Type::Midi);
+  ASSERT_NE (track->timebaseProvider (), nullptr);
+  EXPECT_EQ (
+    track->timebaseProvider ()->effectiveTimebase (), dsp::Timebase::Musical);
+}
+
+TEST_F (TrackTest, TimebaseProviderEmitsOnSet)
+{
+  auto       track = createMockTrack (Track::Type::Midi);
+  QSignalSpy spy (
+    track->timebaseProvider (),
+    &dsp::TimebaseProvider::effectiveTimebaseChanged);
+  track->timebaseProvider ()->setOverride (dsp::Timebase::Absolute);
+  EXPECT_EQ (spy.count (), 1);
+  EXPECT_EQ (
+    track->timebaseProvider ()->effectiveTimebase (), dsp::Timebase::Absolute);
+}
+
+} // namespace zrythm::structure::tracks

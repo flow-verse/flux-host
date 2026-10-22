@@ -1,0 +1,177 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "structure/project/port_connection.h"
+#include "utils/serialization.h"
+
+#include <gtest/gtest.h>
+
+namespace zrythm::structure::project
+{
+
+class PortConnectionTest : public ::testing::Test
+{
+protected:
+  const dsp::PortUuid kTestSrcId{ QUuid::createUuid () };
+  const dsp::PortUuid kTestDestId{ QUuid::createUuid () };
+
+  void SetUp () override
+  {
+    // Create default connection for tests
+    default_connection_ = std::make_unique<PortConnection> (
+      kTestSrcId, kTestDestId, 1.0f, false, true);
+  }
+
+  std::unique_ptr<PortConnection> default_connection_;
+};
+
+TEST_F (PortConnectionTest, DefaultConstruction)
+{
+  PortConnection conn;
+  EXPECT_TRUE (conn.src_id_.is_null ());
+  EXPECT_TRUE (conn.dest_id_.is_null ());
+  EXPECT_FLOAT_EQ (conn.multiplier_, 1.0f);
+  EXPECT_FALSE (conn.locked_);
+  EXPECT_TRUE (conn.enabled_);
+  EXPECT_FALSE (conn.bipolar_);
+  EXPECT_TRUE (conn.audio_bus_channel_routing_.is_derived ());
+}
+
+TEST_F (PortConnectionTest, ParameterizedConstruction)
+{
+  const dsp::PortUuid src{ QUuid::createUuid () };
+  const dsp::PortUuid dest{ QUuid::createUuid () };
+  PortConnection      conn (src, dest, 0.5f, true, false);
+
+  EXPECT_EQ (conn.src_id_, src);
+  EXPECT_EQ (conn.dest_id_, dest);
+  EXPECT_FLOAT_EQ (conn.multiplier_, 0.5f);
+  EXPECT_TRUE (conn.locked_);
+  EXPECT_FALSE (conn.enabled_);
+  EXPECT_FALSE (conn.bipolar_);
+  EXPECT_TRUE (conn.audio_bus_channel_routing_.is_derived ());
+}
+
+TEST_F (PortConnectionTest, UpdateMethod)
+{
+  default_connection_->update (0.75f, true, false);
+
+  EXPECT_FLOAT_EQ (default_connection_->multiplier_, 0.75f);
+  EXPECT_TRUE (default_connection_->locked_);
+  EXPECT_FALSE (default_connection_->enabled_);
+}
+
+TEST_F (PortConnectionTest, EqualityOperator)
+{
+  PortConnection same1 (kTestSrcId, kTestDestId, 1.0f, false, true);
+  PortConnection same2 (kTestSrcId, kTestDestId, 1.0f, false, true);
+  PortConnection different (
+    kTestSrcId, dsp::PortUuid{ QUuid::createUuid () }, 0.5f, true, false);
+
+  EXPECT_TRUE (same1 == same2);
+  EXPECT_FALSE (same1 == different);
+  EXPECT_FALSE (same2 == different);
+}
+
+TEST_F (PortConnectionTest, JsonSerialization)
+{
+  default_connection_->set_bipolar (true);
+
+  // Serialize
+  nlohmann::json j;
+  to_json (j, *default_connection_);
+
+  // Deserialize
+  PortConnection deserialized;
+  from_json (j, deserialized);
+
+  // Verify deserialized object
+  EXPECT_EQ (deserialized.src_id_, kTestSrcId);
+  EXPECT_EQ (deserialized.dest_id_, kTestDestId);
+  EXPECT_FLOAT_EQ (deserialized.multiplier_, 1.0f);
+  EXPECT_FALSE (deserialized.locked_);
+  EXPECT_TRUE (deserialized.enabled_);
+  EXPECT_TRUE (deserialized.bipolar_);
+  EXPECT_TRUE (deserialized.audio_bus_channel_routing_.is_derived ());
+}
+
+TEST_F (PortConnectionTest, AudioBusChannelRouting)
+{
+  EXPECT_TRUE (default_connection_->audio_bus_channel_routing_.is_derived ());
+
+  default_connection_->set_audio_bus_channel_routing (
+    {
+      { .source_channel = 2, .destination_channel = 1, .gain = 0.5f }
+  });
+  EXPECT_FALSE (default_connection_->audio_bus_channel_routing_.is_derived ());
+  ASSERT_EQ (
+    default_connection_->audio_bus_channel_routing_.routes ().size (), 1);
+  EXPECT_EQ (
+    default_connection_->audio_bus_channel_routing_.routes ()
+      .front ()
+      .source_channel,
+    2);
+  EXPECT_EQ (
+    default_connection_->audio_bus_channel_routing_.routes ()
+      .front ()
+      .destination_channel,
+    1);
+
+  default_connection_->reset_audio_bus_channel_routing ();
+  EXPECT_TRUE (default_connection_->audio_bus_channel_routing_.is_derived ());
+}
+
+TEST_F (PortConnectionTest, DuplicateAudioBusChannelRoutesRejected)
+{
+  EXPECT_THROW (
+    default_connection_->set_audio_bus_channel_routing (
+      {
+        { .source_channel = 0, .destination_channel = 1 },
+        { .source_channel = 0, .destination_channel = 1 }
+  }),
+    std::invalid_argument);
+}
+
+TEST_F (PortConnectionTest, AudioBusChannelRoutingSurvivesSerialization)
+{
+  default_connection_->set_audio_bus_channel_routing (
+    {
+      { .source_channel = 1, .destination_channel = 0, .gain = 0.25f }
+  });
+
+  nlohmann::json j;
+  to_json (j, *default_connection_);
+  PortConnection deserialized;
+  from_json (j, deserialized);
+
+  EXPECT_EQ (
+    deserialized.audio_bus_channel_routing_,
+    default_connection_->audio_bus_channel_routing_);
+}
+
+TEST_F (PortConnectionTest, CloneBehavior)
+{
+  // Create a modified connection to clone, with every field away from its
+  // default so that a field the clone forgets is visible
+  PortConnection original (kTestSrcId, kTestDestId, 0.8f, true, false);
+  original.set_bipolar (true);
+  original.set_audio_bus_channel_routing (
+    {
+      { .source_channel = 1, .destination_channel = 0, .gain = 0.5f }
+  });
+
+  // Clone it
+  auto clone = utils::clone_unique (original);
+
+  // Verify clone matches original
+  EXPECT_EQ (clone->src_id_, original.src_id_);
+  EXPECT_EQ (clone->dest_id_, original.dest_id_);
+  EXPECT_FLOAT_EQ (clone->multiplier_, original.multiplier_);
+  EXPECT_EQ (clone->locked_, original.locked_);
+  EXPECT_EQ (clone->enabled_, original.enabled_);
+  EXPECT_EQ (clone->bipolar_, original.bipolar_);
+  EXPECT_EQ (
+    clone->audio_bus_channel_routing_, original.audio_bus_channel_routing_);
+}
+
+} // namespace zrythm::structure::project

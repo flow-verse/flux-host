@@ -1,0 +1,158 @@
+// SPDX-FileCopyrightText: © 2019-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include "dsp/file_audio_source.h"
+#include "utils/hash.h"
+#include "utils/units.h"
+
+#include <boost/unordered/concurrent_flat_map.hpp>
+
+namespace zrythm::dsp
+{
+
+/**
+ * @brief A manager for a registry of FileAudioSource inside a project.
+ *
+ * An audio pool is a pool of audio files and their corresponding float arrays
+ * in memory that are referenced by clips.
+ *
+ * Instead of associating audio files with clips, all audio files (and their
+ * edited counterparts after some hard editing like stretching) are saved in
+ * the pool.
+ */
+struct AudioPool final
+{
+public:
+  /**
+   * @brief Returns a path that will be used to manage audio files in.
+   *
+   * @param backup Whether this path is for a backup project (as opposed to the
+   * main project).
+   */
+  using ProjectPoolPathGetter =
+    std::function<std::filesystem::path (bool backup)>;
+  using SampleRateGetter = std::function<units::sample_rate_t ()>;
+
+  AudioPool (
+    utils::IObjectRegistry &registry,
+    ProjectPoolPathGetter   path_getter,
+    SampleRateGetter        sr_getter);
+
+public:
+  /**
+   * Initializes the audio pool after deserialization.
+   *
+   * @throw ZrythmException if an error occurred.
+   */
+  void init_loaded ();
+
+  /**
+   * Duplicates the clip with the given ID and returns the duplicate.
+   *
+   * @param write_file Whether to also write the file.
+   * @return The ID in the pool.
+   *
+   * @throw ZrythmException If the file could not be written.
+   */
+  auto duplicate_clip (const FileAudioSource::Uuid &clip_id, bool write_file)
+    -> FileAudioSourceUuidReference;
+
+  /**
+   * Gets the path of a clip matching @ref name from the pool.
+   *
+   * @param is_backup Whether writing to a backup project.
+   */
+  [[nodiscard]] std::filesystem::path
+  get_clip_path (const dsp::FileAudioSource::Uuid &id, bool is_backup) const;
+
+  /**
+   * Writes the clip to the pool as a wav file.
+   *
+   * @param parts If true, only write new data. @see
+   * FileAudioSource.frames_written.
+   * @param backup Whether writing to a backup project.
+   *
+   * @throw ZrythmException on error.
+   */
+  void write_clip (const FileAudioSource * clip, bool parts, bool backup);
+
+  /**
+   * Removes and frees (and removes the files for) all clips not used by the
+   * project or undo stacks.
+   *
+   * @param backup Whether to remove from backup directory.
+   * @throw ZrythmException If any file could not be removed.
+   */
+  void remove_unused (bool backup);
+
+  /**
+   * Loads the frame buffers of clips currently in use in the project from their
+   * files and frees the buffers of clips not currently in use.
+   *
+   * This should be called whenever there is a relevant change in the project
+   * (eg, object added/removed).
+   *
+   * @throw ZrythmException If any file could not be read.
+   */
+  void reload_clip_frame_bufs ();
+
+  /**
+   * Writes all the clips to disk.
+   *
+   * Used when saving a project elsewhere.
+   *
+   * @param is_backup Whether this is a backup project.
+   *
+   * @throw ZrythmException If any file could not be written.
+   */
+  void write_to_disk (bool is_backup);
+
+  void
+  for_each_clip (std::function<void (dsp::FileAudioSource &)> visitor) const;
+
+private:
+  friend void init_from (
+    AudioPool             &obj,
+    const AudioPool       &other,
+    utils::ObjectCloneType clone_type);
+
+  friend void to_json (nlohmann::json &j, const AudioPool &pool);
+  friend void from_json (const nlohmann::json &j, AudioPool &pool);
+
+private:
+  SampleRateGetter      sample_rate_getter_;
+  ProjectPoolPathGetter project_pool_path_getter_;
+
+  /**
+   * Audio clips.
+   */
+  utils::IObjectRegistry &registry_;
+
+  /** File hashes, used for checking if a clip is already written to the pool so
+   * we can save time by skipping overwriting it. */
+  boost::unordered::concurrent_flat_map<FileAudioSource::Uuid, utils::hash::HashT>
+    last_known_file_hashes_;
+};
+} // namespace zrythm::dsp
+
+// Formatter for AudioPool
+template <>
+struct fmt::formatter<zrythm::dsp::AudioPool> : fmt::formatter<std::string_view>
+{
+  template <typename FormatContext>
+  auto format (const zrythm::dsp::AudioPool &pool, FormatContext &ctx) const
+  {
+    std::stringstream ss;
+    ss << "\nAudio Pool:\n";
+    pool.for_each_clip ([&] (const auto &clip) {
+      auto pool_path = pool.get_clip_path (clip.get_uuid (), false);
+      ss << fmt::format (
+        "[Clip {}] {}: {}\n", clip.get_uuid (), clip.get_name (), pool_path);
+    });
+
+    return fmt::formatter<std::string_view>::format (
+      fmt::format ("{}", ss.str ()), ctx);
+  }
+};

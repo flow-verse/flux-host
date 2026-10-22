@@ -1,0 +1,647 @@
+// SPDX-FileCopyrightText: © 2018-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "structure/tracks/track_all.h"
+#include "structure/tracks/tracklist.h"
+
+namespace zrythm::structure::tracks
+{
+
+Tracklist::Tracklist (utils::IObjectRegistry &registry, QObject * parent)
+    : QObject (parent), registry_ (registry),
+      track_collection_ (
+        utils::make_qobject_unique<TrackCollection> (registry, this)),
+      track_routing_ (utils::make_qobject_unique<TrackRouting> (registry, this)),
+      singleton_tracks_ (utils::make_qobject_unique<SingletonTracks> (this))
+{
+}
+
+// ========================================================================
+// QML Interface
+// ========================================================================
+
+void
+Tracklist::for_each_arranger_object (
+  const std::function<void (arrangement::ArrangerObjectUuidReference)> &visitor)
+  const
+{
+  const auto visit_owner_children = [&] (const auto * owner) {
+    if (owner == nullptr)
+      return;
+    for (const auto &child_ref : owner->get_children_vector ())
+      {
+        visitor (child_ref);
+      }
+  };
+
+  for (const auto &track_ref : collection ()->tracks ())
+    {
+      const auto * track = track_ref.get ();
+
+      // Lane clips (MIDI and audio)
+      if (track->lanes () != nullptr)
+        {
+          for (const auto &lane : track->lanes ()->lanes ())
+            {
+              visit_owner_children (
+                static_cast<const arrangement::ArrangerObjectOwner<
+                  arrangement::MidiClip> *> (lane.get ()));
+              visit_owner_children (
+                static_cast<const arrangement::ArrangerObjectOwner<
+                  arrangement::AudioClip> *> (lane.get ()));
+            }
+        }
+
+      // Chord clips, scale objects and markers (singleton tracks)
+      visit_owner_children (
+        dynamic_cast<const arrangement::ArrangerObjectOwner<
+          arrangement::ChordClip> *> (track));
+      visit_owner_children (
+        dynamic_cast<const arrangement::ArrangerObjectOwner<
+          arrangement::ScaleObject> *> (track));
+      visit_owner_children (
+        dynamic_cast<const arrangement::ArrangerObjectOwner<
+          arrangement::Marker> *> (track));
+
+      // Automation clips
+      if (const auto * atl = track->automationTracklist ())
+        {
+          for (const auto * at : atl->automation_tracks ())
+            {
+              visit_owner_children (at);
+            }
+        }
+    }
+}
+
+Track *
+Tracklist::getTrackForTimelineObject (
+  const arrangement::ArrangerObject * arrangerObject) const
+{
+  switch (arrangerObject->type ())
+    {
+    case arrangement::ArrangerObject::Type::ChordClip:
+      {
+        // Search through chord track for this chord clip
+        auto * chord_track = singleton_tracks_->chordTrack ();
+        if (chord_track != nullptr)
+          {
+            if (
+              chord_track->arrangement::
+                ArrangerObjectOwner<arrangement::ChordClip>::contains_object (
+                  arrangerObject->get_uuid ()))
+              {
+                return chord_track;
+              }
+          }
+        break;
+      }
+    case arrangement::ArrangerObject::Type::ScaleObject:
+      {
+        // Search through chord track for this scale object
+        auto * chord_track = singleton_tracks_->chordTrack ();
+        if (chord_track != nullptr)
+          {
+            if (
+              chord_track->arrangement::
+                ArrangerObjectOwner<arrangement::ScaleObject>::contains_object (
+                  arrangerObject->get_uuid ()))
+              {
+                return chord_track;
+              }
+          }
+        break;
+      }
+    case arrangement::ArrangerObject::Type::Marker:
+      {
+        // Search through marker track for this marker
+        auto * marker_track = singleton_tracks_->markerTrack ();
+        if (marker_track != nullptr)
+          {
+            if (
+              marker_track->arrangement::ArrangerObjectOwner<arrangement::Marker>::
+                contains_object (arrangerObject->get_uuid ()))
+              {
+                return marker_track;
+              }
+          }
+        break;
+      }
+    case arrangement::ArrangerObject::Type::MidiClip:
+    case arrangement::ArrangerObject::Type::AudioClip:
+      {
+        // Search through all tracks with lanes for this clip
+        for (const auto &track_ref : collection ()->tracks ())
+          {
+            auto * track = track_ref.get ();
+            if (track->lanes () != nullptr)
+              {
+                for (auto * lane : track->lanes ()->lanes_view ())
+                  {
+                    // Check MIDI clips
+                    if (
+                      lane->arrangement::ArrangerObjectOwner<
+                        arrangement::MidiClip>::
+                        contains_object (arrangerObject->get_uuid ()))
+                      {
+                        return track;
+                      }
+                    // Check Audio clips
+                    if (
+                      lane->arrangement::ArrangerObjectOwner<
+                        arrangement::AudioClip>::
+                        contains_object (arrangerObject->get_uuid ()))
+                      {
+                        return track;
+                      }
+                  }
+              }
+          }
+        break;
+      }
+    case arrangement::ArrangerObject::Type::AutomationClip:
+      {
+        // Search through all tracks with automation tracklists for this clip
+        for (const auto &track_ref : collection ()->tracks ())
+          {
+            auto * track = track_ref.get ();
+            if (track->automationTracklist () != nullptr)
+              {
+                for (
+                  auto * automation_track :
+                  track->automationTracklist ()->automation_tracks ())
+                  {
+                    if (
+                      automation_track->arrangement::ArrangerObjectOwner<
+                        arrangement::AutomationClip>::
+                        contains_object (arrangerObject->get_uuid ()))
+                      {
+                        return track;
+                      }
+                  }
+              }
+          }
+        break;
+      }
+    case arrangement::ArrangerObject::Type::MidiControlEvent:
+      {
+        // MIDI control events are contained within MIDI clips
+        break;
+      }
+    case arrangement::ArrangerObject::Type::MidiNote:
+      {
+        // Midi notes are contained within MIDI clips, so we need to find
+        // the parent clip first, then find the track that contains that
+        // clip This is more complex and may require additional infrastructure
+        break;
+      }
+    case arrangement::ArrangerObject::Type::ChordObject:
+      {
+        // Chord objects are contained within chord clips, so we need to find
+        // the parent clip first, then find the chord track that contains that
+        // clip This is more complex and may require additional infrastructure
+        break;
+      }
+    case arrangement::ArrangerObject::Type::AutomationPoint:
+      {
+        // Automation points are contained within automation clips, so we need
+        // to find the parent clip first, then find the track that contains
+        // that clip This is more complex and may require additional
+        // infrastructure
+        break;
+      }
+    // Special objects that may not be directly owned by a track
+    case arrangement::ArrangerObject::Type::AudioSourceObject:
+    case arrangement::ArrangerObject::Type::TimeSignatureObject:
+    case arrangement::ArrangerObject::Type::TempoObject:
+      break;
+    }
+  return nullptr;
+}
+
+TrackLane *
+Tracklist::getTrackLaneForObject (
+  const arrangement::ArrangerObject * timelineObject) const
+{
+  switch (timelineObject->type ())
+    {
+    case arrangement::ArrangerObject::Type::MidiClip:
+    case arrangement::ArrangerObject::Type::AudioClip:
+      {
+        // Search through all tracks with lanes for this clip
+        for (const auto &track_ref : collection ()->tracks ())
+          {
+            auto * track = track_ref.get ();
+            if (track->lanes () != nullptr)
+              {
+                for (auto * lane : track->lanes ()->lanes_view ())
+                  {
+                    // Check MIDI clips
+                    if (
+                      lane->arrangement::ArrangerObjectOwner<
+                        arrangement::MidiClip>::
+                        contains_object (timelineObject->get_uuid ()))
+                      {
+                        return lane;
+                      }
+                    // Check Audio clips
+                    if (
+                      lane->arrangement::ArrangerObjectOwner<
+                        arrangement::AudioClip>::
+                        contains_object (timelineObject->get_uuid ()))
+                      {
+                        return lane;
+                      }
+                  }
+              }
+          }
+        break;
+      }
+    default:
+      break;
+    }
+  return nullptr;
+}
+
+AutomationTrack *
+Tracklist::getAutomationTrackForObject (
+  const arrangement::AutomationClip * clip) const
+{
+  for (const auto &track_ref : collection ()->tracks ())
+    {
+      const auto * atl = track_ref.get ()->automationTracklist ();
+      if (atl == nullptr)
+        continue;
+      for (auto * automation_track : atl->automation_tracks ())
+        {
+          if (
+            automation_track->arrangement::ArrangerObjectOwner<
+              arrangement::AutomationClip>::contains_object (clip->get_uuid ()))
+            {
+              return automation_track;
+            }
+        }
+    }
+  return nullptr;
+}
+
+// ========================================================================
+
+std::optional<TrackUuidReference>
+Tracklist::get_track_for_plugin (const plugins::Plugin::Uuid &plugin_id) const
+{
+  for (const auto &tr_ref : collection ()->tracks ())
+    {
+      auto * tr = tr_ref.get ();
+      auto * channel = tr->channel ();
+      if (channel == nullptr)
+        continue;
+
+      std::vector<plugins::PluginUuidReference> plugins;
+      channel->get_plugins (plugins);
+      if (
+        std::ranges::contains (
+          plugins, plugin_id, &plugins::PluginUuidReference::id))
+        {
+          return tr_ref;
+        }
+    }
+
+  return std::nullopt;
+}
+
+void
+Tracklist::mark_track_for_bounce (
+  TrackPtrVariant track_var,
+  bool            bounce,
+  bool            mark_clips,
+  bool            mark_children,
+  bool            mark_parents)
+{
+// TODO
+#if 0
+  std::visit (
+    [&] (auto &&track) {
+      using TrackT = utils::base_type<decltype (track)>;
+      if constexpr (!std::derived_from<TrackT, ChannelTrack>)
+        return;
+
+      z_debug (
+        "marking {} for bounce {}, mark clips {}", track->get_name (), bounce,
+        mark_clips);
+
+      track->bounce_ = bounce;
+
+      if (mark_clips)
+        {
+          if constexpr (std::derived_from<TrackT, LanedTrack>)
+            {
+              for (auto &lane_var : track->lanes_)
+                {
+                  using LaneT = TrackT::TrackLaneType;
+                  auto lane = std::get<LaneT *> (lane_var);
+                  for (auto * clip : lane->get_children_view ())
+                    {
+                      clip->bounce_ = bounce;
+                    }
+                }
+            }
+
+          if constexpr (std::is_same_v<TrackT, ChordTrack>)
+            for (
+              auto * clip :
+              track->arrangement::template ArrangerObjectOwner<
+                arrangement::ChordClip>::get_children_view ())
+              {
+                clip->bounce_ = bounce;
+              }
+        }
+
+      if constexpr (std::derived_from<TrackT, ChannelTrack>)
+        {
+          auto * direct_out = track->channel ()->get_output_track ();
+          if (direct_out && mark_parents)
+            {
+              std::visit (
+                [&] (auto &&direct_out_derived) {
+                  mark_track_for_bounce (
+                    direct_out_derived, bounce, false, false, true);
+                },
+                convert_to_variant_qobj<TrackPtrVariant> (direct_out));
+            }
+        }
+
+      if (mark_children)
+        {
+          if constexpr (std::derived_from<TrackT, GroupTargetTrack>)
+            {
+              for (auto child_id : track->children_)
+                {
+                  if (
+                    auto child_var =
+                      track->get_tracklist ()->get_track (child_id))
+                    {
+                      std::visit (
+                        [&] (auto &&c) {
+                          c->bounce_to_master_ = track->bounce_to_master_;
+                          mark_track_for_bounce (
+                            c, bounce, mark_clips, true, false);
+                        },
+                        *child_var);
+                    }
+                }
+            }
+        }
+    },
+    track_var);
+#endif
+}
+
+bool
+Tracklist::should_be_visible (const Track::Uuid &track_id) const
+{
+  const auto * track = get_track (track_id);
+  if (!track->visible ())
+    return false;
+
+  // Walk the folder parent chain upward. If any ancestor folder is
+  // collapsed, this track should not be visible.
+  auto current_id = track_id;
+  while (auto parent_opt = collection ()->get_folder_parent (current_id))
+    {
+      if (!collection ()->get_track_expanded (*parent_opt))
+        return false;
+      current_id = *parent_opt;
+    }
+
+  return true;
+}
+
+// TODO
+#if 0
+void
+Tracklist::add_folder_parents (
+  const Track::Uuid            &track_id,
+  std::vector<FoldableTrack *> &parents,
+  bool                          prepend) const
+{
+  for (
+    auto * cur_track :
+    collection ()->tracks ()
+      | std::views::transform (&TrackUuidReference::get)
+      | std::views::transform (
+        [] (Track * t) -> FoldableTrack * { return qobject_cast<FoldableTrack *> (t); })
+      | std::views::filter ([] (FoldableTrack * p) { return p != nullptr; }))
+    {
+      // last position covered by the foldable track cur_track
+      int last_covered_pos = cur_track->pos_ + (cur_track->size_ - 1);
+
+      if (cur_track->pos_ < pos_ && pos_ <= last_covered_pos)
+        {
+          if (prepend)
+            {
+              parents.insert (parents.begin (), cur_track);
+            }
+          else
+            {
+              parents.push_back (cur_track);
+            }
+        }
+    }
+}
+
+void
+Tracklist::remove_from_folder_parents (const Track::Uuid &track_id)
+{
+  std::vector<FoldableTrack *> parents;
+  add_folder_parents (track_id, parents, false);
+  for (auto parent : parents)
+    {
+      parent->size_--;
+    }
+}
+#endif
+
+bool
+Tracklist::multiply_track_heights (
+  double multiplier,
+  bool   visible_only,
+  bool   check_only,
+  bool   fire_events)
+{
+  for (const auto &track_ref : collection ()->tracks ())
+    {
+      auto * track = track_ref.get ();
+      if (visible_only && !should_be_visible (track->get_uuid ()))
+        continue;
+
+      if (!track->multiply_heights (multiplier, visible_only, check_only))
+        {
+          return false;
+        }
+    }
+
+  return true;
+}
+
+std::optional<TrackPtrVariant>
+Tracklist::get_visible_track_after_delta (Track::Uuid track_id, int delta) const
+{
+  // TODO
+  return std::nullopt;
+#if 0
+  auto span =
+    get_track_span () | std::views::filter (co::visible_projection);
+  auto current_it =
+    std::ranges::find (span, track_id, TrackSpan::uuid_projection);
+  auto found = std::ranges::next (current_it, delta);
+  if (found == span.end ())
+    return std::nullopt;
+  return *(found);
+#endif
+}
+
+void
+init_from (
+  Tracklist             &obj,
+  const Tracklist       &other,
+  utils::ObjectCloneType clone_type)
+{
+  obj.pinned_tracks_cutoff_ = other.pinned_tracks_cutoff_;
+
+  if (clone_type == utils::ObjectCloneType::Snapshot)
+    {
+      // init_from(*obj.track_collection_, *other.track_collection_);
+    }
+  else if (clone_type == utils::ObjectCloneType::NewIdentity)
+    {
+    }
+}
+
+void
+Tracklist::handle_click (TrackUuid track_id, bool ctrl, bool shift, bool dragged)
+{
+// TODO: move to UI module, this is not Tracklist's concern
+#if 0
+  const auto track_var_opt = get_track (track_id);
+  z_return_if_fail (track_var_opt.has_value ());
+  auto span = get_track_span ();
+  auto selected_tracks =
+    std::views::filter (span, TrackSpan::selected_projection)
+    | std::ranges::to<std::vector> ();
+  bool is_selected = get_selection_manager ().is_selected (track_id);
+  if (is_selected)
+    {
+      if ((ctrl || shift) && !dragged)
+        {
+          if (get_selection_manager ().size () > 1)
+            {
+              get_selection_manager ().remove_from_selection (track_id);
+            }
+        }
+      else
+        {
+          /* do nothing */
+        }
+    }
+  else /* not selected */
+    {
+      if (shift)
+        {
+          if (!selected_tracks.empty ())
+            {
+// TODO
+#  if 0
+              TrackSpan selected_tracks_span{ selected_tracks };
+              auto      highest_var = selected_tracks_span.get_first_track ();
+              auto      lowest_var = selected_tracks_span.get_last_track ();
+              std::visit (
+                [&] (auto &&highest, auto &&lowest) {
+                  const auto track_index = get_track_index (track_id);
+                  const auto highest_index =
+                    get_track_index (highest->get_uuid ());
+                  const auto lowest_index =
+                    get_track_index (lowest->get_uuid ());
+
+                  if (track_index > highest_index)
+                    {
+                      /* select all tracks in between */
+                      auto tracks_to_select = std::span (
+                        tracks_.begin () + highest_index,
+                        tracks_.begin () + track_index);
+                      get_selection_manager ().select_only_these (
+                        tracks_to_select
+                        | std::views::transform ([&] (const auto &id_ref) {
+                            return id_ref.id ();
+                          }));
+                    }
+                  else if (track_index < lowest_index)
+                    {
+                      /* select all tracks in between */
+                      auto tracks_to_select = std::span (
+                        tracks_.begin () + track_index,
+                        tracks_.begin () + lowest_index);
+                      get_selection_manager ().select_only_these (
+                        tracks_to_select
+                        | std::views::transform ([&] (const auto &id_ref) {
+                            return id_ref.id ();
+                          }));
+                    }
+                },
+                highest_var, lowest_var);
+#  endif
+            }
+        }
+      else if (ctrl)
+        {
+          // append to selections
+          get_selection_manager ().append_to_selection (track_id);
+        }
+      else
+        {
+          // select exclusively
+          get_selection_manager ().select_unique (track_id);
+        }
+    }
+#endif
+}
+
+void
+to_json (nlohmann::json &j, const Tracklist &t)
+{
+  j[Tracklist::kPinnedTracksCutoffKey] = t.pinned_tracks_cutoff_;
+  to_json (j, *t.track_collection_);
+  to_json (j, *t.track_routing_);
+}
+
+void
+from_json (const nlohmann::json &j, Tracklist &t)
+{
+  j.at (Tracklist::kPinnedTracksCutoffKey).get_to (t.pinned_tracks_cutoff_);
+  from_json (j, *t.track_collection_);
+  for (const auto &track_ref : t.track_collection_->tracks ())
+    {
+      auto * track = track_ref.get ();
+      if (auto * chord = qobject_cast<ChordTrack *> (track))
+        {
+          t.singletonTracks ()->setChordTrack (chord);
+        }
+      else if (auto * marker = qobject_cast<MarkerTrack *> (track))
+        {
+          t.singletonTracks ()->setMarkerTrack (marker);
+        }
+      else if (auto * master = qobject_cast<MasterTrack *> (track))
+        {
+          t.singletonTracks ()->setMasterTrack (master);
+        }
+      else if (auto * modulator = qobject_cast<ModulatorTrack *> (track))
+        {
+          t.singletonTracks ()->setModulatorTrack (modulator);
+        }
+    }
+  from_json (j, *t.track_routing_);
+  Q_EMIT t.track_routing_->routingChanged ();
+}
+
+Tracklist::~Tracklist () = default;
+}

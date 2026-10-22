@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+include(_common)
+
+[settings]
+compiler=gcc
+compiler.version=16
+compiler.libcxx=libstdc++11
+compiler.cppstd=23
+
+[conf]
+tools.build:compiler_executables={"c": "/usr/bin/gcc", "cpp": "/usr/bin/g++"}
+tools.build:cflags+=["-DQT_NO_INT128", "-pipe"]
+tools.build:cxxflags+=["-DQT_NO_INT128", "-pipe"]

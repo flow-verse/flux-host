@@ -1,0 +1,214 @@
+// SPDX-FileCopyrightText: © 2019-2021, 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include <atomic>
+
+#include "dsp/graph_builder.h"
+#include "dsp/graph_scheduler.h"
+#include "dsp/hardware_audio_interface.h"
+#include "utils/rt_thread_id.h"
+
+#include <juce_audio_basics/juce_audio_basics.h>
+
+namespace zrythm::dsp
+{
+
+/**
+ * @brief The DspGraphDispatcher class manages the processing graph for the
+ * audio engine.
+ *
+ * The DspGraphDispatcher class is responsible for maintaining the active
+ * processing graph, handling graph setup and recalculation, and managing the
+ * processing cycle. It provides methods for starting a new processing cycle,
+ * retrieving the maximum playback latency, and checking the current processing
+ * thread.
+ */
+class DspGraphDispatcher final
+{
+public:
+  using RunFunctionWithEngineLock = std::function<void (std::function<void ()>)>;
+
+  using TerminalProcessablesProvider =
+    std::function<std::span<graph::IProcessable *> ()>;
+
+  DspGraphDispatcher (
+    std::unique_ptr<graph::IGraphBuilder>      graph_builder,
+    TerminalProcessablesProvider               terminal_processables_provider,
+    const IHardwareAudioInterface             &hw_interface,
+    RunFunctionWithEngineLock                  run_function_with_engine_lock,
+    graph::GraphScheduler::RunOnMainThreadFunc run_on_main_thread,
+    std::optional<juce::AudioWorkgroup>        workgroup = std::nullopt);
+
+  /**
+   * Recalculates the process acyclic directed graph.
+   *
+   * Non-reentrant (main thread only): nesting would deadlock on the
+   * non-recursive engine processing lock, so a request arriving while a
+   * recalculation is in progress is never run inline.
+   *
+   * A hard recalculation re-prepares all nodes and then refreshes their
+   * latencies (GraphScheduler::prepare_nodes_for_processing), so it covers
+   * both nested soft and nested hard requests, which are dropped. A soft
+   * recalculation only refreshes latencies, so it cannot stand in for a
+   * rebuild: a hard request arriving during one is run once it finishes.
+   *
+   * Soft re-entrant requests are an expected pattern (e.g., a plugin
+   * reporting a latency change from within activation).
+   *
+   * @param soft If true, only readjusts latencies.
+   */
+  void recalc_graph (bool soft);
+
+  /**
+   * Releases resources held by the current graph nodes and clears the graph.
+   * Unlike recalc_graph(), does not rebuild — safe to call during shutdown
+   * when external state (providers, selections) may already be destroyed.
+   */
+  void clear_graph ();
+
+  /**
+   * Starts a new cycle.
+   *
+   * @param realtime_context Whether this is called in a realtime context.
+   * @param remaining_latency_preroll Remaining number of playback latency
+   * preroll samples for this cycle.
+   * @param tempo_map Tempo map for this cycle.
+   */
+  void start_cycle (
+    const dsp::ITransport       &current_transport_state,
+    dsp::graph::ProcessBlockInfo time_nfo,
+    units::sample_u64_t          remaining_latency_preroll,
+    bool                         realtime_context,
+    const dsp::TempoMap         &tempo_map) noexcept [[clang::nonblocking]];
+
+  /**
+   * Returns the max playback latency of the trigger
+   * nodes.
+   */
+  units::sample_u32_t get_max_route_playback_latency ();
+
+  /**
+   * Returns whether this is the thread that kicks off processing (thread that
+   * calls router_start_cycle()).
+   */
+  [[nodiscard, gnu::hot]] bool is_processing_kickoff_thread () const
+  {
+    return process_kickoff_thread_.has_value ()
+             ? current_thread_id.get () == process_kickoff_thread_.value ()
+             : false;
+  }
+
+  /**
+   * Returns if the current thread is a processing thread.
+   */
+  [[nodiscard, gnu::hot]] bool is_processing_thread () const
+  {
+    /* this is called too often so use this optimization */
+    static thread_local bool have_result = false;
+    static thread_local bool is_processing_thread = false;
+
+    if (have_result) [[likely]]
+      {
+        return is_processing_thread;
+      }
+
+    if (!scheduler_) [[unlikely]]
+      {
+        have_result = false;
+        is_processing_thread = false;
+        return false;
+      }
+
+    if (scheduler_->contains_thread (current_thread_id.get ()))
+      {
+        is_processing_thread = true;
+        have_result = true;
+        return true;
+      }
+
+    have_result = true;
+    is_processing_thread = false;
+    return false;
+  }
+
+  /**
+   * @brief Accessor for currently active trigger nodes.
+   *
+   * @note This must only be called outside of start_cycle() calls (TODO:
+   * enforce this).
+   */
+  auto &current_trigger_nodes () const
+  {
+    return scheduler_->get_nodes ().trigger_nodes_;
+  }
+
+private:
+  /**
+   * @brief Global cycle pre-processing logic that does not require rebuilding
+   * the graph.
+   *
+   * Some examples of what could go here:
+   * 1. live piano-roll keys
+   * 2. transport (start/stop/seek/loop/tempo)
+   * 3. global panic
+   * 4. external clock/time-sig
+   * 5. one-shot automation jumps
+   *
+   * Everything else (plugins, clips, faders) lives inside the graph.
+   *
+   * @param time_nfo Current cycle time info.
+   */
+  void preprocess_at_start_of_cycle (
+    const dsp::graph::ProcessBlockInfo &time_nfo) noexcept
+    [[clang::nonblocking]];
+
+private:
+  std::unique_ptr<graph::IGraphBuilder> graph_builder_;
+  const IHardwareAudioInterface        &hw_interface_;
+  std::optional<juce::AudioWorkgroup>   workgroup_;
+
+  /**
+   * @brief Callable to call in a context where the audio processing engine is
+   * locked.
+   */
+  RunFunctionWithEngineLock run_function_with_engine_lock_;
+
+  /**
+   * @brief Terminal processables to prune the graph to.
+   */
+  TerminalProcessablesProvider terminal_processables_provider_;
+
+  std::unique_ptr<graph::GraphScheduler> scheduler_;
+
+  /** Stored for the currently processing cycle */
+  units::sample_u32_t max_route_playback_latency_;
+
+  /**
+   * @brief Current global latency offset.
+   *
+   * Calculated as [max latency of all routes] minus [remaining latency from
+   * engine].
+   *
+   * TODO: figure out if this is supposed to be used anywhere, or delete.
+   */
+  units::sample_u32_t global_offset_;
+
+  /** ID of the thread that calls kicks off the cycle. */
+  std::optional<unsigned int> process_kickoff_thread_;
+
+  graph::GraphScheduler::RunOnMainThreadFunc run_on_main_thread_;
+
+  /** Whether a recalculation is currently in progress (main thread only). */
+  std::atomic<bool> recalc_in_progress_{ false };
+
+  /** Whether the in-progress recalculation is a soft one. */
+  bool soft_recalc_in_progress_ = false;
+
+  /** Whether a hard recalculation was requested during a soft one, to be
+   * run once it finishes. */
+  bool hard_recalc_pending_ = false;
+};
+
+}

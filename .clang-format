@@ -1,0 +1,158 @@
+# SPDX-FileCopyrightText: © 2022 Alexandros Theodotou
+# SPDX-License-Identifier: FSFAP
+---
+BasedOnStyle: GNU
+---
+Language: Cpp
+AccessModifierOffset: -2
+# FIXME set to BlockIndent on clang-format 14
+AlignAfterOpenBracket: AlwaysBreak
+AlignArrayOfStructures: Left
+AlignConsecutiveMacros: None
+AlignConsecutiveAssignments: false
+AlignConsecutiveBitFields: None
+AlignConsecutiveDeclarations: true
+AlignEscapedNewlines: DontAlign
+AlignOperands: Align
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: true
+AllowAllConstructorInitializersOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLambdasOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterDefinitionReturnType: All
+AlwaysBreakAfterReturnType: TopLevel
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations: MultiLine
+BinPackArguments: true
+BinPackParameters: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterObjCDeclaration: true
+  AfterStruct: true
+  AfterUnion: true
+  # This is often beneficial to be on a single line
+  AfterExternBlock: false
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: true
+  IndentBraces: true
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeConceptDeclarations: true
+BreakBeforeInheritanceComma: false
+BreakInheritanceList: BeforeColon
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializersBeforeComma: false
+BreakConstructorInitializers: BeforeColon
+BreakStringLiterals: false
+ContinuationIndentWidth: 2
+ColumnLimit: 80
+CommentPragmas: '^ SPDX-FileCopyrightText:|^ IWYU pragma:'
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ConstructorInitializerIndentWidth: 4
+Cpp11BracedListStyle: false
+DeriveLineEnding: true
+DerivePointerAlignment: false
+DisableFormat: false
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: LogicalBlock
+FixNamespaceComments: false
+ForEachMacros:
+  - LILV_FOREACH
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^"(zrythm-|zrythm-test-)config\.h"$'
+    Priority:        -10
+    CaseSensitive:   true
+  - Regex:           '^<(windows|shlobj).h>$'
+    Priority:        -6
+    CaseSensitive:   false
+  # C++ standard headers
+  - Regex:           '<([a-z_])+>'
+    Priority:        -4
+    CaseSensitive:   true
+  - Regex:           '^<(assert|errno|inttypes|signal|cstring|cstd.+|sys/.+|cmath|cfloat)\.h>$'
+    Priority:        -2
+    CaseSensitive:   true
+  # Must be included before other headers that include fmt/format.h to avoid compilation errors
+  - Regex:           '^"utils/format_qt\.h"$'
+    Priority:        1
+    CaseSensitive:   true
+  # Must be included before specific headers (don't know exactly which, but related to project.h)
+  - Regex:           '^<fmt/std.h>$'
+    Priority:        1
+    CaseSensitive:   true
+  - Regex:           '^"((actions|commands|controllers|dsp|engine|gui|plugins|structure|undo|utils)/.*|zrythm\.h|zrythm_app\.h|project.*\.h)'
+    Priority:        3
+    CaseSensitive:   true
+  - Regex:           '^<(Q|qqml).*>$'
+    Priority:        100
+  - Regex:           '^"(tests|helpers)/.*"$'
+    Priority:        300
+  - Regex:           '.*'
+    Priority:        400
+# don't use main includes
+IncludeIsMainRegex: '^$'
+IndentAccessModifiers: false
+IndentCaseBlocks: false
+IndentCaseLabels: false
+IndentExternBlock: AfterExternBlock
+IndentGotoLabels: false
+IndentPPDirectives: AfterHash
+IndentWidth: 2
+IndentWrappedFunctionNames: false
+MaxEmptyLinesToKeep: 1
+PenaltyBreakAssignment: 30
+PenaltyBreakBeforeFirstCallParameter: 20
+PenaltyBreakComment: 300
+PenaltyBreakOpenParenthesis: 40
+# TODO clang format 18
+#PenaltyBreakScopeResolution: 10000
+PenaltyBreakString: 1000
+PenaltyExcessCharacter: 120
+PenaltyIndentedWhitespace: 100
+PenaltyReturnTypeOnItsOwnLine: 1
+PointerAlignment: Middle
+ReferenceAlignment: Right
+ReflowComments: true
+SpaceAfterCStyleCast: true
+SpaceAfterLogicalNot: false
+SpaceAroundPointerQualifiers: Both
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeParens: Always
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: true
+SpaceInEmptyParentheses: false
+SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
+SpacesInContainerLiterals: true
+SpacesInLineCommentPrefix:
+  Minimum: 1
+  Maximum: -1
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+Standard: c++20
+StatementMacros: []
+TabWidth: 2
+TypenameMacros: []
+UseTab: Never
+WhitespaceSensitiveMacros:
+  - G_DEFINE_QUARK
+...

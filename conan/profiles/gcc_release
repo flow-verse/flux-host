@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+include(_gcc)
+include(_qt_common)
+
+[settings]
+arch=x86_64
+os=Linux
+build_type=Release
+compiler.march=AVX
+
+[conf]
+tools.build:cflags+=["-march=x86-64-v3", "-mtune=generic"]
+tools.build:cxxflags+=["-march=x86-64-v3", "-mtune=generic"]

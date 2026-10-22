@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+[settings]
+compiler.sanitizer=Realtime
+
+[conf]
+qt/*:tools.build.cross_building:cross_build=True
+tools.build:cflags+=["-fsanitize=realtime", "-fno-omit-frame-pointer"]
+tools.build:cxxflags+=["-fsanitize=realtime", "-fno-omit-frame-pointer"]
+tools.build:exelinkflags+=["-fsanitize=realtime"]
+tools.build:sharedlinkflags+=["-fsanitize=realtime"]
+
+[buildenv]
+RTSAN_OPTIONS=halt_on_error=0

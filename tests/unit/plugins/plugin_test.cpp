@@ -1,0 +1,953 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <limits>
+
+#include "plugins/plugin.h"
+#include "utils/exceptions.h"
+#include "utils/object_registry.h"
+#include "utils/registry_utils.h"
+
+#include <QSignalSpy>
+#include <QTest>
+
+#include "helpers/scoped_qcoreapplication.h"
+
+#include "unit/dsp/graph_helpers.h"
+#include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
+
+namespace zrythm::plugins
+{
+
+class TestPlugin : public Plugin
+{
+public:
+  TestPlugin (utils::IObjectRegistry &registry, QObject * parent = nullptr)
+      : Plugin (registry, parent)
+  {
+    auto bypass_ref = generate_default_bypass_param ();
+    add_parameter (bypass_ref);
+    set_bypass_id (bypass_ref.id ());
+    auto gain_ref = generate_default_gain_param ();
+    add_parameter (gain_ref);
+    gain_id_ = gain_ref.id ();
+  }
+
+  void set_instantiation_failed (bool failed)
+  {
+    instantiation_failed_ = failed;
+  }
+
+  void
+  trigger_instantiation_finished (bool successful, const QString &error = {})
+  {
+    Q_EMIT instantiationFinished (successful, error);
+  }
+
+  void prepare_plugin_for_processing (
+    units::sample_rate_t sample_rate,
+    units::sample_u32_t  max_block_length) override
+  {
+    prepare_called_ = true;
+    last_sample_rate_ = sample_rate;
+    last_max_block_length_ = max_block_length;
+  }
+
+  void process_impl (
+    dsp::graph::ProcessBlockInfo time_info,
+    const dsp::ITransport &,
+    const dsp::TempoMap &) noexcept override
+  {
+    process_called_ = true;
+    last_time_info_ = time_info;
+  }
+
+  units::sample_u32_t get_single_playback_latency () const override
+  {
+    return units::samples (384);
+  }
+
+  std::string save_state_impl () const override
+  {
+    if (return_empty_state_)
+      return {};
+    return std::to_string (save_count_++);
+  }
+  bool load_state_impl (const std::string &state) override
+  {
+    loaded_states_.push_back (state);
+    return true;
+  }
+
+  std::span<const PresetEntry> presetEntries () const override
+  {
+    return presets_;
+  }
+
+  bool apply_preset_impl (const PresetId &id) override
+  {
+    applied_presets_.push_back (id);
+    if (report_backend_change_during_apply_)
+      {
+        // Simulates a plugin reporting a preset load and then failing
+        // the load it was asked to perform
+        update_selected_preset_from_backend (10);
+      }
+    return !fail_preset_apply_;
+  }
+
+  /** Simulates the plugin itself switching presets (e.g. from its own UI). */
+  void simulate_backend_preset_change (PresetId id)
+  {
+    update_selected_preset_from_backend (std::move (id));
+  }
+
+  /** Simulates the user editing a parameter while a preset is selected. */
+  void simulate_user_edit () { set_preset_dirty (true); }
+
+  /** Simulates the backend rebuilding its preset list in place. */
+  void simulate_preset_list_change () { notify_presets_rebuilt (); }
+
+  // Durable ids deliberately differ from list positions (and one is a
+  // string) to exercise id-based selection
+  std::vector<PresetEntry> presets_{
+    { QStringLiteral ("Init"),   QStringLiteral ("Factory"), 0  },
+    { QStringLiteral ("Bright"), QStringLiteral ("Factory"), 1  },
+    { QStringLiteral ("Warm"),   QStringLiteral ("Factory"), 2  },
+    { QStringLiteral ("Dark"),   QStringLiteral ("Factory"), 3  },
+    { QStringLiteral ("Lead"),   QStringLiteral ("User"),    10 },
+    { QStringLiteral ("Pad"),    QStringLiteral ("User"),    11 },
+    { QStringLiteral ("Custom"), QStringLiteral ("User"),
+     QStringLiteral ("ext:1")                                   },
+  };
+  std::vector<PresetId> applied_presets_;
+
+  /** Makes apply_preset_impl report failure (simulates a refused load). */
+  bool fail_preset_apply_ = false;
+
+  /** Makes apply_preset_impl report a backend preset change before
+   * finishing. */
+  bool report_backend_change_during_apply_ = false;
+
+  mutable int              save_count_ = 0;
+  bool                     return_empty_state_ = false;
+  std::vector<std::string> loaded_states_;
+
+  bool                         prepare_called_ = false;
+  bool                         process_called_ = false;
+  units::sample_rate_t         last_sample_rate_;
+  units::sample_u32_t          last_max_block_length_;
+  dsp::graph::ProcessBlockInfo last_time_info_ = dsp::graph::ProcessBlockInfo::
+    from_position_and_nframes (units::samples (0), units::samples (0));
+};
+
+class PluginTest : public ::testing::Test, public test_helpers::ScopedQCoreApplication
+{
+protected:
+  void SetUp () override
+  {
+    registry_ = std::make_unique<utils::ObjectRegistry> ();
+
+    plugin_ = std::make_unique<TestPlugin> (*registry_);
+
+    // Set up mock transport
+    mock_transport_ = std::make_unique<dsp::graph_test::MockTransport> ();
+    tempo_map_ = std::make_unique<dsp::TempoMap> (sample_rate_);
+  }
+
+  void TearDown () override
+  {
+    if (plugin_)
+      {
+        plugin_->release_resources ();
+      }
+  }
+
+  std::unique_ptr<utils::ObjectRegistry> registry_;
+  units::sample_rate_t        sample_rate_{ units::sample_rate (48000) };
+  units::sample_u32_t         max_block_length_{ units::samples (1024) };
+  std::unique_ptr<TestPlugin> plugin_;
+  std::unique_ptr<dsp::graph_test::MockTransport> mock_transport_;
+  std::unique_ptr<dsp::TempoMap>                  tempo_map_;
+};
+
+TEST_F (PluginTest, BypassedPropertyReflectsBypassParameter)
+{
+  auto * bypass = plugin_->bypassParameter ();
+  ASSERT_NE (bypass, nullptr);
+  ASSERT_FALSE (plugin_->bypassed ());
+
+  plugin_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  int  bypassed_change_count = 0;
+  bool last_bypassed = false;
+  QObject::connect (
+    plugin_.get (), &Plugin::bypassedChanged, plugin_.get (),
+    [&] (bool bypassed) {
+      last_bypassed = bypassed;
+      ++bypassed_change_count;
+    });
+
+  // The property write API updates the bypass parameter
+  plugin_->setBypassed (true);
+  EXPECT_TRUE (bypass->range ().isToggled (bypass->baseValue ()));
+  EXPECT_EQ (bypassed_change_count, 1);
+
+  // External parameter writes (automation, undo, plugin GUI) are
+  // re-emitted as bypassedChanged for QML bindings
+  bypass->setBaseValue (0.f);
+  EXPECT_FALSE (plugin_->bypassed ());
+  EXPECT_EQ (bypassed_change_count, 2);
+  EXPECT_FALSE (last_bypassed);
+
+  bypass->setBaseValue (1.f);
+  EXPECT_TRUE (plugin_->bypassed ());
+  EXPECT_EQ (bypassed_change_count, 3);
+  EXPECT_TRUE (last_bypassed);
+}
+
+// bypassedChanged must fire when the bypass parameter changes even before
+// the plugin is prepared for processing (e.g. right after project load),
+// or QML bypassed bindings go stale
+TEST_F (PluginTest, BypassedChangedEmittedBeforePrepare)
+{
+  int bypassed_change_count = 0;
+  QObject::connect (
+    plugin_.get (), &Plugin::bypassedChanged, plugin_.get (),
+    [&] (bool) { ++bypassed_change_count; });
+
+  plugin_->setBypassed (true);
+  EXPECT_EQ (bypassed_change_count, 1);
+}
+
+TEST_F (PluginTest, AbSwitchSwapsStateSlots)
+{
+  EXPECT_FALSE (plugin_->abActive ());
+
+  // Empty state is a no-op
+  plugin_->return_empty_state_ = true;
+  plugin_->switchAbState ();
+  EXPECT_FALSE (plugin_->abActive ());
+  EXPECT_TRUE (plugin_->loaded_states_.empty ());
+
+  plugin_->return_empty_state_ = false;
+
+  // First switch: B becomes active, initialized as a copy of the current
+  // state without a load
+  plugin_->switchAbState ();
+  EXPECT_TRUE (plugin_->abActive ());
+  EXPECT_TRUE (plugin_->loaded_states_.empty ());
+
+  // Second switch: saves B, restores A
+  plugin_->switchAbState ();
+  EXPECT_FALSE (plugin_->abActive ());
+  ASSERT_EQ (plugin_->loaded_states_.size (), 1);
+  EXPECT_EQ (plugin_->loaded_states_.at (0), "0");
+
+  // Third switch: saves A, restores B
+  plugin_->switchAbState ();
+  EXPECT_TRUE (plugin_->abActive ());
+  ASSERT_EQ (plugin_->loaded_states_.size (), 2);
+  EXPECT_EQ (plugin_->loaded_states_.at (1), "1");
+}
+
+TEST_F (PluginTest, ConstructionAndBasicProperties)
+{
+  EXPECT_EQ (plugin_->get_node_name (), u8"Plugin");
+  EXPECT_EQ (plugin_->get_all_input_ports ().size (), 0);
+  EXPECT_EQ (plugin_->get_all_output_ports ().size (), 0);
+  EXPECT_EQ (plugin_->get_parameters ().size (), 2);
+  EXPECT_FALSE (plugin_->uiVisible ());
+  EXPECT_EQ (plugin_->presetIndex (), -1);
+  EXPECT_FALSE (plugin_->presetDirty ());
+}
+
+TEST_F (PluginTest, InstantiationErrorRetainedUntilSuccess)
+{
+  plugin_->trigger_instantiation_finished (false, QStringLiteral ("boom"));
+  EXPECT_EQ (
+    plugin_->instantiationStatus (), Plugin::InstantiationStatus::Failed);
+  EXPECT_EQ (plugin_->instantiationError (), QStringLiteral ("boom"));
+
+  plugin_->trigger_instantiation_finished (true, {});
+  EXPECT_EQ (
+    plugin_->instantiationStatus (), Plugin::InstantiationStatus::Successful);
+  EXPECT_TRUE (plugin_->instantiationError ().isEmpty ());
+}
+
+TEST_F (PluginTest, SetConfiguration)
+{
+  // Create a plugin descriptor
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+
+  // Create configuration
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+
+  // Set configuration
+  QSignalSpy spy (plugin_.get (), &Plugin::configurationChanged);
+  plugin_->set_configuration (config);
+
+  EXPECT_EQ (spy.count (), 1);
+  EXPECT_EQ (plugin_->get_name (), u8"Test Plugin");
+  EXPECT_EQ (plugin_->get_protocol (), Protocol::ProtocolType::Internal);
+}
+
+TEST_F (PluginTest, PresetSelection)
+{
+  QSignalSpy spy (plugin_.get (), &Plugin::presetIndexChanged);
+
+  // Selecting an entry applies its durable id, which is not necessarily
+  // the list position
+  plugin_->setPresetIndex (5);
+  EXPECT_EQ (plugin_->presetIndex (), 5);
+  ASSERT_EQ (plugin_->applied_presets_.size (), 1);
+  EXPECT_EQ (std::get<int> (plugin_->applied_presets_.at (0)), 11);
+  EXPECT_EQ (spy.count (), 1);
+  EXPECT_EQ (spy.takeFirst ().at (0).toInt (), 5);
+
+  // Selecting the same entry again re-applies it (revert) without
+  // re-emitting the change signal
+  plugin_->setPresetIndex (5);
+  EXPECT_EQ (plugin_->presetIndex (), 5);
+  EXPECT_EQ (spy.count (), 0);
+  EXPECT_EQ (plugin_->applied_presets_.size (), 2);
+
+  // Out-of-range indices are refused
+  plugin_->setPresetIndex (42);
+  EXPECT_EQ (plugin_->presetIndex (), 5);
+  EXPECT_EQ (spy.count (), 0);
+  EXPECT_EQ (plugin_->applied_presets_.size (), 2);
+
+  // -1 clears the selection
+  plugin_->setPresetIndex (-1);
+  EXPECT_EQ (plugin_->presetIndex (), -1);
+  EXPECT_EQ (spy.count (), 1);
+  EXPECT_EQ (spy.takeFirst ().at (0).toInt (), -1);
+}
+
+TEST_F (PluginTest, FailedPresetApplyKeepsPreviousSelection)
+{
+  QSignalSpy spy (plugin_.get (), &Plugin::presetIndexChanged);
+
+  plugin_->setPresetIndex (0);
+  EXPECT_EQ (plugin_->presetIndex (), 0);
+  EXPECT_EQ (spy.count (), 1);
+  spy.clear ();
+
+  plugin_->fail_preset_apply_ = true;
+  plugin_->setPresetIndex (2);
+
+  // The failed preset was attempted but the selection snapped back to
+  // the previously applied one; the resolved index never changed, so
+  // no change signal fires
+  ASSERT_EQ (plugin_->applied_presets_.size (), 2);
+  EXPECT_EQ (std::get<int> (plugin_->applied_presets_.at (1)), 2);
+  EXPECT_EQ (plugin_->presetIndex (), 0);
+  EXPECT_EQ (spy.count (), 0);
+}
+
+TEST_F (PluginTest, FailedPresetApplyWithBackendReportRestoresSelection)
+{
+  QSignalSpy spy (plugin_.get (), &Plugin::presetIndexChanged);
+
+  plugin_->setPresetIndex (0);
+  ASSERT_EQ (plugin_->presetIndex (), 0);
+  spy.clear ();
+
+  plugin_->fail_preset_apply_ = true;
+  plugin_->report_backend_change_during_apply_ = true;
+  plugin_->setPresetIndex (2);
+
+  // The backend report moved the selection to "Lead" (row 4) and
+  // emitted for it, but the failed apply snaps the selection back to
+  // the previously applied preset, with a corrective emission
+  EXPECT_EQ (plugin_->presetIndex (), 0);
+  ASSERT_EQ (spy.count (), 2);
+  EXPECT_EQ (spy.takeFirst ().at (0).toInt (), 4);
+  EXPECT_EQ (spy.takeFirst ().at (0).toInt (), 0);
+}
+
+TEST_F (PluginTest, PresetDirty)
+{
+  QSignalSpy dirty_spy (plugin_.get (), &Plugin::presetDirtyChanged);
+
+  // Dirty requires a selection
+  plugin_->simulate_user_edit ();
+  EXPECT_FALSE (plugin_->presetDirty ());
+  EXPECT_EQ (dirty_spy.count (), 0);
+
+  plugin_->setPresetIndex (0);
+  EXPECT_FALSE (plugin_->presetDirty ());
+
+  // Editing the state marks the preset dirty
+  plugin_->simulate_user_edit ();
+  EXPECT_TRUE (plugin_->presetDirty ());
+  EXPECT_EQ (dirty_spy.count (), 1);
+  EXPECT_EQ (dirty_spy.takeFirst ().at (0).toBool (), true);
+
+  // Backend reports of the already-selected preset keep the dirty flag
+  // (they can arrive alongside plugin-side parameter edits)
+  plugin_->simulate_backend_preset_change (0);
+  EXPECT_TRUE (plugin_->presetDirty ());
+
+  // Selecting a preset clears the dirty flag
+  plugin_->setPresetIndex (0);
+  EXPECT_FALSE (plugin_->presetDirty ());
+  EXPECT_EQ (dirty_spy.count (), 1);
+  EXPECT_EQ (dirty_spy.takeFirst ().at (0).toBool (), false);
+
+  // Plugin-initiated preset changes update the selection (resolving the
+  // durable id to its list position) and clear the dirty flag
+  QSignalSpy index_spy (plugin_.get (), &Plugin::presetIndexChanged);
+  plugin_->simulate_user_edit ();
+  plugin_->simulate_backend_preset_change (10);
+  EXPECT_EQ (plugin_->presetIndex (), 4);
+  EXPECT_FALSE (plugin_->presetDirty ());
+  EXPECT_EQ (index_spy.count (), 1);
+  EXPECT_EQ (index_spy.takeFirst ().at (0).toInt (), 4);
+}
+
+TEST_F (PluginTest, UiVisible)
+{
+  QSignalSpy spy (plugin_.get (), &Plugin::uiVisibleChanged);
+
+  // Test setting UI visible
+  plugin_->setUiVisible (true);
+  EXPECT_TRUE (plugin_->uiVisible ());
+  EXPECT_EQ (spy.count (), 1);
+  EXPECT_EQ (spy.takeFirst ().at (0).toBool (), true);
+
+  // Test setting same value (should not emit signal)
+  plugin_->setUiVisible (true);
+  EXPECT_TRUE (plugin_->uiVisible ());
+  EXPECT_EQ (spy.count (), 0);
+
+  // Test setting UI hidden
+  plugin_->setUiVisible (false);
+  EXPECT_FALSE (plugin_->uiVisible ());
+  EXPECT_EQ (spy.count (), 1);
+  EXPECT_EQ (spy.takeFirst ().at (0).toBool (), false);
+}
+
+TEST_F (PluginTest, PrepareAndReleaseResources)
+{
+  // Set configuration first
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  // Prepare for processing
+  plugin_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  EXPECT_TRUE (plugin_->prepare_called_);
+  EXPECT_EQ (plugin_->last_sample_rate_, sample_rate_);
+  EXPECT_EQ (plugin_->last_max_block_length_, max_block_length_);
+
+  // Release resources
+  plugin_->release_resources ();
+}
+
+TEST_F (PluginTest, ProcessingWhenEnabled)
+{
+  // Set configuration
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  // Prepare for processing
+  plugin_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Create bypass parameter
+  auto * bypass = plugin_->bypassParameter ();
+  bypass->setBaseValue (0.0f); // Not bypassed
+
+  // Process
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  EXPECT_TRUE (plugin_->process_called_);
+  EXPECT_EQ (plugin_->last_time_info_.nframes_, units::samples (512));
+}
+
+TEST_F (PluginTest, ProcessingRegistersDspLoadAndLatency)
+{
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  plugin_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Nothing measured yet
+  EXPECT_DOUBLE_EQ (plugin_->dspLoadPercentage (), 0.0);
+
+  // The query returns the latency reported by the plugin
+  EXPECT_EQ (plugin_->latencySamples (), 384);
+
+  // Processing must register nonzero load (the only way the measurement
+  // stays at exactly zero is if it is broken); block durations below the
+  // clock resolution read as zero, so retry a bounded number of times
+  const auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  double load = 0.0;
+  for (int i = 0; i < 100 && load <= 0.0; ++i)
+    {
+      plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+      load = plugin_->dspLoadPercentage ();
+    }
+  EXPECT_TRUE (plugin_->process_called_);
+  EXPECT_GT (load, 0.0);
+
+  // Releasing resources resets the measurement
+  plugin_->release_resources ();
+  EXPECT_DOUBLE_EQ (plugin_->dspLoadPercentage (), 0.0);
+}
+
+TEST_F (PluginTest, ProcessingWhenBypassed)
+{
+  // Set configuration
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  // Prepare for processing
+  plugin_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Create bypass parameter and set to bypassed
+  auto * bypass = plugin_->bypassParameter ();
+  bypass->setBaseValue (1.0f); // Bypassed
+
+  // Process
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  EXPECT_FALSE (plugin_->process_called_);
+
+  // The passthrough path is measured too, so a nonzero load must register
+  // while bypassed (retry: a short block can read as zero duration at
+  // clock resolution)
+  double load = 0.0;
+  for (int i = 0; i < 100 && load <= 0.0; ++i)
+    {
+      plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+      load = plugin_->dspLoadPercentage ();
+    }
+  EXPECT_GT (load, 0.0);
+}
+
+TEST_F (PluginTest, ProcessingWhenInstantiationFailed)
+{
+  // Set configuration
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  // Prepare for processing
+  plugin_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Simulate instantiation failure
+  plugin_->set_instantiation_failed (true);
+
+  // Process
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  EXPECT_FALSE (plugin_->process_called_);
+}
+
+TEST_F (PluginTest, CurrentlyEnabled)
+{
+  // Set configuration
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  // Prepare for processing
+  plugin_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Create bypass parameter
+  auto * bypass = plugin_->bypassParameter ();
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+
+  // Test enabled
+  bypass->setBaseValue (0.0f);
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+  EXPECT_TRUE (plugin_->currently_enabled ());
+
+  // Test bypassed
+  bypass->setBaseValue (1.0f);
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+  EXPECT_FALSE (plugin_->currently_enabled ());
+}
+
+TEST_F (PluginTest, GenerateDefaultParameters)
+{
+  // Set configuration
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  // Prepare for processing
+  plugin_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Test bypass parameter
+  auto * bypass = plugin_->bypassParameter ();
+  EXPECT_EQ (bypass->label (), "Bypass");
+  EXPECT_EQ (bypass->range ().type_, dsp::ParameterRange::Type::Toggle);
+
+  // Test gain parameter
+  auto * gain = plugin_->gainParameter ();
+  EXPECT_EQ (gain->label (), "Gain");
+  EXPECT_EQ (gain->range ().type_, dsp::ParameterRange::Type::GainAmplitude);
+}
+
+TEST_F (PluginTest, JsonSerializationRoundtrip)
+{
+  // Set configuration
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  // Set some state
+  plugin_->setPresetIndex (3);
+  plugin_->setUiVisible (true);
+
+  // Serialize
+  nlohmann::json j = *plugin_;
+
+  // Create new plugin from JSON
+  TestPlugin deserialized (*registry_);
+  from_json (j, deserialized);
+
+  // Verify state
+  EXPECT_EQ (deserialized.presetIndex (), 3);
+  EXPECT_FALSE (deserialized.presetDirty ());
+  EXPECT_TRUE (deserialized.uiVisible ());
+  EXPECT_EQ (deserialized.get_name (), u8"Test Plugin");
+  EXPECT_EQ (deserialized.get_protocol (), Protocol::ProtocolType::Internal);
+  EXPECT_EQ (
+    deserialized.gainParameter ()->get_uuid (),
+    plugin_->gainParameter ()->get_uuid ());
+}
+
+TEST_F (PluginTest, PresetDirtyAndStringKeySerializationRoundtrip)
+{
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  // Select the string-keyed entry and dirty it
+  plugin_->setPresetIndex (6);
+  plugin_->simulate_user_edit ();
+
+  nlohmann::json j = *plugin_;
+
+  TestPlugin deserialized (*registry_);
+  from_json (j, deserialized);
+
+  EXPECT_EQ (deserialized.presetIndex (), 6);
+  EXPECT_TRUE (deserialized.presetDirty ());
+}
+
+TEST_F (PluginTest, OutOfRangePresetIndexInJsonIsRefused)
+{
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  nlohmann::json j = *plugin_;
+  j["preset"] = std::numeric_limits<int64_t>::max ();
+
+  TestPlugin deserialized (*registry_);
+  EXPECT_THROW (from_json (j, deserialized), utils::ZrythmException);
+}
+
+TEST_F (PluginTest, PresetDirtyWithoutSelectionInJsonIsDiscarded)
+{
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  nlohmann::json j = *plugin_;
+  j.erase ("preset");
+  j["presetDirty"] = true;
+
+  TestPlugin deserialized (*registry_);
+  from_json (j, deserialized);
+
+  // Dirty state requires a selection; a file without one must not load as
+  // dirty
+  EXPECT_EQ (deserialized.presetIndex (), -1);
+  EXPECT_FALSE (deserialized.presetDirty ());
+}
+
+TEST_F (PluginTest, NegativePresetIndexInJsonIsRefused)
+{
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  nlohmann::json j = *plugin_;
+  j["preset"] = -5;
+
+  TestPlugin deserialized (*registry_);
+  EXPECT_THROW (from_json (j, deserialized), utils::ZrythmException);
+}
+
+TEST_F (PluginTest, NonIntNonStringPresetInJsonIsRefused)
+{
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  nlohmann::json j = *plugin_;
+  const auto     bad_values = std::array{
+    nlohmann::json (3.0), nlohmann::json (nullptr), nlohmann::json (true)
+  };
+  for (const auto &bad_value : bad_values)
+    {
+      j["preset"] = bad_value;
+      TestPlugin deserialized (*registry_);
+      EXPECT_THROW (from_json (j, deserialized), utils::ZrythmException)
+        << "preset value should be refused: " << bad_value.dump ();
+    }
+}
+
+TEST_F (PluginTest, NonBoolPresetDirtyInJsonIsRefused)
+{
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  nlohmann::json j = *plugin_;
+  j["preset"] = 3;
+  j["presetDirty"] = 1;
+
+  TestPlugin deserialized (*registry_);
+  EXPECT_THROW (from_json (j, deserialized), utils::ZrythmException);
+}
+
+TEST_F (PluginTest, SelectionFollowsPresetListContentChanges)
+{
+  // Select "Bright" (durable id 1)
+  plugin_->setPresetIndex (1);
+  ASSERT_EQ (plugin_->presetIndex (), 1);
+
+  QSignalSpy presets_spy (plugin_.get (), &Plugin::presetsChanged);
+  QSignalSpy index_spy (plugin_.get (), &Plugin::presetIndexChanged);
+
+  // Removing an earlier entry moves the selection to a lower index; the
+  // durable id keeps it pointing at the same preset
+  plugin_->presets_.erase (plugin_->presets_.begin ());
+  plugin_->simulate_preset_list_change ();
+  EXPECT_EQ (plugin_->presetIndex (), 0);
+  EXPECT_EQ (presets_spy.count (), 1);
+  ASSERT_EQ (index_spy.count (), 1);
+  EXPECT_EQ (index_spy.takeFirst ().at (0).toInt (), 0);
+
+  // Removing the selected entry itself makes the selection unresolvable
+  plugin_->presets_.erase (plugin_->presets_.begin ());
+  plugin_->simulate_preset_list_change ();
+  EXPECT_EQ (plugin_->presetIndex (), -1);
+  ASSERT_EQ (index_spy.count (), 1);
+  EXPECT_EQ (index_spy.takeFirst ().at (0).toInt (), -1);
+}
+
+TEST_F (PluginTest, ProcessPassthroughImpl)
+{
+  // Set configuration
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Test Plugin";
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+  plugin_->set_configuration (config);
+
+  // Create ports for passthrough
+  auto audio_in = utils::create_object<dsp::AudioPort> (
+    *registry_, u8"Audio In", dsp::PortFlow::Input,
+    dsp::SpeakerArrangement::mono ());
+  auto audio_out = utils::create_object<dsp::AudioPort> (
+    *registry_, u8"Audio Out", dsp::PortFlow::Output,
+    dsp::SpeakerArrangement::mono ());
+
+  plugin_->add_input_port (audio_in);
+  plugin_->add_output_port (audio_out);
+
+  // Prepare for processing
+  plugin_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Fill input buffer
+  auto * in_port = audio_in.get_object_as<dsp::AudioPort> ();
+  auto * out_port = audio_out.get_object_as<dsp::AudioPort> ();
+  for (size_t i = 0; i < 512; i++)
+    {
+      in_port->buffers ()->setSample (0, i, static_cast<float> (i) * 0.01f);
+    }
+
+  // Process with bypass enabled
+  auto * bypass = plugin_->bypassParameter ();
+  bypass->setBaseValue (1.0f); // Bypassed
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify passthrough
+  for (size_t i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (out_port->buffers ()->getSample (0, i), i * 0.01f);
+    }
+}
+
+TEST_F (PluginTest, InstantiationStatusTransitions)
+{
+  QSignalSpy spy (plugin_.get (), &Plugin::instantiationStatusChanged);
+
+  // Initial state
+  EXPECT_EQ (
+    plugin_->instantiationStatus (), Plugin::InstantiationStatus::Pending);
+
+  // Pending -> Successful
+  plugin_->trigger_instantiation_finished (true, {});
+  EXPECT_EQ (
+    plugin_->instantiationStatus (), Plugin::InstantiationStatus::Successful);
+  EXPECT_EQ (spy.count (), 1);
+
+  // Successful -> Failed (should not happen in practice, but test the transition)
+  plugin_->trigger_instantiation_finished (false, "Forced failure");
+  EXPECT_EQ (
+    plugin_->instantiationStatus (), Plugin::InstantiationStatus::Failed);
+  EXPECT_EQ (spy.count (), 2);
+
+  // Failed -> Successful (recovery scenario)
+  plugin_->trigger_instantiation_finished (true, {});
+  EXPECT_EQ (
+    plugin_->instantiationStatus (), Plugin::InstantiationStatus::Successful);
+  EXPECT_EQ (spy.count (), 3);
+}
+
+// ============================================================================
+// Tests for configurationChanged signal contract
+// ============================================================================
+
+/**
+ * @brief Fresh plugin (no ports) should signal that handlers need to generate
+ * ports and parameters.
+ */
+TEST_F (PluginTest, ConfigurationChangedSignalsGenerationNeededForFreshPlugin)
+{
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Signal Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+
+  QSignalSpy spy (plugin_.get (), &Plugin::configurationChanged);
+  plugin_->set_configuration (config);
+
+  ASSERT_EQ (spy.count (), 1);
+  const auto args = spy.takeFirst ();
+  EXPECT_TRUE (args.at (1).toBool ())
+    << "Fresh plugin should signal generateNewPluginPortsAndParams = true";
+}
+
+/**
+ * @brief Plugin with pre-existing input ports (e.g., after JSON deserialization)
+ * should signal that handlers should NOT generate ports/params.
+ */
+TEST_F (PluginTest, ConfigurationChangedSignalsNoGenerationWithExistingInputPorts)
+{
+  auto midi_in = utils::create_object<dsp::MidiPort> (
+    *registry_, u8"MIDI In", dsp::PortFlow::Input);
+  plugin_->add_input_port (midi_in);
+
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Signal Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+
+  QSignalSpy spy (plugin_.get (), &Plugin::configurationChanged);
+  plugin_->set_configuration (config);
+
+  ASSERT_EQ (spy.count (), 1);
+  const auto args = spy.takeFirst ();
+  EXPECT_FALSE (args.at (1).toBool ())
+    << "Plugin with existing input ports should signal "
+       "generateNewPluginPortsAndParams = false";
+}
+
+/**
+ * @brief Plugin with pre-existing output ports (e.g., after JSON
+ * deserialization) should signal that handlers should NOT generate
+ * ports/params.
+ */
+TEST_F (
+  PluginTest,
+  ConfigurationChangedSignalsNoGenerationWithExistingOutputPorts)
+{
+  auto audio_out = utils::create_object<dsp::AudioPort> (
+    *registry_, u8"Audio Out", dsp::PortFlow::Output,
+    dsp::SpeakerArrangement::stereo ());
+  plugin_->add_output_port (audio_out);
+
+  auto descriptor = std::make_unique<PluginDescriptor> ();
+  descriptor->name_ = u8"Signal Test Plugin";
+  descriptor->protocol_ = Protocol::ProtocolType::Internal;
+  PluginConfiguration config;
+  config.descr_ = std::move (descriptor);
+
+  QSignalSpy spy (plugin_.get (), &Plugin::configurationChanged);
+  plugin_->set_configuration (config);
+
+  ASSERT_EQ (spy.count (), 1);
+  const auto args = spy.takeFirst ();
+  EXPECT_FALSE (args.at (1).toBool ())
+    << "Plugin with existing output ports should signal "
+       "generateNewPluginPortsAndParams = false";
+}
+
+} // namespace zrythm::plugins

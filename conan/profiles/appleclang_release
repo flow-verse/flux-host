@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+include(_apple_clang)
+include(_qt_macos)
+
+[settings]
+build_type=Release

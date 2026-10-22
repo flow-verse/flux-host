@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+[settings]
+compiler.sanitizer=AddressUndefinedBehavior
+
+[conf]
+qt/*:tools.build.cross_building:cross_build=True
+tools.build:cflags+=["-fsanitize=address,undefined", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls"]
+tools.build:cxxflags+=["-fsanitize=address,undefined", "-fno-omit-frame-pointer", "-fno-optimize-sibling-calls"]
+tools.build:exelinkflags+=["-fsanitize=address,undefined"]
+tools.build:sharedlinkflags+=["-fsanitize=address,undefined"]
+
+[buildenv]
+ASAN_OPTIONS=detect_leaks=0:halt_on_error=0:abort_on_error=0
+UBSAN_OPTIONS=halt_on_error=0

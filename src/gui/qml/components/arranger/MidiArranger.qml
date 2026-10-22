@@ -1,0 +1,130 @@
+// SPDX-FileCopyrightText: © 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Controls
+import ZrythmStyle
+import ZrythmArrangement
+import ZrythmGui
+
+Arranger {
+  id: root
+
+  property ChordTrack chordTrack: null
+  property int highlightMode: 0
+  readonly property MidiClip midiClip: clipEditor.clipObject as MidiClip
+  required property MidiEditor midiEditor
+  readonly property Track track: clipEditor.track
+
+  function beginObjectCreation(coordinates: point): MidiNote {
+    const midiNote = createObjectAt(coordinates);
+    root.currentAction = Arranger.CreatingResizingMovingR;
+    root.selectSingleObject(root.midiClip.midiNotes, root.midiClip.midiNotes.rowCount() - 1);
+    CursorManager.setResizeEndCursor();
+
+    return midiNote;
+  }
+
+  function createObjectAt(coordinates: point): MidiNote {
+    const pitch = getPitchAtY(coordinates.y);
+    const tickPosition = coordinates.x / root.ruler.pxPerTick;
+    const localTickPosition = tickPosition - root.midiClip.position.ticks;
+
+    return objectCreator.addMidiNote(root.midiClip, localTickPosition, pitch);
+  }
+
+  function createdObjectTypeAt(coordinates: point): int {
+    return ArrangerObject.MidiNote;
+  }
+
+  function getObjectHeight(obj: MidiNote): real {
+    return root.midiEditor.keyHeight; // Height of MIDI notes
+  }
+
+  function getObjectY(obj: MidiNote): real {
+    return getYAtPitch(obj.pitch);
+  }
+
+  function getPitchAtY(y: real): int {
+    return midiEditor.getKeyAtY(y);
+  }
+
+  function getYAtPitch(pitch: int): real {
+    return midiEditor.keyHeight * (127 - pitch);
+  }
+
+  function moveSelectionsY(dy: real, prevY: real) {
+    const prevPitch = getPitchAtY(prevY);
+    const currentPitch = getPitchAtY(prevY + dy);
+    if (currentPitch == prevPitch) {
+      return;
+    }
+    const delta = currentPitch - prevPitch;
+    console.debug("moving selections by", delta, "pitch");
+    if (root.selectionOperator) {
+      const success = root.selectionOperator.moveNotesByPitch(root.arrangerSelectionModel, delta);
+      if (!success) {
+        console.warn("Failed to move selections - validation failed");
+      }
+    }
+  }
+
+  function moveTemporaryObjectsY(dy: real, prevY: real) {
+    const prevPitch = getPitchAtY(prevY);
+    const currentPitch = getPitchAtY(prevY + dy);
+    const delta = currentPitch - prevPitch;
+    root.dragState.dragDeltaY -= delta * midiEditor.keyHeight;
+  }
+
+  editorSettings: midiEditor
+  enableYScroll: true
+  scrollView.ScrollBar.horizontal.policy: ScrollBar.AsNeeded
+
+  content: Repeater {
+    id: midiNotesRepeater
+
+    anchors.fill: parent
+    model: root.midiClip.midiNotes
+
+    delegate: ArrangerObjectLoader {
+      id: midiNoteLoader
+
+      readonly property MidiNote midiNote: arrangerObject as MidiNote
+
+      arrangerSelectionModel: root.arrangerSelectionModel
+      dragDeltaPx: root.dragState.dragDeltaPx
+      dragDeltaY: root.dragState.dragDeltaY
+      dragMode: root.dragState.dragMode
+      height: root.midiEditor.keyHeight
+      isLoopResize: root.dragState.isLoopResize
+      model: midiNotesRepeater.model
+      pxPerTick: root.ruler.pxPerTick
+      scrollViewWidth: root.scrollViewWidth
+      scrollX: root.scrollX
+      unifiedObjectsModel: root.unifiedObjectsModel
+      y: (127 - midiNote.pitch) * root.midiEditor.keyHeight
+
+      sourceComponent: Component {
+        MidiNoteView {
+          id: midiNoteView
+
+          arrangerObject: midiNoteLoader.arrangerObject
+          chordTrack: root.chordTrack
+          highlightMode: root.highlightMode
+          isSelected: midiNoteLoader.selectionTracker.isSelected
+          track: root.track
+          undoStack: root.undoStack
+
+          onHoveredChanged: {
+            root.handleObjectHover(midiNoteView.hovered, midiNoteView);
+          }
+          onSelectionRequested: function (mouse) {
+            root.handleObjectSelection(midiNotesRepeater.model, midiNoteLoader.index, mouse);
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include "dsp/iaudio_callback.h"
+#include "utils/inplace_function.h"
+
+namespace zrythm::dsp
+{
+class AudioCallback : public IAudioCallback
+{
+public:
+  using EngineProcessCallback = utils::InplaceFunction<void (
+    std::span<const float * const> inputChannels,
+    std::span<float * const>       outputChannels,
+    units::sample_u32_t            numSamples)>;
+  using DeviceAboutToStartCallback = utils::InplaceFunction<void ()>;
+  using DeviceStoppedCallback = utils::InplaceFunction<void ()>;
+
+  AudioCallback (
+    EngineProcessCallback      process_cb,
+    DeviceAboutToStartCallback device_about_to_start_cb,
+    DeviceStoppedCallback      device_stopped_cb);
+
+public:
+  void process_audio (
+    std::span<const float * const> input_channels,
+    std::span<float * const>       output_channels,
+    units::sample_u32_t            num_samples) noexcept override;
+  void about_to_start () override;
+  void stopped () override;
+  void error (std::string_view error_message) override;
+
+private:
+  EngineProcessCallback      process_cb_;
+  DeviceAboutToStartCallback device_about_to_start_cb_;
+  DeviceStoppedCallback      device_stopped_cb_;
+};
+} // namespace zrythm::dsp

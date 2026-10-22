@@ -1,0 +1,66 @@
+# SPDX-FileCopyrightText: © 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+set_source_files_properties(
+  ZrythmTheme.qml
+  PROPERTIES QT_QML_SINGLETON_TYPE TRUE
+)
+
+qt_add_library(zrythm_style STATIC)
+
+qt_add_qml_module(zrythm_style
+  URI ZrythmStyle
+  VERSION 1.0
+  IMPORTS QtQuick.Controls.Basic/6.11 # fallback to Basic
+  SOURCES
+    shortcututils.h
+  QML_FILES
+    ApplicationWindow.qml
+    # Action.qml
+    # BusyIndicator.qml
+    Button.qml
+    ButtonBackgroundRect.qml
+    CheckBox.qml
+    CheckIndicator.qml
+    ComboBox.qml
+    DialogButtonBox.qml
+    Dialog.qml
+    DropShadowEffect.qml
+    ItemDelegate.qml
+    Label.qml
+    Menu.qml
+    MenuBar.qml
+    MenuBarItem.qml
+    MenuSeparator.qml
+    MenuItem.qml
+    # Overlay.qml
+    Page.qml
+    # PageIndicator.qml
+    Pane.qml
+    Popup.qml
+    PopupBackgroundRect.qml
+    RoundButton.qml
+    ProgressBar.qml
+    SearchField.qml
+    # ScrollBar.qml
+    # ScrollIndicator.qml
+    # ScrollView.qml
+    # SwipeView.qml
+    # SplitView.qml
+    # StackView.qml
+    TabBar.qml
+    TabButton.qml
+    TextField.qml
+    ToolBar.qml
+    ToolButton.qml
+    ToolSeparator.qml
+    ToolTip.qml
+    TreeViewDelegate.qml
+    ZrythmTheme.qml
+
+  # compile qml files listed in QML_FILES to C++ using qmltc
+  # (fails to compile)
+  # ENABLE_TYPE_COMPILER
+)
+
+target_link_libraries(zrythm_style PUBLIC Qt6::Gui)

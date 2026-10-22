@@ -1,0 +1,185 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "utils/format_qt.h"
+
+#include "actions/plugin_importer.h"
+#include "commands/add_plugin_command.h"
+#include "plugins/plugin_group.h"
+
+#include <QTimer>
+
+namespace zrythm::actions
+{
+
+PluginImporter::PluginImporter (
+  undo::UndoStack        &undo_stack,
+  plugins::PluginFactory &plugin_factory,
+  const TrackCreator     &track_creator,
+  PluginImportedHandler   instantiation_finished_handler,
+  QObject *               parent)
+    : QObject (parent), undo_stack_ (undo_stack),
+      plugin_factory_ (plugin_factory), track_creator_ (track_creator),
+      instantiation_finished_handler_ (std::move (instantiation_finished_handler))
+{
+}
+
+void
+PluginImporter::importPluginToNewTrack (
+  const plugins::PluginDescriptor * descriptor)
+{
+  import (descriptor, std::nullopt, std::nullopt);
+}
+
+void
+PluginImporter::importPluginToGroup (
+  const plugins::PluginDescriptor * descriptor,
+  plugins::PluginGroup *            group,
+  int                               index)
+{
+  import (
+    descriptor, group, index >= 0 ? std::optional<int> (index) : std::nullopt);
+}
+
+void
+PluginImporter::importPluginToTrack (
+  const plugins::PluginDescriptor * descriptor,
+  structure::tracks::Track *        track)
+{
+  import (descriptor, track, std::nullopt);
+}
+
+void
+PluginImporter::import (
+  const plugins::PluginDescriptor * descriptor,
+  std::optional<std::variant<plugins::PluginGroup *, structure::tracks::Track *>>
+                     track_or_group,
+  std::optional<int> index)
+{
+  if (descriptor == nullptr)
+    {
+      z_warning ("Cannot import null plugin descriptor");
+      return;
+    }
+
+  z_debug ("Importing plugin: {}", descriptor->name ());
+
+  // Create plugin configuration from descriptor
+  auto config =
+    plugins::PluginConfiguration::create_new_for_descriptor (*descriptor);
+
+  // Create plugin instance using the plugin factory
+  // Note that we don't actually do anything meaningful until the plugin is
+  // instantiated
+  plugin_factory_.create_plugin_from_setting (
+    *config,
+    plugins::PluginFactory::InstantiationFinishOptions{
+      .handler_ =
+        [this, track_or_group, index] (
+          plugins::PluginUuidReference inner_plugin_ref, bool successful,
+          const QString &error) {
+          const auto * descr =
+            inner_plugin_ref.get ()->configuration ()->descriptor ();
+          if (!successful)
+            {
+              z_warning (
+                "Failed to instantiate plugin {}: {}", descr->name (),
+                error.toStdString ());
+              Q_EMIT instantiationFailed (descr->name (), error);
+
+              // Keep the plugin alive until the ongoing instantiationFinished
+              // emission completes: the factory's single-shot connection
+              // releases its own reference during emission, and the plugin is
+              // deleted once the last reference is released
+              QTimer::singleShot (0, this, [inner_plugin_ref] () { });
+              return;
+            }
+          z_debug ("Plugin instance ready. Importing {}", descr->name ());
+
+          {
+            // End the macro before the handler below runs: handlers must not
+            // have any undo commands they push folded into the import macro
+            undo::UndoStack::ScopedMacro macro (
+              undo_stack_, QObject::tr ("Import %1").arg (descr->name ()));
+
+            // Determine target group
+            auto * plugin_group = [&] () -> plugins::PluginGroup * {
+              structure::tracks::Track * track = nullptr;
+
+              if (track_or_group.has_value ())
+                {
+                  if (
+                    std::holds_alternative<plugins::PluginGroup *> (
+                      track_or_group.value ()))
+                    {
+                      return std::get<plugins::PluginGroup *> (
+                        track_or_group.value ());
+                    }
+                  if (
+                    std::holds_alternative<structure::tracks::Track *> (
+                      track_or_group.value ()))
+                    {
+                      track = std::get<structure::tracks::Track *> (
+                        track_or_group.value ());
+                    }
+                }
+
+              // Pick the plugin slot matching the descriptor's category,
+              // creating a track of a matching type when no target was
+              // given
+              const auto group_type =
+                plugins::PluginGroup::group_type_for_descriptor (*descr);
+              switch (group_type)
+                {
+                case plugins::PluginGroup::DeviceGroupType::Instrument:
+                  {
+                    auto * t =
+                      track != nullptr
+                        ? track
+                        : track_creator_
+                            .addEmptyTrackFromType (
+                              structure::tracks::Track::Type::Instrument)
+                            .value<structure::tracks::InstrumentTrack *> ();
+                    return t->channel ()->instruments ();
+                  }
+                case plugins::PluginGroup::DeviceGroupType::MIDI:
+                  {
+                    auto * t =
+                      track != nullptr
+                        ? track
+                        : track_creator_
+                            .addEmptyTrackFromType (
+                              structure::tracks::Track::Type::MidiBus)
+                            .value<structure::tracks::MidiBusTrack *> ();
+                    return t->channel ()->midiFx ();
+                  }
+                default:
+                  {
+                    auto * t =
+                      track != nullptr
+                        ? track
+                        : track_creator_
+                            .addEmptyTrackFromType (
+                              structure::tracks::Track::Type::AudioBus)
+                            .value<structure::tracks::AudioBusTrack *> ();
+                    return t->channel ()->inserts ();
+                  }
+                }
+            }();
+
+            // Add plugin to the group using AddPluginCommand
+            if (plugin_group != nullptr)
+              {
+                undo_stack_.push (
+                  std::make_unique<commands::AddPluginCommand> (
+                    *plugin_group, inner_plugin_ref, index)
+                    .release ());
+              }
+          }
+
+          instantiation_finished_handler_ (inner_plugin_ref);
+        },
+      .handler_context_ = this });
+}
+
+} // namespace zrythm::actions

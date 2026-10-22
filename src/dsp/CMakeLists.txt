@@ -1,0 +1,189 @@
+# SPDX-FileCopyrightText: © 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+qt_add_library(zrythm_dsp_lib STATIC)
+
+target_sources(zrythm_dsp_lib
+  PRIVATE
+    audio_bus_channel_routing.cpp
+    audio_bus_configuration.cpp
+    audio_callback.cpp
+    audio_input_selection.cpp
+    audio_input_processor.cpp
+    audio_pool.cpp
+    audio_port.cpp
+    audio_sample_processor.cpp
+    chord_audition_state.cpp
+    chord_descriptor.cpp
+    chord_preset.cpp
+    chord_suggestion.cpp
+    content_time_warp.cpp
+    curve.cpp
+    cv_port.cpp
+    ditherer.cpp
+    engine.cpp
+    fader.cpp
+    file_audio_source.cpp
+    fork_join_executor.cpp
+    graph.cpp
+    graph_builder.cpp
+    graph_dispatcher.cpp
+    graph_export.cpp
+    graph_node.cpp
+    graph_pruner.cpp
+    graph_renderer.cpp
+    graph_scheduler.cpp
+    graph_thread.cpp
+    juce_hardware_audio_interface.cpp
+    kmeter_dsp.cpp
+    loop_tempo_estimator.cpp
+    metronome.cpp
+    midi_device_buffer.cpp
+    midi_event.cpp
+    midi_file.cpp
+    midi_activity_provider.cpp
+    midi_input_processor.cpp
+    midi_input_selection.cpp
+    midi_panic_processor.cpp
+    midi_port.cpp
+    note_type.cpp
+    modulator_macro_processor.cpp
+    musical_scale.cpp
+    panning.cpp
+    parameter.cpp
+    passthrough_processors.cpp
+    peak_dsp.cpp
+    peak_fall_smooth.cpp
+    playhead.cpp
+    playhead_qml_adapter.cpp
+    poly_voice_manager.cpp
+    port.cpp
+    port_observation_manager.cpp
+    port_observer.cpp
+    position.cpp
+    processor_base.cpp
+    snap_grid.cpp
+    speaker_arrangement.cpp
+    timestretch_engine.cpp
+    timebase.cpp
+    rubberband_timestretch_engine.cpp
+    tempo_map.cpp
+    tempo_warp_map.cpp
+    time_warp_map.cpp
+    tempo_map_qml_adapter.cpp
+    timeline_data_cache.cpp
+    transport.cpp
+    true_peak_dsp.cpp
+  PUBLIC
+    FILE_SET HEADERS
+    BASE_DIRS ".."
+    FILES
+      audio_bus_channel_routing.h
+      audio_bus_configuration.h
+      audio_callback.h
+      audio_device_info.h
+      audio_input_selection.h
+      audio_input_processor.h
+      audio_pool.h
+      audio_port.h
+      chord_audition_state.h
+      chord_descriptor.h
+      chord_preset.h
+      chord_suggestion.h
+      content_time_warp.h
+      curve.h
+      cv_port.h
+      ditherer.h
+      dsp.h
+      engine.h
+      fader.h
+      file_audio_source.h
+      fork_join_executor.h
+      graph.h
+      graph_builder.h
+      graph_dispatcher.h
+      graph_export.h
+      graph_node.h
+      graph_pruner.h
+      graph_renderer.h
+      graph_scheduler.h
+      graph_thread.h
+      hardware_audio_interface.h
+      hardware_midi_interface.h
+      itransport.h
+      juce_hardware_audio_interface.h
+      kmeter_dsp.h
+      loop_tempo_estimator.h
+      metronome.h
+      midi_device_buffer.h
+      midi_activity_provider.h
+      midi_event_buffer.h
+      midi_event.h
+      midi_file.h
+      midi_input_processor.h
+      midi_input_selection.h
+      midi_panic_processor.h
+      midi_port.h
+      modulator_macro_processor.h
+      musical_scale.h
+      note_type.h
+      parameter.h
+      panning.h
+      passthrough_processors.h
+      peak_dsp.h
+      peak_fall_smooth.h
+      playhead.h
+      playhead_qml_adapter.h
+      poly_voice_manager.h
+      port.h
+      port_all.h
+      port_observation_cache.h
+      port_observation_manager.h
+      port_observation_token.h
+      port_observer.h
+      position.h
+      processor_base.h
+      snap_grid.h
+      speaker_arrangement.h
+      synth_voice.h
+      timestretch_engine.h
+      timebase.h
+      rubberband_timestretch_engine.h
+      tick_types.h
+      tempo_map.h
+      tempo_warp_map.h
+      time_warp_map.h
+      tempo_map_qml_adapter.h
+      timeline_data_cache.h
+      transport.h
+      true_peak_dsp.h
+)
+
+set_target_properties(zrythm_dsp_lib PROPERTIES
+  UNITY_BUILD ${ZRYTHM_UNITY_BUILD}
+  VERIFY_INTERFACE_HEADER_SETS ${ZRYTHM_VERIFY_INTERFACE_HEADER_SETS}
+)
+
+target_precompile_headers(zrythm_dsp_lib PUBLIC
+  $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/dsp.h>)
+
+target_link_libraries(zrythm_dsp_lib
+  PUBLIC
+    ${zrythm_link_libs}
+    zrythm::utils_lib
+    zrythm::include_dirs
+    zrythm::all_compile_options
+  PRIVATE
+    loop-tempo-estimator
+)
+
+# create a plugin so that types get exposed to QML
+qt_add_qml_module(zrythm_dsp_lib
+  URI ZrythmDsp
+  VERSION 1.0
+  OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ZrythmDsp
+)
+set_target_properties(zrythm_dsp_libplugin PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)
+
+# this breaks things on MSVC (:: in path names)
+# add_library(zrythm::dsp_lib ALIAS zrythm_dsp_lib)

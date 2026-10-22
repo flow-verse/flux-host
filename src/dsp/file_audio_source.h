@@ -1,0 +1,304 @@
+// SPDX-FileCopyrightText: © 2019-2025 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include "utils/audio.h"
+#include "utils/audio_file.h"
+#include "utils/icloneable.h"
+#include "utils/monotonic_time_provider.h"
+#include "utils/typed_uuid_reference.h"
+#include "utils/units.h"
+#include "utils/utf8_string.h"
+#include "utils/uuid_identifiable_object.h"
+
+#include <juce_audio_formats/juce_audio_formats.h>
+
+namespace zrythm::dsp
+{
+
+/**
+ * Audio clips for the pool.
+ *
+ * These should be loaded in the project's sample rate.
+ */
+class FileAudioSource final
+    : public utils::UuidIdentifiableObject<FileAudioSource>
+{
+  Q_OBJECT
+
+public:
+  using BitDepth = zrythm::utils::audio::BitDepth;
+  using AudioFile = zrythm::utils::audio::AudioFile;
+  using channels_t = uint_fast8_t;
+
+public:
+  FileAudioSource (QObject * parent = nullptr);
+
+  /**
+   * Creates an audio clip from a file.
+   *
+   * The clip's source BPM (@ref bpm_) is initialized from the file. The
+   * basename of the file is used as the clip name.
+   *
+   * @throw ZrythmException on error.
+   */
+  FileAudioSource (
+    const std::filesystem::path &full_path,
+    units::sample_rate_t         project_sample_rate,
+    QObject *                    parent = nullptr);
+
+  /**
+   * Creates an audio clip by copying the given buffer.
+   *
+   * @param source_bpm The clip's permanent source BPM. For material captured
+   *                   in-project (e.g. recording) this is the project tempo at
+   *                   capture time; for duplicated clips, the original's BPM.
+   * @param name A name for this clip.
+   */
+  FileAudioSource (
+    const utils::audio::AudioBuffer &buf,
+    utils::audio::BitDepth           bit_depth,
+    units::sample_rate_t             project_sample_rate,
+    units::bpm_t                     source_bpm,
+    const utils::Utf8String         &name,
+    QObject *                        parent = nullptr);
+
+  /**
+   * Creates an audio clip by copying the given interleaved float array.
+   *
+   * @param arr Interleaved array.
+   * @param nframes Number of frames per channel.
+   * @param channels Number of channels.
+   * @param name A name for this clip.
+   */
+  FileAudioSource (
+    const float *                  arr,
+    units::sample_u64_t            nframes,
+    channels_t                     channels,
+    zrythm::utils::audio::BitDepth bit_depth,
+    units::sample_rate_t           project_sample_rate,
+    units::bpm_t                   source_bpm,
+    const utils::Utf8String       &name,
+    QObject *                      parent = nullptr)
+      : FileAudioSource (
+          *utils::audio::AudioBuffer::
+            from_interleaved (arr, nframes.in (units::samples), channels),
+          bit_depth,
+          project_sample_rate,
+          source_bpm,
+          name,
+          parent)
+  {
+  }
+
+  // ========================================================================
+  // QML Interface
+  // ========================================================================
+
+  /**
+   * @brief Emitted when the source samples change.
+   */
+  Q_SIGNAL void samplesChanged ();
+
+  // ========================================================================
+
+  auto get_bit_depth () const { return bit_depth_; }
+  auto get_name () const { return name_; }
+  /**
+   * @brief The clip's permanent source BPM (its intrinsic musical tempo).
+   *
+   * Used to compute musical-mode stretch ratios. A value of 0 means
+   * "unknown" — musical mode cannot be applied.
+   *
+   * @see bpm_ for how this is initialized.
+   */
+  auto        source_bpm () const { return bpm_; }
+  const auto &get_samples () const { return ch_frames_; }
+  auto        get_samplerate () const { return samplerate_; }
+
+  void set_name (const utils::Utf8String &name) { name_ = name; }
+
+  /**
+   * @brief Expands (appends to the end) the frames in the clip by the given
+   * frames.
+   *
+   * @param frames Non-interleaved frames.
+   */
+  void expand_with_frames (const utils::audio::AudioBuffer &frames);
+
+  /**
+   * Replaces the clip's frames starting from @p start_frame with @p frames.
+   *
+   * @warning Not realtime safe.
+   *
+   * @param src_frames Frames to copy.
+   * @param start_frame Frame to start copying to (@p src_frames are always
+   * copied from the start).
+   */
+  void replace_frames (
+    const utils::audio::AudioBuffer &src_frames,
+    units::sample_u64_t              start_frame);
+
+  /**
+   * Replaces the clip's frames starting from @p start_frame with @p frames.
+   *
+   * @warning Not realtime safe.
+   *
+   * @param frames Frames, interleaved.
+   * @param start_frame Frame to start copying to (@p src_frames are always
+   * copied from the start).
+   */
+  void replace_frames_from_interleaved (
+    const float *       frames,
+    units::sample_u64_t start_frame,
+    units::sample_u64_t num_frames_per_channel,
+    channels_t          channels);
+
+  /**
+   * @brief Unloads the clip's frames from memory.
+   */
+  void clear_frames ()
+  {
+    ch_frames_.setSize (ch_frames_.getNumChannels (), 0, false, true);
+    Q_EMIT samplesChanged ();
+  }
+
+  auto get_num_channels () const { return ch_frames_.getNumChannels (); };
+  auto get_num_frames () const { return ch_frames_.getNumSamples (); };
+
+  /**
+   * @brief Initializes members from an audio file.
+   *
+   * @param full_path Path to the file.
+   * @param bpm_to_set Optional source BPM override. Used when reloading a
+   *                   project to preserve the previously stored value. If
+   *                   nullopt, the BPM is auto-detected from the file (see
+   *                   @ref bpm_).
+   *
+   * @throw ZrythmException on I/O error.
+   */
+  void init_from_file (
+    const std::filesystem::path &full_path,
+    units::sample_rate_t         project_sample_rate,
+    std::optional<units::bpm_t>  bpm_to_set);
+
+private:
+  friend void init_from (
+    FileAudioSource       &obj,
+    const FileAudioSource &other,
+    utils::ObjectCloneType clone_type);
+
+  void convert_mono_to_stereo ();
+
+  friend void to_json (nlohmann::json &j, const FileAudioSource &clip);
+  friend void from_json (const nlohmann::json &j, FileAudioSource &clip);
+
+private:
+  /** Name of the clip. */
+  utils::Utf8String name_;
+
+  /**
+   * Per-channel frames.
+   */
+  utils::audio::AudioBuffer ch_frames_;
+
+  /**
+   * The clip's permanent source BPM — its intrinsic musical tempo.
+   *
+   * For file-loaded clips this comes from the file's metadata, or from tempo
+   * estimation when the metadata carries none (0 if estimation fails). For
+   * buffer-backed clips (recording, duplication) it is supplied by the
+   * caller. Used to compute musical-mode stretch ratios; 0 means "unknown".
+   *
+   * @see source_bpm()
+   */
+  units::bpm_t bpm_{};
+
+  /**
+   * Samplerate of the clip, or samplerate when the clip was imported into the
+   * project.
+   */
+  units::sample_rate_t samplerate_;
+
+  /**
+   * Bit depth of the clip when the clip was imported into the project.
+   */
+  utils::audio::BitDepth bit_depth_{};
+};
+
+// ========================================================================
+
+/**
+ * Handles all file I/O operations for FileAudioSource
+ */
+class FileAudioSourceWriter : private utils::QElapsedTimeProvider
+{
+public:
+  /**
+   * Writes the given audio clip data to a file.
+   *
+   * @param parts If true, only write new data. @see
+   * FileAudioSource.frames_written.
+   *
+   * @throw ZrythmException on error.
+   */
+  explicit FileAudioSourceWriter (
+    const FileAudioSource &source,
+    std::filesystem::path  path,
+    bool                   parts);
+
+  /**
+   * @brief Write the file either in parts or whole (depending on constructor
+   * param).
+   *
+   * If parts, this should be called periodically while the source is expanding
+   * in memory to write any unwritten data to the file.
+   */
+  void write_to_file ();
+
+  /**
+   * @brief To be called after the file has been written via
+   * write_file_buffered().
+   */
+  void finalize_buffered_write ();
+
+  /**
+   * @brief Returns whether enough time has elapsed since the last write to
+   * file. This is used so that writing to file is done in chunks.
+   */
+  bool enough_time_elapsed_since_last_write () const;
+
+private:
+  /**
+   * @brief Whether we are writing in parts.
+   */
+  bool parts_;
+
+  const FileAudioSource                   &source_;
+  std::unique_ptr<juce::AudioFormatWriter> writer_;
+  std::filesystem::path                    writer_path_;
+
+  /**
+   * Frames already written to the file, per channel.
+   *
+   * Used when writing in chunks/parts.
+   */
+  units::sample_u64_t frames_written_;
+
+  /**
+   * Time the last write took place.
+   *
+   * This is used so that we can write every x ms instead of all the time.
+   *
+   * @see FileAudioSource.frames_written.
+   */
+  utils::MonotonicTime last_write_{};
+};
+
+using FileAudioSourcePtrVariant = std::variant<FileAudioSource *>;
+using FileAudioSourceUuidReference = utils::TypedUuidReference<FileAudioSource>;
+
+} // namespace zrythm::dsp
+
+DEFINE_UUID_HASH_SPECIALIZATION (zrythm::dsp::FileAudioSource::Uuid)

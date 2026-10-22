@@ -1,0 +1,367 @@
+// SPDX-FileCopyrightText: © 2019-2022, 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <cassert>
+#include <exception>
+#include <limits>
+#include <mutex>
+#include <utility>
+
+#include <fmt/std.h>
+
+#include "dsp/file_audio_source.h"
+#include "dsp/loop_tempo_estimator.h"
+#include "dsp/panning.h"
+#include "utils/audio.h"
+#include "utils/audio_file.h"
+#include "utils/debug.h"
+#include "utils/exceptions.h"
+#include "utils/float_ranges.h"
+#include "utils/io_utils.h"
+#include "utils/logger.h"
+#include "utils/serialization.h"
+
+#include <fmt/format.h>
+
+using zrythm::utils::ZrythmException;
+
+namespace zrythm::dsp
+{
+
+FileAudioSource::FileAudioSource (QObject * parent)
+    : utils::UuidIdentifiableObject<FileAudioSource> (parent)
+{
+}
+
+FileAudioSource::FileAudioSource (
+  const std::filesystem::path &full_path,
+  units::sample_rate_t         project_sample_rate,
+  QObject *                    parent)
+    : utils::UuidIdentifiableObject<FileAudioSource> (parent)
+{
+  init_from_file (full_path, project_sample_rate, std::nullopt);
+}
+
+FileAudioSource::FileAudioSource (
+  const utils::audio::AudioBuffer &buf,
+  BitDepth                         bit_depth,
+  units::sample_rate_t             project_sample_rate,
+  units::bpm_t                     source_bpm,
+  const utils::Utf8String         &name,
+  QObject *                        parent)
+    : utils::UuidIdentifiableObject<FileAudioSource> (parent)
+{
+  if (buf.getNumSamples () == 0)
+    {
+      throw std::runtime_error ("Buffer is empty");
+    }
+
+  samplerate_ = project_sample_rate;
+  assert (samplerate_ > units::sample_rate (0));
+  name_ = name;
+  bit_depth_ = bit_depth;
+  ch_frames_ = buf;
+  convert_mono_to_stereo ();
+  bpm_ = source_bpm;
+}
+
+void
+FileAudioSource::init_from_file (
+  const std::filesystem::path &full_path,
+  units::sample_rate_t         project_sample_rate,
+  std::optional<units::bpm_t>  bpm_to_set)
+{
+  samplerate_ = project_sample_rate;
+  assert (samplerate_ > units::sample_rate (0));
+
+  /* read metadata */
+  AudioFile                       file (full_path);
+  utils::audio::AudioFileMetadata md;
+  try
+    {
+      md = file.read_metadata ();
+    }
+  catch (const ZrythmException &)
+    {
+      std::throw_with_nested (ZrythmException (
+        fmt::format ("Failed to read metadata from file '{}'", full_path)));
+    }
+  bit_depth_ = utils::audio::bit_depth_int_to_enum (md.bit_depth);
+  bpm_ = units::bpm (md.bpm);
+
+  try
+    {
+      /* read frames into project's samplerate */
+      file.read_full (ch_frames_, samplerate_.in (units::sample_rate));
+      convert_mono_to_stereo ();
+    }
+  catch (const ZrythmException &)
+    {
+      std::throw_with_nested (ZrythmException (
+        fmt::format ("Failed to read frames from file '{}'", full_path)));
+    }
+
+  name_ = utils::Utf8String::from_path (
+    utils::io::path_get_basename_without_ext (full_path));
+  if (bpm_to_set.has_value () && bpm_to_set.value () > units::bpm (0.0))
+    {
+      bpm_ = bpm_to_set.value ();
+    }
+  else if (!bpm_to_set.has_value () && bpm_ <= units::bpm (0.0))
+    {
+      /* no BPM in metadata and no override: attempt to estimate the tempo
+       * (only done on fresh imports - the stored value is authoritative when
+       * reloading) */
+      if (const auto estimated_bpm = estimate_loop_bpm (ch_frames_, samplerate_))
+        {
+          z_debug (
+            "estimated BPM of '{}' as {}", full_path,
+            estimated_bpm->in (units::bpm));
+          bpm_ = *estimated_bpm;
+        }
+    }
+
+  Q_EMIT samplesChanged ();
+}
+
+void
+init_from (
+  FileAudioSource       &obj,
+  const FileAudioSource &other,
+  utils::ObjectCloneType clone_type)
+{
+  init_from (
+    static_cast<FileAudioSource::UuidIdentifiableObject &> (obj),
+    static_cast<const FileAudioSource::UuidIdentifiableObject &> (other),
+    clone_type);
+  obj.name_ = other.name_;
+  obj.ch_frames_ = other.ch_frames_;
+  obj.bpm_ = other.bpm_;
+  obj.samplerate_ = other.samplerate_;
+  obj.bit_depth_ = other.bit_depth_;
+}
+
+void
+FileAudioSource::replace_frames_from_interleaved (
+  const float *       frames,
+  units::sample_u64_t start_frame,
+  units::sample_u64_t num_frames_per_channel,
+  channels_t          channels)
+{
+  utils::audio::AudioBuffer buf (
+    1,
+    num_frames_per_channel.in<int> (units::samples)
+      * static_cast<int> (channels));
+  buf.deinterleave_samples (channels);
+  replace_frames (buf, start_frame);
+}
+
+void
+FileAudioSource::replace_frames (
+  const utils::audio::AudioBuffer &src_frames,
+  units::sample_u64_t              start_frame)
+{
+  z_return_if_fail_cmp (
+    src_frames.getNumChannels (), ==, ch_frames_.getNumChannels ());
+
+  for (int i = 0; i < src_frames.getNumChannels (); ++i)
+    {
+      ch_frames_.copyFrom (
+        i, start_frame.in<int> (units::samples),
+        src_frames.getReadPointer (i, 0), src_frames.getNumSamples ());
+    }
+
+  Q_EMIT samplesChanged ();
+}
+
+void
+FileAudioSource::expand_with_frames (const utils::audio::AudioBuffer &frames)
+{
+  z_return_if_fail (frames.getNumChannels () == ch_frames_.getNumChannels ());
+  z_return_if_fail (frames.getNumSamples () > 0);
+
+  const auto current = static_cast<int64_t> (ch_frames_.getNumSamples ());
+  const auto added = static_cast<int64_t> (frames.getNumSamples ());
+  const auto needed = std::min (
+    current + added, static_cast<int64_t> (std::numeric_limits<int>::max ()));
+  const auto grown = std::min (
+    std::max (needed, current + (current / 2)),
+    static_cast<int64_t> (std::numeric_limits<int>::max ()));
+  units::sample_u64_t prev_end = units::samples (current);
+
+  // Geometric growth (1.5x): over-allocate to amortize reallocations across
+  // repeated expand_with_frames() calls (e.g., during recording).  JUCE's
+  // setSize with avoidReallocating=true will increase allocation when needed
+  // but never shrink it, so we first grow to `grown` (expanding the underlying
+  // allocation), then shrink the logical size back to `needed` while keeping
+  // the larger allocation intact.
+  ch_frames_.setSize (ch_frames_.getNumChannels (), grown, true, false, true);
+  ch_frames_.setSize (ch_frames_.getNumChannels (), needed, true, false, true);
+  replace_frames (frames, prev_end);
+}
+
+void
+FileAudioSource::convert_mono_to_stereo ()
+{
+  if (ch_frames_.getNumChannels () != 1)
+    {
+      return;
+    }
+
+  const auto [left_gain, _] =
+    calculate_panning (PanLaw::Minus3dB, PanAlgorithm::SquareRoot, 0.5f);
+  const auto num_samples = ch_frames_.getNumSamples ();
+  assert (num_samples >= 0);
+  const auto samples = static_cast<size_t> (num_samples);
+
+  ch_frames_.setSize (2, num_samples, true);
+
+  auto * left = ch_frames_.getWritePointer (0);
+  auto * right = ch_frames_.getWritePointer (1);
+
+  utils::float_ranges::mul_k2 ({ left, samples }, left_gain);
+  utils::float_ranges::copy ({ right, samples }, { left, samples });
+}
+
+// ========================================================================
+
+FileAudioSourceWriter::FileAudioSourceWriter (
+  const FileAudioSource &source,
+  std::filesystem::path  path,
+  bool                   parts)
+    : parts_ (parts), source_ (source), writer_path_ (std::move (path))
+{
+}
+
+bool
+FileAudioSourceWriter::enough_time_elapsed_since_last_write () const
+{
+  assert (parts_);
+
+  /* write to pool if 2 seconds passed since last write */
+  auto                           cur_time = get_monotonic_time_usecs ();
+  constexpr utils::MonotonicTime usec_to_wait = 2 * 1000 * 1000;
+  return cur_time - last_write_ > usec_to_wait;
+}
+
+void
+FileAudioSourceWriter::finalize_buffered_write ()
+{
+  assert (parts_);
+
+  if (frames_written_ == units::samples (0))
+    {
+      z_debug ("nothing to write, skipping");
+      return;
+    }
+
+  z_return_if_fail (writer_);
+  writer_->flush ();
+  writer_.reset ();
+}
+
+void
+FileAudioSourceWriter::write_to_file ()
+{
+  assert (source_.get_samplerate () > units::sample_rate (0));
+  assert (
+    frames_written_ < units::samples (std::numeric_limits<size_t>::max ()));
+
+  // Use a static mutex to protect JUCE object creation to avoid data races
+  // in LeakedObjectDetector counters during multi-threaded execution
+  static std::mutex juce_creation_mutex;
+
+  auto create_writer_for_filepath = [&] () {
+    std::lock_guard lock (juce_creation_mutex);
+
+    auto file = utils::Utf8String::from_path (writer_path_).to_juce_file ();
+    std::unique_ptr<juce::OutputStream> out_stream =
+      std::make_unique<juce::FileOutputStream> (file);
+
+    if (
+      !out_stream
+      || !dynamic_cast<juce::FileOutputStream &> (*out_stream).openedOk ())
+      {
+        throw ZrythmException (
+          fmt::format ("Failed to open file '{}' for writing", writer_path_));
+      }
+
+    auto format = std::make_unique<juce::WavAudioFormat> ();
+
+    juce::AudioFormatWriterOptions options;
+    options =
+      options.withSampleRate (source_.get_samplerate ().in (units::sample_rate))
+        .withNumChannels (source_.get_num_channels ())
+        .withBitsPerSample (
+          utils::audio::bit_depth_enum_to_int (source_.get_bit_depth ()))
+        .withQualityOptionIndex (0);
+
+    auto writer = format->createWriterFor (out_stream, options);
+
+    if (writer == nullptr)
+      {
+        throw ZrythmException (
+          fmt::format (
+            "Failed to create audio writer for file: {}", writer_path_));
+      }
+    return writer;
+  };
+
+  const auto num_frames = source_.get_num_frames ();
+  if (parts_)
+    {
+      z_return_if_fail_cmp (units::samples (num_frames), >=, frames_written_);
+      units::sample_u64_t nframes_to_write_this_time =
+        units::samples (num_frames) - frames_written_;
+      z_return_if_fail_cmp (
+        nframes_to_write_this_time, <, units::samples (SIZE_MAX));
+
+      // create writer if first time
+      if (frames_written_ == units::samples (0))
+        {
+          writer_ = create_writer_for_filepath ();
+        }
+      else
+        {
+          z_return_if_fail (writer_ != nullptr);
+        }
+      writer_->writeFromAudioSampleBuffer (
+        source_.get_samples (), frames_written_.in<int> (units::samples),
+        nframes_to_write_this_time.in<int> (units::samples));
+
+      frames_written_ = units::samples (num_frames);
+      last_write_ = get_monotonic_time_usecs ();
+    }
+  else
+    {
+      z_return_if_fail_cmp (num_frames, <, (int) INT_MAX);
+      size_t nframes = num_frames;
+
+      auto writer = create_writer_for_filepath ();
+      writer->writeFromAudioSampleBuffer (
+        source_.get_samples (), 0, static_cast<int> (nframes));
+      writer->flush ();
+    }
+}
+
+static constexpr auto kNameKey = "name"sv;
+static constexpr auto kBpmKey = "bpm"sv;
+
+void
+to_json (nlohmann::json &j, const FileAudioSource &clip)
+{
+  to_json (
+    j, static_cast<const FileAudioSource::UuidIdentifiableObject &> (clip));
+  j[kNameKey] = clip.name_;
+  j[kBpmKey] = clip.bpm_;
+}
+
+void
+from_json (const nlohmann::json &j, FileAudioSource &clip)
+{
+  from_json (j, static_cast<FileAudioSource::UuidIdentifiableObject &> (clip));
+  j.at (kNameKey).get_to (clip.name_);
+  j.at (kBpmKey).get_to (clip.bpm_);
+}
+
+} // namespace zrythm::dsp

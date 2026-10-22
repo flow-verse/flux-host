@@ -1,0 +1,168 @@
+// SPDX-FileCopyrightText: © 2024-2025 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Controls
+import ZrythmStyle
+import Zrythm
+
+Control {
+  id: root
+
+  required property ArrangerObject arrangerObject
+  readonly property alias down: dragArea.pressed
+  readonly property alias edgeHandles: edgeHandlesLoader
+  property point hoveredPoint: Qt.point(0, 0)
+  property bool isResizeLHovered: false
+  property bool isResizeRHovered: false
+  property bool isResizingL: false // simple flag to be turned off immediately after checked by the interested party (Arranger)
+  property bool isResizingR: false // ditto
+  required property bool isSelected
+  readonly property color objectColor: {
+    let c = (arrangerObject.color && arrangerObject.color.useColor) ? arrangerObject.color.color : (track ? track.color : palette.button);
+    if (root.isSelected)
+      c = ZrythmTheme.getColorBlendedTowardsContrastByFactor(c, 1.1);
+
+    c = ZrythmTheme.adjustColorForHoverOrVisualFocusOrDown(c, root.hovered, root.visualFocus, root.down);
+
+    if (root._isMuted)
+      c = QmlUtils.saturate(c, 0.0);
+
+    return c;
+  }
+  readonly property bool _isMuted: arrangerObject.mute?.muted ?? false
+  required property Track track
+  required property UndoStack undoStack
+
+  // Corner radius of the selection outline; types whose shape has corners
+  // other than the default set this to match (e.g. half the height for the
+  // fully-round automation point).
+  property real selectionCornerRadius: ZrythmTheme.toolButtonRadius
+
+  signal selectionRequested(var mouse)
+  signal objectDoubleClicked
+
+  function requestSelection(mouse: var) {
+    selectionRequested(mouse);
+  }
+
+  focusPolicy: Qt.StrongFocus
+  font: root.isSelected ? ZrythmTheme.arrangerObjectBoldTextFont : ZrythmTheme.arrangerObjectTextFont
+  height: track.height
+  hoverEnabled: true
+  implicitWidth: 20
+
+  MouseArea {
+    id: dragArea
+
+    property real startX
+
+    acceptedButtons: Qt.AllButtons
+    anchors.fill: parent
+    cursorShape: undefined // to be set by Arranger
+    hoverEnabled: true
+    propagateComposedEvents: true
+
+    onPositionChanged: mouse => {
+      mouse.accepted = false;
+      root.hoveredPoint = Qt.point(mouse.x, mouse.y);
+    }
+    onPressed: mouse => {
+      mouse.accepted = false;
+    }
+  }
+
+  Loader {
+    id: edgeHandlesLoader
+
+    active: root.arrangerObject.length !== null
+    anchors.fill: parent
+    enabled: active
+    visible: active
+    z: 10
+
+    sourceComponent: Item {
+      anchors.fill: parent
+
+      // Left resize handle
+      Handle {
+        id: leftHandle
+
+        anchors.left: parent.left
+        isLeft: true
+      }
+
+      // Right resize handle
+      Handle {
+        id: rightHandle
+
+        anchors.right: parent.right
+        isLeft: false
+      }
+    }
+  }
+
+  Rectangle {
+    anchors.fill: parent
+    border.color: root.palette.windowText
+    border.width: 1
+    color: "transparent"
+    radius: root.selectionCornerRadius
+    visible: root.isSelected
+    z: 200
+  }
+
+  component Handle: Rectangle {
+    id: handleRect
+
+    required property bool isLeft
+
+    bottomLeftRadius: isLeft ? ZrythmTheme.toolButtonRadius : 0
+    bottomRightRadius: isLeft ? 0 : ZrythmTheme.toolButtonRadius
+    color: ZrythmTheme.backgroundAppendColor
+    height: parent.height
+    topLeftRadius: isLeft ? ZrythmTheme.toolButtonRadius : 0
+    topRightRadius: isLeft ? 0 : ZrythmTheme.toolButtonRadius
+    visible: root.hovered || handleDragArea.pressed
+    width: 5
+
+    MouseArea {
+      id: handleDragArea
+
+      acceptedButtons: Qt.LeftButton
+      anchors.fill: parent
+      cursorShape: undefined // to be set by Arranger
+      hoverEnabled: true
+      propagateComposedEvents: true
+
+      onEntered: {
+        if (handleRect.isLeft) {
+          root.isResizeLHovered = true;
+        } else {
+          root.isResizeRHovered = true;
+        }
+      }
+      onExited: {
+        if (handleRect.isLeft) {
+          root.isResizeLHovered = false;
+        } else {
+          root.isResizeRHovered = false;
+        }
+      }
+      onPositionChanged: mouse => {
+        root.hoveredPoint = handleRect.mapToItem(root, Qt.point(mouse.x, mouse.y));
+        mouse.accepted = false;
+      }
+      onPressed: mouse => {
+        if (handleRect.isLeft) {
+          root.isResizingL = true;
+        } else {
+          root.isResizingR = true;
+        }
+        mouse.accepted = false;
+      }
+    }
+  }
+}

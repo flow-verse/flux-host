@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+include(_common)
+
+[settings]
+os=Macos
+os.version=13.0
+arch=armv8|x86_64
+compiler=apple-clang
+compiler.version=21
+compiler.libcxx=libc++
+compiler.cppstd=23
+
+[conf]
+tools.build:cflags+=["-pipe"]
+tools.build:cxxflags+=["-pipe"]
+# If Conan fails to auto-detect the macOS SDK path, run:
+#   xcrun --sdk macosx --show-sdk-path
+# and uncomment/add the following line with the output:
+# tools.apple:sdk_path=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk

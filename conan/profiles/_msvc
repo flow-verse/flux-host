@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+include(_common)
+
+[settings]
+compiler=msvc
+compiler.version=195
+compiler.runtime=dynamic
+compiler.cppstd=23
+os=Windows

@@ -1,0 +1,1117 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <stdexcept>
+#include <thread>
+#include <tuple>
+
+#include "dsp/engine.h"
+#include "dsp/graph_builder.h"
+#include "dsp/midi_device_buffer.h"
+#include "dsp/tempo_map.h"
+#include "dsp/tempo_map_qml_adapter.h"
+#include "dsp/transport.h"
+
+#include "helpers/mock_hardware_audio_interface.h"
+#include "helpers/mock_hardware_midi_interface.h"
+#include "helpers/scoped_juce_qapplication.h"
+
+#include "./graph_helpers.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+using namespace testing;
+using namespace std::chrono_literals;
+
+namespace zrythm::dsp
+{
+
+class AudioEngineTest
+    : public ::testing::Test,
+      public test_helpers::ScopedJuceQApplication
+{
+protected:
+  using MockProcessable = graph_test::MockProcessable;
+
+  void SetUp () override
+  {
+    // Create real tempo map
+    tempo_map_ = std::make_unique<TempoMap> (units::sample_rate (48000.0));
+    tempo_map_wrapper_ = std::make_unique<TempoMapWrapper> (*tempo_map_);
+
+    // Setup config provider with default values
+    config_provider_ = {
+      .return_to_cue_on_pause_ = [] () { return false; },
+      .metronome_countin_bars_ = [] () { return 0; },
+      .recording_preroll_bars_ = [] () { return 0; }
+    };
+
+    // Create real transport with default settings
+    transport_ =
+      std::make_unique<Transport> (*tempo_map_wrapper_, config_provider_);
+
+    // Create real graph builder using the actual implementation
+    // We'll use a simple mock implementation for testing
+    graph_builder_ = std::make_unique<MockGraphBuilder> ();
+    mock_graph_builder_ = graph_builder_.get ();
+    processable_ = std::make_unique<MockProcessable> ();
+    ON_CALL (*graph_builder_, build_graph_impl (_))
+      .WillByDefault ([this] (graph::Graph &graph) {
+        // Simple graph with 1 node
+        graph.add_node_for_processable (*processable_);
+      });
+
+    // Create real graph dispatcher
+    auto run_function_with_engine_lock = [] (std::function<void ()> func) {
+      func ();
+    };
+
+    hw_interface_ =
+      std::make_unique<test_helpers::MockHardwareAudioInterface> ();
+
+    graph_dispatcher_ = std::make_unique<DspGraphDispatcher> (
+      std::move (graph_builder_),
+      [this] () { return std::span (terminal_processables_); }, *hw_interface_,
+      run_function_with_engine_lock, run_function_with_engine_lock);
+  }
+
+  // Mock implementation of IGraphBuilder for testing
+  class MockGraphBuilder : public graph::IGraphBuilder
+  {
+  public:
+    MOCK_METHOD (void, build_graph_impl, (graph::Graph &), (override));
+  };
+
+  std::unique_ptr<TempoMap>           tempo_map_;
+  std::unique_ptr<TempoMapWrapper>    tempo_map_wrapper_;
+  std::unique_ptr<Transport>          transport_;
+  std::unique_ptr<MockProcessable>    processable_;
+  std::unique_ptr<MockGraphBuilder>   graph_builder_;
+  MockGraphBuilder *                  mock_graph_builder_ = nullptr;
+  std::unique_ptr<DspGraphDispatcher> graph_dispatcher_;
+  std::vector<graph::IProcessable *>  terminal_processables_;
+  std::unique_ptr<test_helpers::MockHardwareAudioInterface> hw_interface_;
+  test_helpers::MockHardwareMidiInterface                   midi_interface_;
+  Transport::ConfigProvider                                 config_provider_;
+};
+
+TEST_F (AudioEngineTest, ConstructorInitializesCorrectly)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  EXPECT_FALSE (engine->activated ());
+  EXPECT_FALSE (engine->running ());
+  EXPECT_NE (engine->midi_panic_processor (), nullptr);
+  EXPECT_EQ (engine->xRunCount (), 0); // Initial value should be 0
+}
+
+TEST_F (AudioEngineTest, BlockLengthReturnsCorrectValue)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  EXPECT_EQ (engine->blockLength (), 256);
+}
+
+TEST_F (AudioEngineTest, SampleRateReturnsCorrectValue)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  EXPECT_EQ (engine->sampleRate (), 48000);
+}
+
+TEST_F (AudioEngineTest, ActivateWithTrueSetsStateToActive)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+
+  EXPECT_TRUE (engine->activated ());
+}
+
+TEST_F (AudioEngineTest, ActivateWithFalseSetsStateToInitialized)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // First activate
+  engine->activate ();
+  EXPECT_TRUE (engine->activated ());
+
+  // Then deactivate
+  engine->deactivate ();
+  EXPECT_FALSE (engine->activated ());
+}
+
+TEST_F (AudioEngineTest, ActivateWithSameStateDoesNothing)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // Activate once
+  engine->activate ();
+  EXPECT_TRUE (engine->activated ());
+
+  // Activate again with same state - should do nothing
+  engine->activate ();
+  EXPECT_TRUE (engine->activated ());
+}
+
+TEST_F (AudioEngineTest, SetAndGetRunning)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  EXPECT_FALSE (engine->running ());
+
+  engine->set_running (true);
+  EXPECT_TRUE (engine->running ());
+
+  engine->set_running (false);
+  EXPECT_FALSE (engine->running ());
+}
+
+TEST_F (AudioEngineTest, PanicAllCallsMidiPanicProcessor)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->panic_all ();
+
+  // Should not crash - we can't easily verify the midi panic processor call
+  // without exposing more internals, but we can at least ensure it doesn't crash
+}
+
+TEST_F (AudioEngineTest, PreprocessWithPauseRequestedUpdatesPlayState)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // Activate and start device to initialize monitor out port buffer
+  engine->activate ();
+
+  // Setup transport to return PauseRequested state
+  transport_->requestPause ();
+
+  auto lock = engine->get_processing_lock ();
+
+  // Get transport snapshot to test preprocess
+  auto snapshot = transport_->get_snapshot ();
+
+  engine->preprocess (snapshot, lock);
+
+  // The pause request is applied
+  EXPECT_EQ (snapshot.get_play_state (), dsp::ITransport::PlayState::Paused);
+  EXPECT_EQ (
+    transport_->effective_rt_play_state (), dsp::ITransport::PlayState::Paused);
+}
+
+TEST_F (AudioEngineTest, PreprocessWithRollRequestedAndNoCountinUpdatesPlayState)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // Activate and start device to initialize monitor out port buffer
+  engine->activate ();
+
+  // Setup transport to return RollRequested state
+  transport_->requestRoll ();
+
+  auto lock = engine->get_processing_lock ();
+
+  // Get transport snapshot to test preprocess
+  auto snapshot = transport_->get_snapshot ();
+
+  engine->preprocess (snapshot, lock);
+
+  // With no count-in, the roll request is applied immediately
+  EXPECT_EQ (snapshot.get_play_state (), dsp::ITransport::PlayState::Rolling);
+  EXPECT_EQ (
+    transport_->effective_rt_play_state (), dsp::ITransport::PlayState::Rolling);
+}
+
+TEST_F (AudioEngineTest, PreprocessWithRollRequestedAndCountinKeepsRequestPending)
+{
+  // Count-in of 1 bar (the fixture's transport has none, and ConfigProvider
+  // is copied at construction, so use a dedicated transport)
+  Transport::ConfigProvider countin_config = {
+    .return_to_cue_on_pause_ = [] () { return false; },
+    .metronome_countin_bars_ = [] () { return 1; },
+    .recording_preroll_bars_ = [] () { return 0; }
+  };
+  Transport countin_transport (*tempo_map_wrapper_, countin_config);
+
+  auto engine = std::make_unique<AudioEngine> (
+    countin_transport, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+  engine->activate ();
+
+  countin_transport.requestRoll ();
+
+  auto lock = engine->get_processing_lock ();
+  auto snapshot = countin_transport.get_snapshot ();
+  ASSERT_GT (snapshot.metronome_countin_frames_remaining (), units::samples (0));
+
+  engine->preprocess (snapshot, lock);
+
+  // The roll request stays pending while the count-in runs
+  EXPECT_EQ (
+    snapshot.get_play_state (), dsp::ITransport::PlayState::RollRequested);
+  EXPECT_EQ (
+    countin_transport.effective_rt_play_state (),
+    dsp::ITransport::PlayState::RollRequested);
+}
+
+TEST_F (AudioEngineTest, ProcessWhenNotRunningReturnsSkipped)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // Activate and start device to initialize monitor out port buffer
+  engine->activate ();
+  engine->set_running (false);
+
+  auto lock = engine->get_processing_lock ();
+  auto result = engine->process (lock, units::samples (256));
+
+  EXPECT_EQ (result, AudioEngine::ProcessReturnStatus::ProcessSkipped);
+}
+
+TEST_F (AudioEngineTest, ProcessWithZeroFramesReturnsFailed)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // Activate and start device to initialize monitor out port buffer
+  engine->activate ();
+  engine->set_running (true);
+
+  auto lock = engine->get_processing_lock ();
+  auto result = engine->process (lock, units::samples (0));
+
+  EXPECT_EQ (result, AudioEngine::ProcessReturnStatus::ProcessFailed);
+}
+
+TEST_F (AudioEngineTest, ProcessWhenRunningReturnsCompleted)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // Activate and start device to initialize monitor out port buffer
+  engine->activate ();
+  engine->set_running (true);
+
+  auto lock = engine->get_processing_lock ();
+  auto result = engine->process (lock, units::samples (256));
+
+  EXPECT_EQ (result, AudioEngine::ProcessReturnStatus::ProcessCompleted);
+}
+
+// ============================================================================
+// MIDI device management tests
+// ============================================================================
+
+TEST_F (AudioEngineTest, MidiDeviceChangeBeforeActivateDoesNothing)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  auto buffer = std::make_shared<dsp::MidiDeviceBuffer> ();
+  midi_interface_.simulate_device_change (
+    {
+      { utils::Utf8String::from_utf8_encoded_string ("dev1"), buffer }
+  });
+
+  EXPECT_TRUE (engine->midi_input_processors ().empty ())
+    << "No processors should be created before activation — the callback is "
+       "not registered yet";
+}
+
+TEST_F (AudioEngineTest, MidiDeviceChangeAfterActivateCreatesProcessor)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+
+  auto       buffer = std::make_shared<dsp::MidiDeviceBuffer> ();
+  const auto dev_id = utils::Utf8String::from_utf8_encoded_string ("dev1");
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id, buffer }
+  });
+
+  EXPECT_EQ (engine->midi_input_processors ().size (), 1u);
+  EXPECT_TRUE (engine->midi_input_processors ().contains (dev_id));
+
+  engine->deactivate ();
+}
+
+TEST_F (AudioEngineTest, MidiDeviceRemovalRemovesProcessor)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+
+  auto       buffer = std::make_shared<dsp::MidiDeviceBuffer> ();
+  const auto dev_id = utils::Utf8String::from_utf8_encoded_string ("dev1");
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id, buffer }
+  });
+  ASSERT_EQ (engine->midi_input_processors ().size (), 1u);
+
+  midi_interface_.simulate_device_change (
+    dsp::IHardwareMidiInterface::BufferMap{});
+
+  EXPECT_TRUE (engine->midi_input_processors ().empty ())
+    << "Removing all devices should remove all processors";
+
+  engine->deactivate ();
+}
+
+// The processing graph's node collection holds raw references to the
+// per-device MIDI input processors. Removing a device must keep its processor
+// alive until the graph recalculation that follows has released the old node
+// collection.
+TEST_F (AudioEngineTest, MidiDeviceRemovalFreesProcessorOnlyAfterGraphRechained)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  ON_CALL (*mock_graph_builder_, build_graph_impl (_))
+    .WillByDefault ([this, &engine] (graph::Graph &graph) {
+      graph.add_node_for_processable (*processable_);
+      for (const auto &mip : engine->midi_input_processors ())
+        {
+          dsp::ProcessorGraphBuilder::add_nodes (graph, *mip.second);
+          dsp::ProcessorGraphBuilder::add_connections (graph, *mip.second);
+        }
+    });
+
+  engine->activate ();
+
+  auto       buffer = std::make_shared<dsp::MidiDeviceBuffer> ();
+  const auto dev_id = utils::Utf8String::from_utf8_encoded_string ("dev1");
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id, buffer }
+  });
+  ASSERT_EQ (engine->midi_input_processors ().size (), 1u);
+
+  midi_interface_.simulate_device_change (
+    dsp::IHardwareMidiInterface::BufferMap{});
+
+  EXPECT_TRUE (engine->midi_input_processors ().empty ());
+
+  engine->deactivate ();
+}
+
+TEST_F (AudioEngineTest, MidiDeviceChangeAfterDeactivateDoesNothing)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+
+  auto       buffer = std::make_shared<dsp::MidiDeviceBuffer> ();
+  const auto dev_id = utils::Utf8String::from_utf8_encoded_string ("dev1");
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id, buffer }
+  });
+  ASSERT_EQ (engine->midi_input_processors ().size (), 1u);
+
+  engine->deactivate ();
+
+  auto       buffer2 = std::make_shared<dsp::MidiDeviceBuffer> ();
+  const auto dev_id2 = utils::Utf8String::from_utf8_encoded_string ("dev2");
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id2, buffer2 }
+  });
+
+  EXPECT_TRUE (engine->midi_input_processors ().empty ())
+    << "Device change after deactivation should not create processors — "
+       "callback was unregistered";
+}
+
+TEST_F (AudioEngineTest, MultipleMidiDevicesCreateMultipleProcessors)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+
+  auto       buffer_a = std::make_shared<dsp::MidiDeviceBuffer> ();
+  auto       buffer_b = std::make_shared<dsp::MidiDeviceBuffer> ();
+  const auto dev_a = utils::Utf8String::from_utf8_encoded_string ("devA");
+  const auto dev_b = utils::Utf8String::from_utf8_encoded_string ("devB");
+
+  midi_interface_.simulate_device_change (
+    {
+      { dev_a, buffer_a },
+      { dev_b, buffer_b }
+  });
+
+  EXPECT_EQ (engine->midi_input_processors ().size (), 2u);
+  EXPECT_TRUE (engine->midi_input_processors ().contains (dev_a));
+  EXPECT_TRUE (engine->midi_input_processors ().contains (dev_b));
+
+  engine->deactivate ();
+}
+
+TEST_F (AudioEngineTest, MidiDeviceSwapRemovesOldAndCreatesNew)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+
+  auto       buffer_a = std::make_shared<dsp::MidiDeviceBuffer> ();
+  auto       buffer_b = std::make_shared<dsp::MidiDeviceBuffer> ();
+  const auto dev_a = utils::Utf8String::from_utf8_encoded_string ("devA");
+  const auto dev_b = utils::Utf8String::from_utf8_encoded_string ("devB");
+
+  midi_interface_.simulate_device_change (
+    {
+      { dev_a, buffer_a }
+  });
+  ASSERT_EQ (engine->midi_input_processors ().size (), 1u);
+  ASSERT_TRUE (engine->midi_input_processors ().contains (dev_a));
+
+  midi_interface_.simulate_device_change (
+    {
+      { dev_b, buffer_b }
+  });
+
+  EXPECT_EQ (engine->midi_input_processors ().size (), 1u);
+  EXPECT_FALSE (engine->midi_input_processors ().contains (dev_a));
+  EXPECT_TRUE (engine->midi_input_processors ().contains (dev_b));
+
+  engine->deactivate ();
+}
+
+TEST_F (AudioEngineTest, MidiDeviceReplugCreatesNewProcessor)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+
+  auto       buffer = std::make_shared<dsp::MidiDeviceBuffer> ();
+  const auto dev_id = utils::Utf8String::from_utf8_encoded_string ("dev1");
+
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id, buffer }
+  });
+  ASSERT_EQ (engine->midi_input_processors ().size (), 1u);
+  const auto port_uuid_before =
+    engine->midi_input_processors ().at (dev_id)->get_output_port ().get_uuid ();
+
+  midi_interface_.simulate_device_change (
+    dsp::IHardwareMidiInterface::BufferMap{});
+
+  EXPECT_TRUE (engine->midi_input_processors ().empty ());
+
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id, buffer }
+  });
+  ASSERT_EQ (engine->midi_input_processors ().size (), 1u);
+
+  const auto port_uuid_after =
+    engine->midi_input_processors ().at (dev_id)->get_output_port ().get_uuid ();
+  EXPECT_NE (port_uuid_before, port_uuid_after)
+    << "Replugged device should get a new processor instance";
+
+  engine->deactivate ();
+}
+
+TEST_F (AudioEngineTest, MidiSameDevicesKeepsExistingProcessors)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+
+  auto       buffer = std::make_shared<dsp::MidiDeviceBuffer> ();
+  const auto dev_id = utils::Utf8String::from_utf8_encoded_string ("dev1");
+
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id, buffer }
+  });
+  ASSERT_EQ (engine->midi_input_processors ().size (), 1u);
+  auto * processor_before = engine->midi_input_processors ().at (dev_id).get ();
+
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id, buffer }
+  });
+
+  ASSERT_EQ (engine->midi_input_processors ().size (), 1u);
+  auto * processor_after = engine->midi_input_processors ().at (dev_id).get ();
+  EXPECT_EQ (processor_before, processor_after)
+    << "Same device set should keep existing processor";
+
+  engine->deactivate ();
+}
+
+TEST_F (AudioEngineTest, MidiActivateDeactivateActivateRestoresCallback)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  auto       buffer = std::make_shared<dsp::MidiDeviceBuffer> ();
+  const auto dev_id = utils::Utf8String::from_utf8_encoded_string ("dev1");
+
+  engine->activate ();
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id, buffer }
+  });
+  EXPECT_EQ (engine->midi_input_processors ().size (), 1u);
+  engine->deactivate ();
+
+  EXPECT_TRUE (engine->midi_input_processors ().empty ());
+
+  engine->activate ();
+  midi_interface_.simulate_device_change (
+    {
+      { dev_id, buffer }
+  });
+  EXPECT_EQ (engine->midi_input_processors ().size (), 1u)
+    << "Re-activating should register the callback again and accept device "
+       "changes";
+  engine->deactivate ();
+}
+
+TEST_F (AudioEngineTest, PostProcessWithRollingStateUpdatesPlayhead)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // Activate and start device to initialize monitor out port buffer
+  engine->activate ();
+  engine->set_running (true);
+
+  // Start rolling to test post_process
+  transport_->setPlayState (dsp::ITransport::PlayState::Rolling);
+
+  // Get transport snapshot to test post_process
+  auto snapshot = transport_->get_snapshot ();
+
+  // Store initial playhead position
+  auto initial_pos =
+    transport_->playhead ()->playhead ().position_samples_FOR_TESTING ();
+
+  {
+    dsp::PlayheadProcessingGuard guard{ transport_->playhead ()->playhead () };
+    engine->advance_playhead_after_processing (
+      snapshot, guard, units::samples (128), units::samples (256));
+  }
+
+  // Playhead should have advanced by 128 samples
+  auto new_pos =
+    transport_->playhead ()->playhead ().position_samples_FOR_TESTING ();
+  EXPECT_DOUBLE_EQ (
+    new_pos.in (units::samples), initial_pos.in (units::samples) + 128);
+}
+
+TEST_F (AudioEngineTest, PostProcessWithNonRollingStateDoesNotUpdatePlayhead)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // Activate and start device to initialize monitor out port buffer
+  engine->activate ();
+  engine->set_running (true);
+
+  // Ensure transport is paused
+  transport_->requestPause ();
+
+  // Get transport snapshot to test post_process
+  auto snapshot = transport_->get_snapshot ();
+
+  // Store initial playhead position
+  auto initial_pos =
+    transport_->playhead ()->playhead ().position_samples_FOR_TESTING ();
+
+  {
+    dsp::PlayheadProcessingGuard guard{ transport_->playhead ()->playhead () };
+    engine->advance_playhead_after_processing (
+      snapshot, guard, units::samples (128), units::samples (256));
+  }
+
+  // Playhead should not have advanced since transport is not rolling
+  auto new_pos =
+    transport_->playhead ()->playhead ().position_samples_FOR_TESTING ();
+  EXPECT_EQ (new_pos.in (units::samples), initial_pos.in (units::samples));
+}
+
+TEST_F (AudioEngineTest, WaitforPauseWithNonRunningEngineReturnsEarly)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->set_running (false);
+
+  transport_->setLoopEnabled (false);
+
+  AudioEngine::EngineState state{};
+  engine->wait_for_pause (state, false, false);
+
+  EXPECT_FALSE (state.running_);
+  EXPECT_FALSE (state.playing_);
+  EXPECT_FALSE (state.looping_);
+}
+
+TEST_F (AudioEngineTest, WaitforPauseWithPlayingEngineStopsPlayback)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->set_running (true);
+
+  // Start rolling and enable loop
+  transport_->setPlayState (dsp::ITransport::PlayState::Rolling);
+  transport_->setLoopEnabled (true);
+
+  AudioEngine::EngineState state{};
+  engine->wait_for_pause (state, true, false);
+
+  EXPECT_TRUE (state.running_);
+  EXPECT_TRUE (state.playing_);
+  EXPECT_TRUE (state.looping_);
+  EXPECT_FALSE (engine->running ());
+}
+
+TEST_F (AudioEngineTest, ResumeWithNonRunningEngineDoesNothing)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->set_running (true);
+
+  AudioEngine::EngineState state{
+    .running_ = false, .playing_ = true, .looping_ = true
+  };
+  engine->resume (state);
+
+  // Should not modify the state since engine wasn't running
+  EXPECT_FALSE (state.running_);
+  EXPECT_TRUE (state.playing_);
+  EXPECT_TRUE (state.looping_);
+}
+
+TEST_F (AudioEngineTest, ResumeWithRunningEngineRestoresState)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->set_running (true);
+
+  // Start rolling and enable loop
+  transport_->requestRoll ();
+  transport_->setLoopEnabled (true);
+
+  AudioEngine::EngineState state{
+    .running_ = true, .playing_ = true, .looping_ = true
+  };
+  engine->resume (state);
+
+  EXPECT_TRUE (state.running_);
+  EXPECT_TRUE (state.playing_);
+  EXPECT_TRUE (state.looping_);
+}
+
+TEST_F (AudioEngineTest, ResumeWhileNotPlayingLeavesTransportUntouched)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->set_running (true);
+
+  transport_->setPlayState (dsp::ITransport::PlayState::Paused);
+  transport_->move_playhead (units::ticks (1920.0), false);
+
+  AudioEngine::EngineState state{
+    .running_ = true, .playing_ = false, .looping_ = true
+  };
+  engine->resume (state);
+
+  EXPECT_TRUE (engine->running ());
+  EXPECT_EQ (transport_->getPlayState (), dsp::ITransport::PlayState::Paused);
+  EXPECT_EQ (
+    transport_->playhead ()->playhead ().position_ticks ().in (units::ticks),
+    1920.0);
+}
+
+TEST_F (AudioEngineTest, EnginePauseDoesNotMovePlayheadToCue)
+{
+  // Enable return-to-cue: a user-initiated pause moves the playhead to the cue
+  // point, but an engine-internal pause must leave the playhead untouched
+  config_provider_.return_to_cue_on_pause_ = [] () { return true; };
+  transport_ =
+    std::make_unique<Transport> (*tempo_map_wrapper_, config_provider_);
+
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->set_running (true);
+
+  // Paused away from the cue point (which is at tick 0)
+  transport_->setPlayState (dsp::ITransport::PlayState::Paused);
+  transport_->move_playhead (units::ticks (1920.0), false);
+
+  engine->execute_function_with_paused_processing_synchronously (
+    [] () { }, false);
+
+  EXPECT_EQ (
+    transport_->playhead ()->playhead ().position_ticks ().in (units::ticks),
+    1920.0);
+}
+
+TEST_F (AudioEngineTest, WaitforPauseWhilePlayingDoesNotMovePlayheadToCue)
+{
+  config_provider_.return_to_cue_on_pause_ = [] () { return true; };
+  transport_ =
+    std::make_unique<Transport> (*tempo_map_wrapper_, config_provider_);
+
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->set_running (true);
+
+  transport_->setPlayState (dsp::ITransport::PlayState::Rolling);
+  transport_->move_playhead (units::ticks (1920.0), false);
+
+  AudioEngine::EngineState state{};
+  engine->wait_for_pause (state, true, false);
+
+  EXPECT_TRUE (state.playing_);
+  EXPECT_EQ (
+    transport_->playhead ()->playhead ().position_ticks ().in (units::ticks),
+    1920.0);
+}
+
+TEST_F (AudioEngineTest, TempoChangeWhilePausedKeepsMusicalPosition)
+{
+  transport_->setPlayState (dsp::ITransport::PlayState::Paused);
+  transport_->move_playhead (units::ticks (1920.0), false);
+
+  tempo_map_wrapper_->setBaseBpm (tempo_map_wrapper_->baseBpm () * 2.0);
+
+  EXPECT_DOUBLE_EQ (
+    transport_->playhead ()->playhead ().position_ticks ().in (units::ticks),
+    1920.0);
+}
+
+TEST_F (AudioEngineTest, TempoChangeWhileRollingKeepsSamplePosition)
+{
+  transport_->setPlayState (dsp::ITransport::PlayState::Rolling);
+  transport_->move_playhead (units::ticks (1920.0), false);
+  const auto samples_before =
+    transport_->playhead ()->playhead ().position_samples_FOR_TESTING ();
+
+  tempo_map_wrapper_->setBaseBpm (tempo_map_wrapper_->baseBpm () * 2.0);
+
+  EXPECT_EQ (
+    transport_->playhead ()->playhead ().position_samples_FOR_TESTING ().in (
+      units::samples),
+    samples_before.in (units::samples));
+}
+
+TEST_F (AudioEngineTest, GetProcessingLockReturnsValidLock)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  auto lock = engine->get_processing_lock ();
+
+  // Should be able to acquire the lock
+  EXPECT_TRUE (lock.is_acquired ());
+}
+
+TEST_F (AudioEngineTest, ReentrantProcessingLockAcquisitionFails)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  auto lock = engine->get_processing_lock ();
+  ASSERT_TRUE (lock.is_acquired ());
+
+  // The processing lock is non-recursive: re-acquiring it from the thread
+  // that already holds it must fail loudly instead of deadlocking
+  EXPECT_DEATH (
+    { std::ignore = engine->get_processing_lock (); }, "non-recursive");
+}
+
+TEST_F (AudioEngineTest, ProcessingLockIsReacquirableAfterRelease)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  {
+    auto lock = engine->get_processing_lock ();
+  }
+
+  auto lock2 = engine->get_processing_lock ();
+  EXPECT_TRUE (lock2.is_acquired ());
+}
+
+TEST_F (AudioEngineTest, TryProcessingLockSucceedsWhenFree)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+  engine->set_running (true);
+
+  auto lock = engine->try_get_processing_lock ();
+  EXPECT_TRUE (lock.is_acquired ());
+  EXPECT_EQ (
+    engine->process (lock, units::samples (256)),
+    AudioEngine::ProcessReturnStatus::ProcessCompleted);
+}
+
+TEST_F (AudioEngineTest, TryProcessingLockFailsWhileHeldByAnotherThread)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+  engine->set_running (true);
+
+  // Hold the lock, as the main thread would while flushing or recalculating
+  // the graph
+  auto main_lock = engine->get_processing_lock ();
+
+  // A pending request proves the skip happened before get_snapshot(): a
+  // running cycle would latch the request into the RT state there
+  transport_->requestRoll ();
+
+  // The audio thread fails to acquire and skips the cycle before touching
+  // any shared state
+  {
+    std::jthread audio_thread ([&] {
+      auto try_lock = engine->try_get_processing_lock ();
+      EXPECT_FALSE (try_lock.is_acquired ());
+      EXPECT_EQ (
+        engine->process (try_lock, units::samples (256)),
+        AudioEngine::ProcessReturnStatus::ProcessSkipped);
+    });
+  }
+
+  // The request was never latched: the RT state still shows the settled
+  // pre-request state
+  EXPECT_EQ (
+    transport_->effective_rt_play_state (), dsp::ITransport::PlayState::Paused);
+}
+
+TEST_F (AudioEngineTest, ReentrantTryProcessingLockAcquisitionFails)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  auto lock = engine->get_processing_lock ();
+  ASSERT_TRUE (lock.is_acquired ());
+
+  // Try-acquiring from the lock-owning thread is a bug and must fail loudly
+  EXPECT_DEATH (
+    { std::ignore = engine->try_get_processing_lock (); }, "non-recursive");
+}
+
+TEST_F (AudioEngineTest, LoadPercentageReturnsValidValue)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // Should return a valid percentage (initially 0.0)
+  double load = engine->loadPercentage ();
+  EXPECT_GE (load, 0.0);
+  EXPECT_LE (load, 100.0);
+}
+
+TEST_F (AudioEngineTest, XRunCountReturnsValidValue)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  // Should return a valid count (initially 0)
+  int xruns = engine->xRunCount ();
+  EXPECT_GE (xruns, 0);
+}
+
+TEST_F (AudioEngineTest, GetGraphDispatcherReturnsValidDispatcher)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  auto &dispatcher = engine->graph_dispatcher ();
+
+  // Should return a valid reference to the graph dispatcher
+  EXPECT_EQ (&dispatcher, &engine->graph_dispatcher ());
+}
+
+TEST_F (AudioEngineTest, DestructorDeactivatesIfActive)
+{
+  {
+    auto engine = std::make_unique<AudioEngine> (
+      *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+      *tempo_map_);
+
+    // Activate the engine first
+    engine->activate ();
+    EXPECT_TRUE (engine->activated ());
+
+    // Destroying the engine (going out of scope) should call deactivate
+    // We can't easily verify this without exposing more internals,
+    // but the destructor should be called without crashing
+  }
+}
+
+TEST_F (AudioEngineTest, ExecuteFunctionWithPausedProcessingResumesOnThrow)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+  engine->set_running (true);
+
+  // The exception propagates to the caller...
+  EXPECT_THROW (
+    engine->execute_function_with_paused_processing_synchronously (
+      [] () { throw std::runtime_error ("boom"); }, false),
+    std::runtime_error);
+
+  // ...but the engine must be resumed regardless
+  EXPECT_TRUE (engine->running ());
+}
+
+TEST_F (AudioEngineTest, OfflineRenderSessionBlocksStateEditsWhileActive)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  auto render_session =
+    std::make_shared<AudioEngine::OfflineRenderSession> (*engine);
+  EXPECT_TRUE (engine->offline_render_active ());
+
+  auto func_ran = false;
+  engine->execute_function_with_paused_processing_synchronously (
+    [&func_ran] () { func_ran = true; }, false);
+  EXPECT_FALSE (func_ran);
+
+  render_session->finish ();
+}
+
+// Deactivation would tear the engine down under the render thread's
+// feet, so an active session refuses it
+TEST_F (AudioEngineTest, OfflineRenderSessionRefusesEngineDeactivation)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  engine->activate ();
+  EXPECT_TRUE (engine->activated ());
+
+  auto render_session =
+    std::make_shared<AudioEngine::OfflineRenderSession> (*engine);
+  engine->deactivate ();
+  EXPECT_TRUE (engine->activated ());
+
+  render_session->finish ();
+  engine->deactivate ();
+  EXPECT_FALSE (engine->activated ());
+}
+
+TEST_F (AudioEngineTest, OfflineRenderSessionFinishAllowsStateEditsAgain)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  AudioEngine::OfflineRenderSession render_session (*engine);
+  render_session.finish ();
+  // A second finish must be a no-op
+  render_session.finish ();
+  EXPECT_FALSE (engine->offline_render_active ());
+
+  auto func_ran = false;
+  engine->execute_function_with_paused_processing_synchronously (
+    [&func_ran] () { func_ran = true; }, false);
+  EXPECT_TRUE (func_ran);
+}
+
+TEST_F (
+  AudioEngineTest,
+  OfflineRenderSessionDestructorCleansUpWhenFinishNotCalled)
+{
+  auto engine = std::make_unique<AudioEngine> (
+    *transport_, *hw_interface_, midi_interface_, *graph_dispatcher_,
+    *tempo_map_);
+
+  {
+    AudioEngine::OfflineRenderSession render_session (*engine);
+    EXPECT_TRUE (engine->offline_render_active ());
+  }
+  EXPECT_FALSE (engine->offline_render_active ());
+
+  auto func_ran = false;
+  engine->execute_function_with_paused_processing_synchronously (
+    [&func_ran] () { func_ran = true; }, false);
+  EXPECT_TRUE (func_ran);
+}
+
+} // namespace zrythm::dsp

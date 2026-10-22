@@ -1,0 +1,145 @@
+// SPDX-FileCopyrightText: © 2018-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include <map>
+#include <string_view>
+
+#include "dsp/audio_input_selection.h"
+#include "dsp/midi_input_selection.h"
+#include "dsp/snap_grid.h"
+#include "structure/project/arranger_tool.h"
+#include "structure/project/chord_pad_bank.h"
+#include "structure/project/clip_editor.h"
+#include "structure/project/project.h"
+#include "structure/project/timeline_editor.h"
+#include "structure/tracks/track.h"
+#include "utils/qt.h"
+
+#include <QtQmlIntegration/qqmlintegration.h>
+
+#include <nlohmann/json_fwd.hpp>
+
+namespace zrythm::structure::project
+{
+
+/**
+ * @brief Serializable UI state for a project.
+ *
+ * Contains UI-related state that should be persisted between sessions:
+ * - Currently selected arranger tool
+ * - Clip editor state (selected clip, etc.)
+ * - Timeline state
+ * - Snap/grid settings for timeline and editor
+ *
+ * This class does NOT own the Project; it receives a reference to access
+ * necessary components (tempo map, registries) during construction.
+ */
+class ProjectUiState : public QObject
+{
+  Q_OBJECT
+  Q_PROPERTY (
+    zrythm::structure::project::TimelineEditor * timeline READ timeline CONSTANT
+      FINAL)
+  Q_PROPERTY (
+    zrythm::structure::project::ArrangerTool * tool READ tool CONSTANT FINAL)
+  Q_PROPERTY (
+    zrythm::structure::project::ClipEditor * clipEditor READ clipEditor CONSTANT
+      FINAL)
+  Q_PROPERTY (
+    zrythm::structure::project::ChordPadBank * chordPadBank READ chordPadBank
+      CONSTANT FINAL)
+  Q_PROPERTY (
+    zrythm::dsp::SnapGrid * snapGridTimeline READ snapGridTimeline CONSTANT FINAL)
+  Q_PROPERTY (
+    zrythm::dsp::SnapGrid * snapGridEditor READ snapGridEditor CONSTANT FINAL)
+  QML_ELEMENT
+  QML_UNCREATABLE ("")
+
+public:
+  /**
+   * @brief Constructs ProjectUiState with references from the given Project.
+   *
+   * @param project The Project to extract tempo map and registries from.
+   * @param app_settings Application settings for snap grid defaults.
+   */
+  ProjectUiState (Project &project, utils::AppSettings &app_settings);
+
+  structure::project::ArrangerTool * tool () const;
+  structure::project::ClipEditor *   clipEditor () const;
+  ChordPadBank *                     chordPadBank () const;
+  TimelineEditor *                   timeline () const;
+  dsp::SnapGrid *                    snapGridTimeline () const;
+  dsp::SnapGrid *                    snapGridEditor () const;
+
+  Q_INVOKABLE dsp::AudioInputSelection *
+  audioInputSelectionForTrack (const structure::tracks::Track * track);
+
+  Q_INVOKABLE dsp::MidiInputSelection *
+  midiInputSelectionForTrack (const structure::tracks::Track * track);
+
+  dsp::AudioInputSelection *
+  find_audio_input_selection (const structure::tracks::Track::Uuid &uuid) const;
+
+  dsp::MidiInputSelection *
+  find_midi_input_selection (const structure::tracks::Track::Uuid &uuid) const;
+
+  static constexpr auto kSnapGridTimelineKey = "snapGridTimeline"sv;
+  static constexpr auto kSnapGridEditorKey = "snapGridEditor"sv;
+  static constexpr auto kChordPadBankKey = "chordPadBank"sv;
+  static constexpr auto kAudioInputSelectionsKey = "audioInputSelections"sv;
+  static constexpr auto kMidiInputSelectionsKey = "midiInputSelections"sv;
+
+Q_SIGNALS:
+  void audioInputSelectionChanged ();
+  void midiInputDeviceChanged ();
+
+private:
+  dsp::AudioInputSelection * get_or_create_audio_input_selection (
+    const structure::tracks::Track::Uuid &uuid);
+
+  dsp::MidiInputSelection * get_or_create_midi_input_selection (
+    const structure::tracks::Track::Uuid &uuid);
+
+  friend void to_json (nlohmann::json &j, const ProjectUiState &p);
+  friend void from_json (const nlohmann::json &j, ProjectUiState &p);
+
+private:
+  Project            &project_;
+  utils::AppSettings &app_settings_;
+
+  /** Currently selected arranger tool. */
+  utils::QObjectUniquePtr<structure::project::ArrangerTool> tool_;
+
+  /** Clip editor state (selected clip, etc.). */
+  utils::QObjectUniquePtr<structure::project::ClipEditor> clip_editor_;
+
+  /** Chord pad bank (variable-length chord descriptors for the pad panel). */
+  utils::QObjectUniquePtr<ChordPadBank> chord_pad_bank_;
+
+  /** Timeline editor state. */
+  utils::QObjectUniquePtr<TimelineEditor> timeline_;
+
+  /** Snap/grid settings for the timeline. */
+  utils::QObjectUniquePtr<dsp::SnapGrid> snap_grid_timeline_;
+
+  /** Snap/grid settings for the editor (piano roll). */
+  utils::QObjectUniquePtr<dsp::SnapGrid> snap_grid_editor_;
+
+  /** Map of track UUID to audio input selection (lazy-created, pruned on save).
+   */
+  std::map<
+    structure::tracks::Track::Uuid,
+    utils::QObjectUniquePtr<dsp::AudioInputSelection>>
+    audio_input_selections_;
+
+  /** Map of track UUID to MIDI input selection (lazy-created, pruned on save).
+   */
+  std::map<
+    structure::tracks::Track::Uuid,
+    utils::QObjectUniquePtr<dsp::MidiInputSelection>>
+    midi_input_selections_;
+};
+
+} // namespace zrythm::structure::project

@@ -1,0 +1,131 @@
+// SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include "structure/project/project.h"
+#include "utils/app_settings.h"
+#include "utils/io_utils.h"
+
+#include "helpers/in_memory_settings_backend.h"
+#include "helpers/mock_hardware_audio_interface_threaded.h"
+#include "helpers/mock_hardware_midi_interface.h"
+#include "helpers/scoped_juce_qapplication.h"
+
+#include <gtest/gtest.h>
+#include <juce_audio_processors/juce_audio_processors.h>
+
+namespace zrythm::test_helpers
+{
+
+/**
+ * @brief Shared test fixture providing a minimal project environment
+ * (temp directory, mock hardware, settings, port/param registries, fader,
+ * metronome) and a `create_minimal_project()` factory.
+ */
+class ProjectTestFixture : public ::testing::Test, protected ScopedJuceQApplication
+{
+protected:
+  void SetUp () override
+  {
+    temp_dir_obj_ = utils::io::make_tmp_dir ();
+    project_dir_ =
+      utils::Utf8String::from_qstring (temp_dir_obj_->path ()).to_path ();
+
+    hw_interface_ = std::make_unique<ThreadedMockHardwareAudioInterface> ();
+
+    plugin_format_manager_ = std::make_shared<juce::AudioPluginFormatManager> ();
+    juce::addDefaultFormatsToManager (*plugin_format_manager_);
+
+    auto settings_backend = std::make_unique<InMemorySettingsBackend> ();
+    app_settings_ =
+      std::make_unique<utils::AppSettings> (std::move (settings_backend));
+
+    registry_ = std::make_unique<utils::ObjectRegistry> (nullptr);
+    monitor_fader_ = utils::make_qobject_unique<dsp::Fader> (
+      *registry_, dsp::PortType::Audio,
+      true,  // hard_limit_output
+      false, // make_params_automatable
+      [] () -> utils::Utf8String { return u8"Test Control Room"; },
+      [] (bool fader_solo_status) { return false; });
+
+    juce::AudioSampleBuffer emphasis_sample (2, 512);
+    juce::AudioSampleBuffer normal_sample (2, 512);
+    metronome_ = utils::make_qobject_unique<dsp::Metronome> (
+      *registry_, emphasis_sample, normal_sample, true, 1.0f, nullptr);
+  }
+
+  void TearDown () override
+  {
+    // Intentionally empty — let RAII destroy members in the correct order
+    // (derived class destructor runs first, freeing the project that
+    // references these objects, then base destructor frees them).
+  }
+
+  /**
+   * @brief Recording callback that does nothing (the default).
+   */
+  static structure::tracks::TrackRecordingCallback
+  make_null_recording_callback ()
+  {
+    return
+      [] (
+        const structure::tracks::Track::Uuid &, units::sample_t,
+        const dsp::ITransport &, const dsp::MidiEventBuffer *,
+        std::optional<structure::tracks::TrackProcessor::ConstStereoPortPair>,
+        units::sample_u32_t) { };
+  }
+
+  /**
+   * @brief Window factory that creates no windows (the default).
+   */
+  static plugins::PluginHostWindowFactory make_null_window_factory ()
+  {
+    return [] (plugins::Plugin &) -> std::unique_ptr<plugins::PluginHostWindow> {
+      return nullptr;
+    };
+  }
+
+  std::unique_ptr<structure::project::Project> create_minimal_project (
+    structure::tracks::TrackRecordingCallback recording_callback =
+      make_null_recording_callback (),
+    plugins::PluginHostWindowFactory window_factory = make_null_window_factory ())
+  {
+    using namespace zrythm::structure::project;
+    using namespace zrythm::plugins;
+
+    Project::ProjectDirectoryPathProvider path_provider =
+      [this] (bool for_backup) {
+        return for_backup ? project_dir_ / "backups" : project_dir_;
+      };
+
+    auto project = std::make_unique<Project> (
+      *app_settings_, path_provider, *hw_interface_, midi_interface_,
+      plugin_format_manager_, std::move (window_factory), *metronome_,
+      *monitor_fader_);
+    project->install_recording_callback (std::move (recording_callback));
+    return project;
+  }
+
+  /**
+   * @brief Overload that only customizes the window factory.
+   */
+  std::unique_ptr<structure::project::Project>
+  create_minimal_project (plugins::PluginHostWindowFactory window_factory)
+  {
+    return create_minimal_project (
+      make_null_recording_callback (), std::move (window_factory));
+  }
+
+  std::unique_ptr<QTemporaryDir>                  temp_dir_obj_;
+  std::filesystem::path                           project_dir_;
+  std::unique_ptr<dsp::IHardwareAudioInterface>   hw_interface_;
+  test_helpers::MockHardwareMidiInterface         midi_interface_;
+  std::shared_ptr<juce::AudioPluginFormatManager> plugin_format_manager_;
+  std::unique_ptr<utils::AppSettings>             app_settings_;
+  std::unique_ptr<utils::ObjectRegistry>          registry_;
+  utils::QObjectUniquePtr<dsp::Fader>             monitor_fader_;
+  utils::QObjectUniquePtr<dsp::Metronome>         metronome_;
+};
+
+} // namespace zrythm::test_helpers

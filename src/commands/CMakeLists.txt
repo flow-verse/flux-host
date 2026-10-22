@@ -1,0 +1,76 @@
+# SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+qt_add_library(zrythm_commands_lib STATIC)
+
+target_sources(zrythm_commands_lib
+  PRIVATE
+    arranger_object_owner_ref.cpp
+    chord_pad_commands.cpp
+    move_arranger_objects_command.cpp
+    move_plugins_command.cpp
+    move_tracks_command.cpp
+    delete_tracks_command.cpp
+    delete_lane_command.cpp
+    remove_plugins_command.cpp
+    resize_arranger_objects_command.cpp
+    set_clip_loop_points_command.cpp
+  PUBLIC
+    FILE_SET HEADERS
+    BASE_DIRS ".."
+    FILES
+      add_arranger_object_command.h
+      add_plugin_command.h
+      add_clip_to_clip_slot_command.h
+      add_track_command.h
+      chord_pad_commands.h
+      route_track_command.h
+      change_parameter_value_command.h
+      change_qobject_property_command.h
+      change_uuid_identifiable_object_property_command.h
+      edit_chord_object_command.h
+      change_track_color_command.h
+      change_track_comment_command.h
+      change_timebase_override_command.h
+      move_arranger_objects_command.h
+      move_plugins_command.h
+      move_tracks_command.h
+      delete_tracks_command.h
+      delete_lane_command.h
+      resize_arranger_objects_command.h
+      relocate_arranger_object_command.h
+      remove_arranger_object_command.h
+      remove_plugins_command.h
+      rename_track_command.h
+      set_clip_loop_points_command.h
+      set_folder_parent_command.h
+)
+
+set_target_properties(zrythm_commands_lib PROPERTIES
+  UNITY_BUILD ${ZRYTHM_UNITY_BUILD}
+  VERIFY_INTERFACE_HEADER_SETS ${ZRYTHM_VERIFY_INTERFACE_HEADER_SETS}
+)
+
+target_precompile_headers(zrythm_commands_lib REUSE_FROM zrythm_structure_project_lib)
+
+target_link_libraries(zrythm_commands_lib
+  PUBLIC
+    ${zrythm_link_libs}
+    zrythm_structure_project_lib
+    zrythm::include_dirs
+    zrythm::all_compile_options
+)
+
+qt_add_qml_module(zrythm_commands_lib
+  URI ZrythmCommands
+  VERSION 1.0
+  IMPORTS
+    TARGET zrythm_utils_lib
+    TARGET zrythm_dsp_lib
+    TARGET zrythm_arrangement_lib
+    TARGET zrythm_structure_scenes_lib
+    TARGET zrythm_structure_tracks_lib
+    TARGET zrythm_structure_project_lib
+  OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ZrythmCommands
+)
+set_target_properties(zrythm_commands_libplugin PROPERTIES DISABLE_PRECOMPILE_HEADERS ON)

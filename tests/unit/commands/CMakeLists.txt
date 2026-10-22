@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+add_executable(zrythm_commands_unit_tests
+  add_arranger_object_command_test.cpp
+  add_plugin_command_test.cpp
+  add_clip_to_clip_slot_command_test.cpp
+  add_track_command_test.cpp
+  arranger_object_owner_ref_test.cpp
+  delete_lane_command_test.cpp
+  delete_tracks_command_test.cpp
+  change_qobject_property_command_test.cpp
+  change_uuid_identifiable_object_property_command_test.cpp
+  edit_chord_object_command_test.cpp
+  change_parameter_value_command_test.cpp
+  chord_pad_commands_test.cpp
+  change_track_color_command_test.cpp
+  change_track_comment_command_test.cpp
+  move_arranger_objects_command_test.cpp
+  move_plugins_command_test.cpp
+  move_tracks_command_test.cpp
+  relocate_arranger_object_command_test.cpp
+  remove_arranger_object_command_test.cpp
+  remove_plugins_command_test.cpp
+  rename_track_command_test.cpp
+  resize_arranger_objects_command_test.cpp
+  route_track_command_test.cpp
+  set_clip_loop_points_command_test.cpp
+)
+
+set_target_properties(zrythm_commands_unit_tests PROPERTIES
+  AUTOMOC OFF
+  UNITY_BUILD ${ZRYTHM_UNITY_BUILD}
+)
+
+target_link_libraries(zrythm_commands_unit_tests PRIVATE
+  GTest::gmock_main
+  zrythm_commands_lib
+  zrythm_test_helpers_lib
+)
+
+target_precompile_headers(zrythm_commands_unit_tests REUSE_FROM zrythm_structure_project_unit_tests)
+
+zrythm_discover_tests(zrythm_commands_unit_tests)

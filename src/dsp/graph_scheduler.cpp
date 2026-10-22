@@ -1,0 +1,430 @@
+// SPDX-FileCopyrightText: © 2019-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+/*
+ * This file incorporates work covered by the following copyright and
+ * permission notice:
+ *
+ * ---
+ *
+ * Copyright (C) 2017, 2019 Robin Gareus <robin@gareus.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * ---
+ */
+
+#include <utility>
+
+#include "dsp/graph_scheduler.h"
+#include "dsp/graph_thread.h"
+#include "utils/audio.h"
+#include "utils/env.h"
+#include "utils/exceptions.h"
+#include "utils/logger.h"
+
+#include <boost/unordered/concurrent_flat_set.hpp>
+
+namespace zrythm::dsp::graph
+{
+
+using zrythm::utils::ZrythmException;
+
+using namespace std::chrono_literals;
+
+struct GraphScheduler::ThreadSet
+{
+  using GraphThreadPtr = std::unique_ptr<GraphThread>;
+  boost::concurrent_flat_set<GraphThreadPtr> threads_;
+  GraphThreadPtr                             main_thread_;
+  std::atomic<size_t>                        num_threads_{ 0 };
+};
+
+size_t
+GraphScheduler::num_threads () const noexcept [[clang::nonblocking]]
+{
+  return thread_set_->num_threads_.load (std::memory_order_relaxed);
+}
+
+GraphScheduler::GraphScheduler (
+  RunOnMainThreadFunc                 run_on_main_thread_func,
+  units::sample_rate_t                sample_rate,
+  units::sample_u32_t                 max_block_length,
+  bool                                realtime_threads,
+  std::optional<juce::AudioWorkgroup> thread_workgroup)
+    : thread_set_ (std::make_unique<ThreadSet> ()),
+      thread_workgroup_ (std::move (thread_workgroup)),
+      sample_rate_ (sample_rate), max_block_length_ (max_block_length),
+      run_on_main_thread_func_ (std::move (run_on_main_thread_func))
+{
+  if (realtime_threads)
+    {
+      realtime_thread_options_ =
+        juce::Thread::RealtimeOptions ()
+          .withPriority (9)
+          .withApproximateAudioProcessingTime (
+            max_block_length.in<int> (units::samples),
+            sample_rate.in (units::sample_rate));
+    }
+}
+
+void
+GraphScheduler::trigger_node (GraphNode &node)
+{
+  /* check if we can run */
+  if (node.refcount_.fetch_sub (1) == 1)
+    {
+      /* reset reference count for next cycle */
+      node.refcount_.store (node.init_refcount_);
+
+      // FIXME: is the code below correct? seems like it would cause data
+      // races since we are increasing the size but the pointer might not be
+      // pushed in the queue yet?
+
+      /* all nodes that feed this node have completed, so this node be
+       * processed now. */
+      /*z_info ("triggering node, pushing back");*/
+      // Cannot fail in practice: the queue is sized to the number of graph
+      // nodes and each node is queued at most once per cycle
+      const bool pushed [[maybe_unused]] = trigger_queue_->try_push (&node);
+      assert (pushed);
+    }
+}
+
+void
+GraphScheduler::rechain_from_node_collection (
+  GraphNodeCollection &&nodes,
+  units::sample_rate_t  sample_rate,
+  units::sample_u32_t   max_block_length)
+{
+  z_debug ("rechaining graph...");
+
+  /* Wait for all workers to go idle before replacing the graph state - a
+   * worker woken near the end of the previous cycle can still be inside a
+   * queue pop.
+   * num_threads() only changes via start_threads()/terminate_threads(),
+   * which callers serialize with this through the engine lock. */
+  if (const auto worker_count = num_threads (); worker_count > 0)
+    {
+      /* Workers are still counted as idle between waking up and
+       * decrementing the counter, so the wait below cannot see them - tell
+       * them to go back to sleep without touching the queue */
+      rechain_pending_.store (true, std::memory_order_release);
+
+      int tries = 0;
+      while (
+        idle_thread_cnt_.load (std::memory_order_acquire)
+        != static_cast<int> (worker_count))
+        {
+          /* warn every ~1s (10us per try) */
+          if ((++tries % 100000) == 0) [[unlikely]]
+            {
+              z_warning (
+                "still waiting for {} graph workers to go idle before "
+                "rechaining (current idle {})",
+                worker_count, idle_thread_cnt_.load ());
+            }
+          std::this_thread::sleep_for (10us);
+        }
+    }
+
+  // cleanup previous graph nodes
+  release_node_resources ();
+
+  /* --- swap setup nodes with graph nodes --- */
+
+  graph_nodes_ = std::move (nodes);
+
+  terminal_refcnt_.store (
+    static_cast<int> (graph_nodes_.terminal_nodes_.size ()));
+
+  trigger_queue_.emplace (
+    std::max<size_t> (graph_nodes_.graph_nodes_.size (), 1));
+
+  /* the queue has been replaced - workers may touch it again */
+  rechain_pending_.store (false, std::memory_order_release);
+
+  sample_rate_ = sample_rate;
+  max_block_length_ = max_block_length;
+  prepare_nodes_for_processing ();
+
+  z_debug ("rechaining done");
+}
+
+void
+GraphScheduler::start_threads (std::optional<int> num_threads)
+{
+  if (num_threads)
+    {
+      num_threads.emplace (
+        std::clamp (num_threads.value (), 1, MAX_GRAPH_THREADS));
+    }
+  else
+    {
+      int num_cores =
+        std::min (MAX_GRAPH_THREADS, utils::audio::get_num_cores ());
+
+      /* we reserve 1 core for the OS and other tasks and 1 core for the main
+       * thread
+       */
+      auto num_threads_int = env_get_int ("ZRYTHM_DSP_THREADS", num_cores - 2);
+
+      if (num_threads_int < 0)
+        {
+          throw ZrythmException ("number of threads must be >= 0");
+        }
+
+      num_threads.emplace (num_threads_int);
+    }
+
+  try
+    {
+      /* create worker threads */
+      z_debug ("creating {} threads", num_threads.value ());
+      for (int i = 0; i < num_threads.value (); ++i)
+        {
+          thread_set_->threads_.insert (
+            std::make_unique<GraphThread> (i, false, *this, thread_workgroup_));
+        }
+
+      /* and the main thread */
+      thread_set_->main_thread_ =
+        std::make_unique<GraphThread> (-1, true, *this, thread_workgroup_);
+
+      thread_set_->num_threads_.store (
+        thread_set_->threads_.size (), std::memory_order_relaxed);
+    }
+  catch (const std::exception &e)
+    {
+      terminate_threads ();
+      throw ZrythmException (
+        "failed to create thread: " + std::string (e.what ()));
+    }
+
+  auto start_thread = [&] (auto &thread) {
+    try
+      {
+        const auto start_normal_thread = [&thread] () {
+          if (!thread->startThread ())
+            {
+              throw ZrythmException ("startThread failed");
+            }
+        };
+
+        if (realtime_thread_options_.has_value ())
+          {
+            if (!thread->startRealtimeThread (realtime_thread_options_.value ()))
+              {
+                z_warning (
+                  "failed to start realtime thread, trying normal thread");
+                // fallback to non-realtime thread
+                start_normal_thread ();
+              }
+          }
+        else
+          {
+            start_normal_thread ();
+          }
+      }
+    catch (const ZrythmException &e)
+      {
+        terminate_threads ();
+        throw ZrythmException (
+          "failed to start thread: " + std::string (e.what ()));
+      }
+  };
+
+  // start them sequentially
+  thread_set_->threads_.cvisit_all ([&] (auto &thread) {
+    start_thread (thread);
+
+    // wait for this thread to initialize before starting the next one
+    // this fixes an internal JUCE race condition on first thread construction
+    while (idle_thread_cnt_.load () < 1)
+      {
+        std::this_thread::sleep_for (10us);
+      }
+  });
+  start_thread (thread_set_->main_thread_);
+
+  /* wait for all threads to go idle */
+  while (
+    idle_thread_cnt_.load () != static_cast<int> (thread_set_->threads_.size ()))
+    {
+      /* wait for all threads to go idle */
+      z_info (
+        "waiting for all {} threads to go idle after creation (current idle {})...",
+        thread_set_->threads_.size (), idle_thread_cnt_.load ());
+      std::this_thread::sleep_for (10us);
+    }
+
+  try
+    {
+      fork_join_executor_.start (
+        num_threads.value (), realtime_thread_options_, thread_workgroup_);
+    }
+  catch (const std::exception &e)
+    {
+      terminate_threads ();
+      throw ZrythmException (
+        "failed to start fork-join executor: " + std::string (e.what ()));
+    }
+}
+
+void
+GraphScheduler::terminate_threads ()
+{
+  z_info ("terminating graph...");
+
+  /* stop the fork-join workers (no node may be processing while threads are
+   * terminated, so no exec() can be in flight) */
+  fork_join_executor_.stop ();
+
+  /* Flag threads to terminate */
+  thread_set_->threads_.cvisit_all ([&] (auto &thread) {
+    thread->signalThreadShouldExit ();
+  });
+  thread_set_->main_thread_->signalThreadShouldExit ();
+
+  /* wait for all threads to go idle */
+  constexpr auto max_tries = 100;
+  auto           tries = 0;
+  while (
+    idle_thread_cnt_.load () != static_cast<int> (thread_set_->threads_.size ()))
+    {
+      z_info ("waiting for threads to go idle...");
+      std::this_thread::sleep_for (1ms);
+      if (++tries > max_tries)
+        break;
+    }
+
+  /* wake-up sleeping threads */
+  int tc = idle_thread_cnt_.load ();
+  assert (tc >= 0);
+  assert (tc <= static_cast<int> (thread_set_->threads_.size ()));
+  if (tc != static_cast<int> (thread_set_->threads_.size ()))
+    {
+      z_warning (
+        "expected {} idle threads, found {}", thread_set_->threads_.size (), tc);
+    }
+  for (const auto _ : std::views::iota (0, tc))
+    {
+      trigger_sem_.signal ();
+    }
+
+  /* and the main thread */
+  callback_start_sem_.signal ();
+
+  /* join threads - wait indefinitely to ensure complete termination */
+  thread_set_->threads_.cvisit_all ([&] (auto &thread) {
+    thread->waitForThreadToExit (-1);
+  });
+  thread_set_->main_thread_->waitForThreadToExit (-1);
+
+  /* Clear threads only after all threads have been joined */
+  thread_set_->threads_.clear ();
+  thread_set_->main_thread_.reset ();
+  thread_set_->num_threads_.store (0, std::memory_order_relaxed);
+
+  /* Reset leftover idle counts from exited threads */
+  idle_thread_cnt_.store (0, std::memory_order_relaxed);
+
+  z_info ("graph terminated");
+}
+
+bool
+GraphScheduler::contains_thread (RTThreadId::IdType thread_id)
+{
+  // this is not ideal performance-wise, but this method is called rarely and
+  // the result is cached in DspGraphDispatcher
+  bool found{};
+  thread_set_->threads_.cvisit_while ([&] (auto &thread) {
+    if (thread_id == thread->rt_thread_id_.load ())
+      {
+        found = true;
+        return false; // finish
+      }
+    return true; // keep on visiting
+  });
+  if (found)
+    {
+      return true;
+    }
+
+  return thread_set_->main_thread_
+         && thread_id == thread_set_->main_thread_->rt_thread_id_.load ();
+}
+
+void
+GraphScheduler::run_cycle (
+  const dsp::graph::ProcessBlockInfo time_nfo,
+  units::sample_u64_t                remaining_preroll_frames,
+  const dsp::ITransport             &transport,
+  const dsp::TempoMap               &tempo_map)
+{
+  time_nfo_ = time_nfo;
+  time_nfo_.fork_join_executor_ = &fork_join_executor_;
+  remaining_preroll_frames_ = remaining_preroll_frames;
+  current_transport_ = transport;
+  current_tempo_map_ = tempo_map;
+
+  callback_start_sem_.signal ();
+  callback_done_sem_.wait ();
+
+  current_transport_.reset ();
+  current_tempo_map_.reset ();
+}
+
+void
+GraphScheduler::prepare_nodes_for_processing ()
+{
+  z_debug (
+    "preparing nodes for processing with sample rate {} and max block length {}",
+    sample_rate_, max_block_length_);
+  run_on_main_thread_func_ ([&] () {
+    for (auto &node : graph_nodes_.graph_nodes_)
+      {
+        node->get_processable ().prepare_for_processing (
+          node.get (), sample_rate_, max_block_length_);
+      }
+  });
+
+  graph_nodes_.update_latencies ();
+}
+
+void
+GraphScheduler::release_node_resources ()
+{
+  run_on_main_thread_func_ ([&] () {
+    for (auto &node : graph_nodes_.graph_nodes_)
+      {
+        node->get_processable ().release_resources ();
+      }
+  });
+}
+
+GraphScheduler::~GraphScheduler ()
+{
+  if (thread_set_->main_thread_ || !thread_set_->threads_.empty ())
+    {
+      z_info ("terminating graph");
+      terminate_threads ();
+    }
+  else
+    {
+      z_info ("graph already terminated");
+    }
+
+  release_node_resources ();
+}
+
+} // namespace zrythm::dsp::graph

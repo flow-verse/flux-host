@@ -1,0 +1,65 @@
+// SPDX-FileCopyrightText: © 2021-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "plugins/plugin_configuration.h"
+#include "utils/serialization.h"
+
+#include <nlohmann/json.hpp>
+
+namespace zrythm::plugins
+{
+
+void
+PluginConfiguration::copy_fields_from (const PluginConfiguration &other)
+{
+  descr_ = utils::clone_unique (*other.descr_);
+  hosting_type_ = other.hosting_type_;
+  force_generic_ui_ = other.force_generic_ui_;
+}
+
+void
+init_from (
+  PluginConfiguration       &obj,
+  const PluginConfiguration &other,
+  utils::ObjectCloneType     clone_type)
+{
+  obj.copy_fields_from (other);
+}
+
+std::unique_ptr<PluginConfiguration>
+PluginConfiguration::create_new_for_descriptor (
+  const zrythm::plugins::PluginDescriptor &descr)
+{
+  auto ret = std::make_unique<PluginConfiguration> ();
+  ret->descr_ = utils::clone_unique (descr);
+  ret->validate ();
+  return ret;
+}
+
+void
+PluginConfiguration::validate ()
+{
+  /* if no custom UI, force generic */
+  if (!descr_->has_custom_ui_)
+    {
+      force_generic_ui_ = true;
+    }
+}
+
+void
+to_json (nlohmann::json &j, const PluginConfiguration &p)
+{
+  j = nlohmann::json{
+    { PluginConfiguration::kDescriptorKey,     p.descr_            },
+    { PluginConfiguration::kForceGenericUIKey, p.force_generic_ui_ },
+  };
+}
+
+void
+from_json (const nlohmann::json &j, PluginConfiguration &p)
+{
+  p.descr_ = std::make_unique<zrythm::plugins::PluginDescriptor> ();
+  j.at (PluginConfiguration::kDescriptorKey).get_to (*p.descr_);
+  j.at (PluginConfiguration::kForceGenericUIKey).get_to (p.force_generic_ui_);
+}
+}

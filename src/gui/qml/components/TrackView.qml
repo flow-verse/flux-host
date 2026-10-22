@@ -1,0 +1,737 @@
+// SPDX-FileCopyrightText: © 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls.impl
+import QtQuick.Layouts
+import Zrythm
+import ZrythmStyle
+
+Control {
+  id: root
+
+  required property AudioEngine audioEngine
+  readonly property real buttonHeight: ZrythmTheme.compactControlHeight
+  readonly property real contentBottomMargins: 3
+  readonly property real contentTopMargins: 1
+  required property int depth
+  readonly property real depthIndentation: depth * 8
+  required property bool expanded
+  required property bool foldable
+  property bool isResizing: false
+  property Track listViewDraggedTrack: null
+  property Track listViewDropTargetFolder: null
+  property int listViewDropTargetIndex: -1
+  property bool listViewIsLast: false
+  required property PortObservationManager portObservationManager
+  required property Track track // connected automatically when used as a delegate for a Tracklist model
+  required property TrackCollectionOperator trackCollectionOperator
+  required property TrackSelectionModel trackSelectionModel
+  required property Tracklist tracklist
+  required property UndoStack undoStack
+  required property ViewContext viewContext
+
+  signal dropTargetChanged(int index)
+  signal dropTargetFolderChanged(var track, int index)
+  signal trackDragEnded
+  signal trackDragStarted
+
+  // Returns a fresh source-model index for this delegate's track. Must be
+  // called at time of use - QModelIndex values must not be cached in QML
+  // because they are frozen snapshots that go stale when model rows change.
+  function trackModelIndex(): var {
+    return tracklist.collection.indexForTrack(track);
+  }
+
+  height: track.fullVisibleHeight
+  hoverEnabled: true
+  implicitHeight: 48
+  implicitWidth: 200
+  opacity: listViewDraggedTrack !== null && selectionTracker.isSelected ? 0.5 : ZrythmTheme.getOpacity(track.enabled, root.Window.active)
+
+  ContextMenu.menu: Menu {
+    id: contextMenu
+
+    onAboutToShow: {
+      const selectedIndexes = root.trackSelectionModel.selectedIndexes;
+      let anyUndeletable = false;
+      for (const idx of selectedIndexes) {
+        const t = idx.data(TrackCollection.TrackPtrRole);
+        if (t !== null && !t.isDeletable) {
+          anyUndeletable = true;
+          break;
+        }
+      }
+      const selCount = selectedIndexes.length;
+      // Copyability follows deletability (both exclude the singleton
+      // track types)
+      cutMenuItem.text = selCount > 1 ? qsTr("Cut %1 Tracks").arg(selCount) : qsTr("Cut Track");
+      cutMenuItem.enabled = !anyUndeletable && selCount > 0;
+      copyMenuItem.text = selCount > 1 ? qsTr("Copy %1 Tracks").arg(selCount) : qsTr("Copy Track");
+      copyMenuItem.enabled = !anyUndeletable && selCount > 0;
+      pasteMenuItem.enabled = root.trackCollectionOperator.canPasteTracks;
+      duplicateMenuItem.text = selCount > 1 ? qsTr("Duplicate %1 Tracks").arg(selCount) : qsTr("Duplicate Track");
+      duplicateMenuItem.enabled = !anyUndeletable && selCount > 0;
+      deleteMenuItem.text = selCount > 1 ? qsTr("Delete %1 Tracks").arg(selCount) : qsTr("Delete Track");
+      deleteMenuItem.enabled = !anyUndeletable && selCount > 0;
+    }
+
+    MenuItem {
+      id: cutMenuItem
+
+      text: qsTr("Cut Track")
+
+      onTriggered: {
+        root.viewContext.cutRequested();
+      }
+    }
+
+    MenuItem {
+      id: copyMenuItem
+
+      text: qsTr("Copy Track")
+
+      onTriggered: {
+        root.viewContext.copyRequested();
+      }
+    }
+
+    MenuItem {
+      id: pasteMenuItem
+
+      text: qsTr("Paste Tracks")
+
+      onTriggered: root.viewContext.pasteRequested()
+    }
+
+    MenuItem {
+      id: duplicateMenuItem
+
+      text: qsTr("Duplicate Track")
+
+      onTriggered: {
+        root.viewContext.duplicateRequested();
+      }
+    }
+
+    MenuSeparator {
+    }
+
+    MenuItem {
+      id: deleteMenuItem
+
+      text: qsTr("Delete Track")
+
+      onTriggered: root.viewContext.deleteRequested()
+    }
+  }
+  background: Rectangle {
+    color: QmlUtils.getTrackBackground(root.palette.window, root.track.color, root.palette.windowText, selectionTracker.isSelected || bgTapHandler.pressed, root.hovered, false)
+
+    Behavior on color {
+      animation: ZrythmTheme.propertyAnimation
+    }
+
+    TapHandler {
+      id: bgTapHandler
+
+      acceptedButtons: Qt.LeftButton
+      acceptedModifiers: Qt.NoModifier
+
+      onTapped: (eventPoint, button) => {
+        root.trackSelectionModel.selectSingleTrack(root.trackModelIndex());
+      }
+    }
+
+    TapHandler {
+      acceptedButtons: Qt.RightButton
+
+      onTapped: (eventPoint, button) => {
+        if (!root.trackSelectionModel.isSelected(root.trackModelIndex()))
+          root.trackSelectionModel.selectSingleTrack(root.trackModelIndex());
+        contextMenu.popup();
+      }
+    }
+
+    TapHandler {
+      acceptedModifiers: Qt.ControlModifier
+
+      onTapped: (eventPoint, button) => {
+        root.trackSelectionModel.select(root.trackModelIndex(), ItemSelectionModel.Toggle);
+        root.trackSelectionModel.setCurrentIndex(root.trackModelIndex(), ItemSelectionModel.NoUpdate);
+      }
+    }
+
+    TapHandler {
+      acceptedModifiers: Qt.ShiftModifier
+
+      onTapped: (eventPoint, button) => {
+        const currentIdx = root.trackSelectionModel.currentIndex;
+        const thisIdx = root.trackModelIndex();
+        if (currentIdx && currentIdx.valid) {
+          const top = Math.min(currentIdx.row, thisIdx.row);
+          const bottom = Math.max(currentIdx.row, thisIdx.row);
+          const sel = QmlUtils.createRangeSelection(root.trackSelectionModel.model, top, bottom);
+          root.trackSelectionModel.select(sel, ItemSelectionModel.ClearAndSelect);
+        } else {
+          root.trackSelectionModel.setCurrentIndex(thisIdx, ItemSelectionModel.Select);
+        }
+      }
+    }
+
+    TapHandler {
+      acceptedModifiers: Qt.ControlModifier | Qt.ShiftModifier
+
+      onTapped: (eventPoint, button) => {
+        const currentIdx = root.trackSelectionModel.currentIndex;
+        const thisIdx = root.trackModelIndex();
+        if (currentIdx && currentIdx.valid) {
+          const top = Math.min(currentIdx.row, thisIdx.row);
+          const bottom = Math.max(currentIdx.row, thisIdx.row);
+          const sel = QmlUtils.createRangeSelection(root.trackSelectionModel.model, top, bottom);
+          root.trackSelectionModel.select(sel, ItemSelectionModel.Select);
+        } else {
+          root.trackSelectionModel.setCurrentIndex(thisIdx, ItemSelectionModel.Select);
+        }
+      }
+    }
+
+    DragHandler {
+      id: reorderDragHandler
+
+      target: null
+      xAxis.enabled: false
+
+      onActiveChanged: {
+        if (active) {
+          // Select the dragged track if it wasn't already selected
+          if (!root.trackSelectionModel.isSelected(root.trackModelIndex()))
+            root.trackSelectionModel.selectSingleTrack(root.trackModelIndex());
+          root.trackDragStarted();
+        } else {
+          root.trackDragEnded();
+        }
+      }
+      onTranslationChanged: {
+        if (active) {
+          const lv = root.ListView.view;
+          if (!lv)
+            return;
+
+          const scenePos = centroid.scenePosition;
+          // mapFromItem(null, ...) gives viewport-relative coordinates, but
+          // itemAt() works in content coordinates. Add contentY to compensate
+          // for scroll offset.
+          const lvPoint = lv.mapFromItem(null, scenePos.x, scenePos.y);
+          const contentPoint = Qt.point(lvPoint.x, lvPoint.y + lv.contentY);
+          const targetItem = lv.itemAt(contentPoint.x, contentPoint.y) as TrackView;
+
+          if (targetItem && targetItem !== root) {
+            const targetLocalPoint = targetItem.mapFromItem(null, scenePos.x, scenePos.y);
+            const relativeY = targetLocalPoint.y / targetItem.height;
+
+            // Fixed-size edge zones (8px) for line-drop vs folder-drop
+            const edgeZone = 8;
+            const targetRow = targetItem.trackModelIndex().row;
+            if (targetItem.foldable && targetLocalPoint.y > edgeZone && targetLocalPoint.y < targetItem.height - edgeZone) {
+              root.dropTargetFolderChanged(targetItem.track, targetRow + 1);
+            } else {
+              const idx = relativeY < 0.5 ? targetRow : targetRow + 1;
+              root.dropTargetChanged(idx);
+            }
+          } else if (!targetItem && lvPoint.x >= 0 && lvPoint.x <= lv.width) {
+            // Cursor is within the ListView horizontally but not over any
+            // delegate - check if we're past the end of the track content.
+            const footerH = lv.footerItem ? lv.footerItem.height : 0;
+            const trackContentEnd = lv.contentHeight - footerH;
+            const cursorContentY = lvPoint.y + lv.contentY;
+            if (cursorContentY >= trackContentEnd - 10) {
+              const pastEndIndex = root.tracklist.isTrackPinned(root.track) ? root.tracklist.pinnedTracksCutoff : root.tracklist.collection.trackCount;
+              root.dropTargetChanged(pastEndIndex);
+            }
+          }
+        }
+      }
+    }
+  }
+  contentItem: Item {
+    id: trackContent
+
+    anchors.fill: parent
+
+    RowLayout {
+      id: mainLayout
+
+      Layout.rightMargin: 6
+      anchors.fill: parent
+      spacing: 4
+
+      Item {
+        Layout.fillHeight: true
+        Layout.preferredWidth: root.depthIndentation
+      }
+
+      Rectangle {
+        id: trackColor
+
+        readonly property int barWidth: 14
+        readonly property int cornerRadius: 2
+
+        Layout.fillHeight: true
+        Layout.preferredWidth: barWidth
+        color: root.track.color
+        topLeftRadius: cornerRadius
+
+        Button {
+          id: expandButton
+
+          height: trackColor.barWidth
+          padding: 0
+          visible: root.foldable && root.hovered
+          width: trackColor.barWidth
+
+          background: Rectangle {
+            color: expandButton.hovered ? Qt.alpha(palette.button, 0.25) : Qt.alpha(palette.button, 0.1)
+            radius: trackColor.cornerRadius
+          }
+          contentItem: IconImage {
+            id: expandArrow
+
+            readonly property int iconSize: trackColor.barWidth - 2
+
+            color: palette.brightText
+            height: iconSize
+            rotation: root.expanded ? 0 : -90
+            source: ResourceManager.getIconUrl("zrythm-dark", "adw-expander-arrow-symbolic.svg")
+            sourceSize.height: iconSize
+            sourceSize.width: iconSize
+            width: iconSize
+
+            Behavior on rotation {
+              animation: ZrythmTheme.propertyAnimation
+            }
+          }
+
+          onClicked: root.tracklist.collection.setTrackExpanded(root.track, !root.expanded)
+
+          anchors {
+            bottom: parent.bottom
+            horizontalCenter: parent.horizontalCenter
+          }
+        }
+      }
+
+      ColumnLayout {
+        id: allTrackComponentRows
+
+        Layout.fillHeight: true
+        Layout.fillWidth: true
+        spacing: 0
+
+        Loader {
+          Layout.bottomMargin: 3
+          Layout.fillWidth: true
+          Layout.maximumHeight: root.track.height - Layout.bottomMargin - Layout.topMargin
+          Layout.minimumHeight: root.track.height - Layout.bottomMargin - Layout.topMargin
+          Layout.topMargin: 3
+          sourceComponent: mainTrackView
+        }
+
+        Loader {
+          id: lanesLoader
+
+          Layout.fillHeight: true
+          Layout.fillWidth: true
+          active: root.track.lanes && root.track.lanes.lanesVisible
+          visible: active
+
+          sourceComponent: ColumnLayout {
+            id: lanesColumnLayout
+
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            spacing: 0
+
+            ListView {
+              id: lanesListView
+
+              Layout.fillHeight: true
+              Layout.fillWidth: true
+              boundsBehavior: Flickable.StopAtBounds
+              implicitHeight: contentHeight
+              model: root.track.lanes
+
+              delegate: ItemDelegate {
+                id: laneDelegate
+
+                required property int index
+                required property TrackLane trackLane
+
+                height: trackLane.height
+                width: ListView.view.width
+
+                ContextMenu.menu: Menu {
+                  MenuItem {
+                    enabled: laneDelegate.index < lanesListView.count - 1
+                    text: qsTr("Delete Lane")
+
+                    onTriggered: {
+                      root.trackCollectionOperator.deleteLane(laneDelegate.trackLane);
+                    }
+                  }
+                }
+
+                RowLayout {
+                  spacing: 2
+
+                  anchors {
+                    bottomMargin: root.contentBottomMargins
+                    fill: parent
+                    topMargin: root.contentTopMargins
+                  }
+
+                  Label {
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.fillHeight: false
+                    Layout.fillWidth: true
+                    text: laneDelegate.trackLane.name
+                  }
+
+                  LinkedButtons {
+                    Layout.alignment: Qt.AlignRight | Qt.AlignTop
+                    Layout.fillHeight: false
+                    Layout.fillWidth: false
+
+                    ChannelStateButton {
+                      checkedFill: ZrythmTheme.soloGreenColor
+                      text: "S"
+                      visible: false // currently unimplemented
+                    }
+
+                    ChannelStateButton {
+                      checkedFill: palette.dark
+                      text: "M"
+                      visible: false // currently unimplemented
+                    }
+                  }
+                }
+
+                ResizeHandle {
+                  anchors.bottom: parent.bottom
+                  anchors.left: parent.left
+                  anchors.right: parent.right
+                  resizeTarget: laneDelegate.trackLane
+
+                  onResizingChanged: active => {
+                    root.isResizing = active;
+                  }
+                }
+
+                Connections {
+                  function onHeightChanged() {
+                    root.track.fullVisibleHeightChanged();
+                  }
+
+                  target: laneDelegate.trackLane
+                }
+              }
+            }
+          }
+        }
+
+        Loader {
+          id: automationLoader
+
+          Layout.fillWidth: true
+          Layout.maximumHeight: Layout.preferredHeight
+          Layout.minimumHeight: Layout.preferredHeight
+          Layout.preferredHeight: (item as AutomationTracksListView)?.contentHeight ?? 0
+          active: root.track.automationTracklist && root.track.automationTracklist.automationVisible
+          visible: active
+
+          sourceComponent: AutomationTracksListView {
+            id: automationTracksListView
+
+            track: root.track
+          }
+        }
+      }
+
+      Loader {
+        active: root.track.channel !== null
+        visible: active
+
+        sourceComponent: TrackMeters {
+          Layout.fillHeight: true
+          Layout.fillWidth: false
+          audioEngine: root.audioEngine
+          channel: root.track.channel
+          portObservationManager: root.portObservationManager
+          track: root.track
+        }
+      }
+    }
+  }
+
+  SelectionTracker {
+    id: selectionTracker
+
+    modelIndexProvider: root.trackModelIndex
+    selectionModel: root.trackSelectionModel
+  }
+
+  Rectangle {
+    id: dropIndicator
+
+    color: palette.highlight
+    height: 3
+    visible: root.listViewDraggedTrack !== null && !selectionTracker.isSelected && root.listViewDropTargetFolder === null && root.listViewDropTargetIndex === root.trackModelIndex().row && root.listViewDropTargetIndex >= 0
+    z: 100
+
+    anchors {
+      left: parent.left
+      right: parent.right
+      top: parent.top
+    }
+  }
+
+  Rectangle {
+    id: dropIndicatorBottom
+
+    color: palette.highlight
+    height: 3
+    visible: root.listViewDraggedTrack !== null && !selectionTracker.isSelected && root.listViewDropTargetFolder === null && root.listViewIsLast && root.listViewDropTargetIndex === root.trackModelIndex().row + 1
+    z: 100
+
+    anchors {
+      bottom: parent.bottom
+      left: parent.left
+      right: parent.right
+    }
+  }
+
+  Rectangle {
+    id: folderDropIndicator
+
+    color: Qt.alpha(palette.highlight, 0.25)
+    visible: root.listViewDraggedTrack !== null && root.foldable && root.listViewDropTargetFolder !== null && root.listViewDropTargetFolder === root.track
+    z: 99
+
+    anchors {
+      bottom: parent.bottom
+      bottomMargin: 1
+      left: parent.left
+      leftMargin: root.depthIndentation
+      right: parent.right
+      top: parent.top
+      topMargin: 1
+    }
+  }
+
+  Component {
+    id: mainTrackView
+
+    Item {
+      id: mainTrackViewItem
+
+      ColumnLayout {
+        id: mainTrackViewColumnLayout
+
+        spacing: 0
+
+        anchors {
+          bottomMargin: root.contentBottomMargins
+          fill: parent
+          topMargin: root.contentTopMargins
+        }
+
+        RowLayout {
+          id: topRow
+
+          readonly property real contentHeight: Math.max(trackNameLabel.implicitHeight, linkedButtons.implicitHeight)
+
+          Layout.alignment: Qt.AlignTop
+          Layout.fillHeight: true
+          Layout.fillWidth: true
+          Layout.minimumHeight: contentHeight
+          Layout.preferredHeight: contentHeight
+
+          IconImage {
+            id: trackIcon
+
+            readonly property real iconSize: 14
+
+            Layout.alignment: Qt.AlignTop | Qt.AlignBaseline
+            Layout.preferredHeight: iconSize
+            Layout.preferredWidth: iconSize
+            color: trackNameLabel.color
+            fillMode: Image.PreserveAspectFit
+            source: {
+              if (root.track.icon.startsWith("gnome-icon-library-"))
+                return ResourceManager.getIconUrl("gnome-icon-library", root.track.icon.substring(19) + ".svg");
+
+              if (root.track.icon.startsWith("fluentui-"))
+                return ResourceManager.getIconUrl("fluentui", root.track.icon.substring(9) + ".svg");
+
+              if (root.track.icon.startsWith("lorc-"))
+                return ResourceManager.getIconUrl("lorc", root.track.icon.substring(5) + ".svg");
+
+              if (root.track.icon.startsWith("jam-icons-"))
+                return ResourceManager.getIconUrl("jam-icons", root.track.icon.substring(10) + ".svg");
+
+              return ResourceManager.getIconUrl("zrythm-dark", root.track.icon + ".svg");
+            }
+            sourceSize.height: iconSize
+            sourceSize.width: iconSize
+          }
+
+          Label {
+            id: trackNameLabel
+
+            Layout.alignment: Qt.AlignLeft | Qt.AlignBaseline
+            Layout.fillWidth: true
+            elide: Text.ElideRight
+            font: selectionTracker.isSelected ? ZrythmTheme.buttonTextFont : ZrythmTheme.normalTextFont
+            text: root.track.name
+          }
+
+          LinkedButtons {
+            id: linkedButtons
+
+            Layout.alignment: Qt.AlignRight | Qt.AlignBaseline | Qt.AlignTop
+            Layout.fillWidth: false
+
+            ChannelStateButton {
+              id: muteButton
+
+              Accessible.name: qsTr("Mute")
+              checkedFill: palette.dark
+              checked: root.track.channel && root.track.channel.fader.mute.baseValue > 0.5
+              text: "M"
+              visible: root.track.channel !== null
+
+              // External value syncs that flip checked re-enter these
+              // handlers; the write-back is a no-op then (value unchanged),
+              // which only holds for binary 0/1 toggles like these
+              onCheckedChanged: root.track.channel?.fader.mute.setBaseValueByUser(checked ? 1.0 : 0.0)
+
+              ToolTip {
+                text: qsTr("Mute")
+              }
+            }
+
+            ChannelStateButton {
+              Accessible.name: qsTr("Solo")
+              checkedFill: ZrythmTheme.soloGreenColor
+              checked: root.track.channel && root.track.channel.fader.solo.baseValue > 0.5
+              text: "S"
+              visible: root.track.channel !== null
+
+              onCheckedChanged: root.track.channel?.fader.solo.setBaseValueByUser(checked ? 1.0 : 0.0)
+
+              ToolTip {
+                text: qsTr("Solo")
+              }
+            }
+
+            ChannelStateButton {
+              Accessible.name: qsTr("Record")
+              checkedFill: ZrythmTheme.recordColor
+              checked: root.track.recordingParam?.range.isToggled(root.track.recordingParam.baseValue) ?? false
+              glyphPixelSize: 10
+              restInk: ZrythmTheme.recordTextColor
+              text: "●"
+              visible: root.track.recordingParam !== null
+
+              onClicked: {
+                root.track.recordingParam.setBaseValueByUser(root.track.recordingParam.range.isToggled(root.track.recordingParam.baseValue) ? 0.0 : 1.0);
+              }
+
+              ToolTip {
+                text: qsTr("Record")
+              }
+            }
+          }
+        }
+
+        RowLayout {
+          id: bottomRow
+
+          Layout.alignment: Qt.AlignBottom
+          Layout.fillHeight: false
+          Layout.fillWidth: true
+          visible: root.track.height > root.buttonHeight + height + 12
+
+          Label {
+            id: chordScalesLabel
+
+            Layout.alignment: Qt.AlignLeft | Qt.AlignBottom
+            font: ZrythmTheme.smallTextFont
+            text: qsTr("Scales")
+            visible: root.track.type === Track.Chord
+          }
+
+          Item {
+            id: filler
+
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+          }
+
+          LinkedButtons {
+            id: bottomRightButtons
+
+            Layout.alignment: Qt.AlignRight | Qt.AlignBottom
+            Layout.fillHeight: true
+
+            ChannelStateButton {
+              Accessible.name: qsTr("Show lanes")
+              checkedFill: palette.dark
+              checked: root.track.lanes && root.track.lanes.lanesVisible
+              icon.source: ResourceManager.getIconUrl("gnome-icon-library", "list-compact-symbolic.svg")
+              visible: root.track.lanes !== null
+
+              onClicked: {
+                root.track.lanes.lanesVisible = !root.track.lanes.lanesVisible;
+              }
+
+              ToolTip {
+                text: qsTr("Show lanes")
+              }
+            }
+
+            ChannelStateButton {
+              Accessible.name: qsTr("Show automation")
+              checkedFill: palette.dark
+              checked: root.track.automationTracklist && root.track.automationTracklist.automationVisible
+              icon.source: ResourceManager.getIconUrl("zrythm-dark", "automation-4p.svg")
+              visible: root.track.automationTracklist !== null
+
+              onClicked: {
+                root.track.automationTracklist.automationVisible = !root.track.automationTracklist.automationVisible;
+              }
+
+              ToolTip {
+                text: qsTr("Show automation")
+              }
+            }
+          }
+        }
+      }
+
+      ResizeHandle {
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        resizeTarget: root.track
+
+        onResizingChanged: active => {
+          root.isResizing = active;
+        }
+      }
+    }
+  }
+}

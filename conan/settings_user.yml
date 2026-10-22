@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+
+compiler:
+  gcc:
+    sanitizer:
+      - null
+      - Address
+      - UndefinedBehavior
+      - AddressUndefinedBehavior
+      - Thread
+      - ThreadUndefinedBehavior
+    march:
+      - null
+      - AVX
+  clang:
+    sanitizer:
+      - null
+      - Address
+      - UndefinedBehavior
+      - AddressUndefinedBehavior
+      - Thread
+      - ThreadUndefinedBehavior
+      - Realtime
+    march:
+      - null
+      - AVX
+  msvc:
+    sanitizer:
+      - null
+      - Address
+    march:
+      - null
+      - AVX
+  apple-clang:
+    sanitizer:
+      - null
+      - Address
+      - UndefinedBehavior
+      - AddressUndefinedBehavior
+      - Thread
+    march:
+      - null

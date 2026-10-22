@@ -1,0 +1,120 @@
+// SPDX-FileCopyrightText: © 2019-2021, 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include <span>
+
+#include "dsp/fader.h"
+#include "dsp/metronome.h"
+#include "structure/tracks/track_fwd.h"
+#include "utils/object_registry.h"
+
+namespace zrythm::engine::session
+{
+
+/**
+ * @brief Abstraction to control the signal coming in from Master and going out
+ * into the speakers.
+ *
+ * For example, the control room allows to specify how Listen will work on each
+ * Channel and to set overall volume after the Master Channel so you can change
+ * the volume without touching the Master Fader.
+ */
+class ControlRoom : public QObject
+{
+  Q_OBJECT
+  Q_PROPERTY (
+    bool dimOutput READ dimOutput WRITE setDimOutput NOTIFY dimOutputChanged)
+  Q_PROPERTY (
+    zrythm::dsp::ProcessorParameter * muteVolume READ muteVolume CONSTANT)
+  Q_PROPERTY (
+    zrythm::dsp::ProcessorParameter * listenVolume READ listenVolume CONSTANT)
+  Q_PROPERTY (
+    zrythm::dsp::ProcessorParameter * dimVolume READ dimVolume CONSTANT)
+  Q_PROPERTY (zrythm::dsp::Fader * monitorFader READ monitorFader CONSTANT)
+  Q_PROPERTY (zrythm::dsp::Metronome * metronome READ metronome CONSTANT FINAL)
+  QML_ELEMENT
+  QML_UNCREATABLE ("")
+
+public:
+  using RealtimeTracks = std::span<structure::tracks::Track * const>;
+  using RealtimeTracksProvider = std::function<RealtimeTracks ()>;
+
+  ControlRoom (
+    RealtimeTracksProvider rt_tracks_provider,
+    QObject *              parent = nullptr);
+
+  // ========================================================================
+  // QML Interface
+  // ========================================================================
+
+  bool dimOutput () const { return dim_output_.load (); }
+  void setDimOutput (bool dim)
+  {
+    bool expected = !dim;
+    if (dim_output_.compare_exchange_strong (expected, dim))
+      {
+        Q_EMIT dimOutputChanged (dim);
+      }
+  }
+  Q_SIGNAL void dimOutputChanged (bool dim);
+
+  dsp::ProcessorParameter * muteVolume () const { return mute_volume_.get (); }
+  dsp::ProcessorParameter * listenVolume () const
+  {
+    return listen_volume_.get ();
+  }
+  dsp::ProcessorParameter * dimVolume () const { return dim_volume_.get (); }
+  auto * monitorFader () const { return monitor_fader_.get (); }
+  auto * metronome () const { return metronome_.get (); }
+
+  // ========================================================================
+
+private:
+  /**
+   * @brief Self-contained registry (just to satisfy port/fader requirements).
+   */
+  utils::ObjectRegistry registry_;
+
+  /**
+   * The volume to set muted channels to when
+   * soloing/muting.
+   */
+  utils::QObjectUniquePtr<dsp::ProcessorParameter> mute_volume_;
+
+  /**
+   * The volume to set listened channels to when
+   * Listen is enabled on a Channel.
+   */
+  utils::QObjectUniquePtr<dsp::ProcessorParameter> listen_volume_;
+
+  /**
+   * The volume to set other channels to when Listen
+   * is enabled on a Channel, or the monitor when
+   * dim is enabled.
+   */
+  utils::QObjectUniquePtr<dsp::ProcessorParameter> dim_volume_;
+
+  /** Dim the output volume. */
+  std::atomic_bool dim_output_ = false;
+
+  /**
+   * Monitor fader.
+   *
+   * The Master stereo out should connect to this.
+   */
+  utils::QObjectUniquePtr<dsp::Fader> monitor_fader_;
+
+  /**
+   * Metronome.
+   *
+   * The metronome is a global processor that connects to the monitor fader.
+   * Its tempo map is set by the active project.
+   */
+  utils::QObjectUniquePtr<dsp::Metronome> metronome_;
+
+  RealtimeTracksProvider rt_tracks_provider_;
+};
+
+}

@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: © 2023 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+[submodule "doc/dev/doxygen-awesome-css"]
+	path = doc/dev/doxygen-awesome-css
+	url = https://github.com/jothepro/doxygen-awesome-css.git
+[submodule "ext/conan-center-index"]
+	path = ext/conan-center-index
+	url = https://github.com/zrythm/conan-center-index
+	branch = zrythm_fixes
+	shallow = true

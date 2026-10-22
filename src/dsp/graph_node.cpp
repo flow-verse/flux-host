@@ -1,0 +1,425 @@
+// SPDX-FileCopyrightText: © 2019-2022, 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+/*
+ * This file incorporates work covered by the following copyright and
+ * permission notice:
+ *
+ * ---
+ *
+ * Copyright (C) 2017, 2019 Robin Gareus <robin@gareus.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * ---
+ */
+
+#include <algorithm>
+#include <stdexcept>
+#include <utility>
+
+#include "dsp/graph_node.h"
+#include "dsp/itransport.h"
+#include "utils/debug.h"
+#include "utils/utf8_string.h"
+
+#include <fmt/format.h>
+
+namespace zrythm::dsp::graph
+{
+
+void
+IProcessable::prepare_for_processing (
+  const GraphNode *    node,
+  units::sample_rate_t sample_rate,
+  units::sample_u32_t  max_block_length)
+{
+  assert (
+    node == nullptr
+    || std::addressof (node->get_processable ())
+         == static_cast<const IProcessable *> (this));
+  prepare_for_processing_impl (node, sample_rate, max_block_length);
+}
+
+utils::Utf8String
+InitialProcessor::get_node_name () const
+{
+  return u8"Initial Processor";
+}
+
+GraphNode::GraphNode (NodeId id, IProcessable &processable)
+    : node_id_ (id), processable_ (processable)
+{
+}
+
+std::string
+GraphNode::print_node_to_str () const
+{
+  std::string name = processable_.get_node_name ().str ();
+  std::string str1 = fmt::format (
+    "node [({}) {}] refcount: {} | terminal: {} | initial: {} | playback latency: {}",
+    node_id_, name, refcount_.load (), terminal_, initial_, playback_latency_);
+  std::string str2;
+  for (const auto dest : childnodes_)
+    {
+      name = dest.get ().processable_.get_node_name ().str ();
+      str2 =
+        fmt::format ("{} (dest [({}) {}])", str1, dest.get ().node_id_, name);
+      str1 = str2;
+    }
+  return str1;
+}
+
+void
+GraphNode::compensate_latency (
+  dsp::graph::ProcessBlockInfo &time_nfo,
+  const units::sample_u32_t     remaining_preroll_frames,
+  const dsp::ITransport        &transport,
+  const dsp::TempoMap          &tempo_map) const
+{
+  /* if the playhead is before the loop-end point and the
+   * latency-compensated position is after the loop-end point it means
+   * that the loop was crossed, so compensate for that.
+   *
+   * if the position is before loop-end and position + frames is after
+   * loop end (there is a loop inside the range), that should be handled
+   * by the ports/processors instead */
+  assert (route_playback_latency_ >= remaining_preroll_frames);
+  const auto playhead_pos = transport.get_playhead_position_in_audio_thread ();
+  auto       adjusted_playhead_position =
+    transport.get_playhead_position_after_adding_frames_in_audio_thread (
+      playhead_pos, route_playback_latency_ - remaining_preroll_frames);
+  time_nfo.transport_position_ =
+    adjusted_playhead_position + time_nfo.buffer_offset_;
+}
+
+void
+GraphNode::process_chunks_after_splitting_at_loop_points (
+  dsp::graph::ProcessBlockInfo &time_nfo,
+  const dsp::ITransport        &transport,
+  const dsp::TempoMap          &tempo_map) const
+{
+  // split at loop points
+  for (
+    units::sample_u32_t num_processable_frames;
+    (num_processable_frames = au::min (
+       transport.is_loop_point_met_in_audio_thread (
+         time_nfo.transport_position_, time_nfo.nframes_),
+       time_nfo.nframes_))
+    != units::samples (0);)
+    {
+      // process chunk
+      processable_.process_block (
+        dsp::graph::ProcessBlockInfo{
+          .transport_position_ = time_nfo.transport_position_,
+          .buffer_offset_ = time_nfo.buffer_offset_,
+          .nframes_ = num_processable_frames,
+          .fork_join_executor_ = time_nfo.fork_join_executor_ },
+        transport, tempo_map);
+
+      time_nfo.nframes_ -= num_processable_frames;
+
+      // loop back to loop start
+      time_nfo.transport_position_ = transport.get_loop_range_positions ().first;
+      time_nfo.buffer_offset_ += num_processable_frames;
+    }
+}
+
+void
+GraphNode::process (
+  dsp::graph::ProcessBlockInfo time_nfo,
+  const units::sample_u64_t    remaining_preroll_frames,
+  const dsp::ITransport       &transport,
+  const dsp::TempoMap         &tempo_map) const
+{
+  // if node is bypassed, skip processing
+  if (bypass_) [[unlikely]]
+    {
+      return;
+    }
+
+  // z_info ("processing {}", get_name ());
+
+  /* skip if we are doing a no-roll */
+  if (route_playback_latency_ < remaining_preroll_frames)
+    {
+      return;
+    }
+
+  // Always include the buffer offset in transport_position so that
+  // processors see the correct timeline position for their chunk,
+  // regardless of transport state.  When rolling, compensate_latency()
+  // will overwrite this with the full latency-adjusted value.
+  time_nfo.transport_position_ += time_nfo.buffer_offset_;
+
+  /* compensate latency when rolling */
+  if (transport.get_play_state () == dsp::ITransport::PlayState::Rolling)
+    {
+      compensate_latency (
+        time_nfo, remaining_preroll_frames, transport, tempo_map);
+    }
+
+  process_chunks_after_splitting_at_loop_points (time_nfo, transport, tempo_map);
+
+  if (time_nfo.nframes_ > units::samples (0))
+    {
+      processable_.process_block (time_nfo, transport, tempo_map);
+    }
+}
+
+void
+GraphNode::add_feeds (GraphNode &dest)
+{
+  /* return if already added */
+  if (std::ranges::any_of (childnodes_, [&] (const auto child) {
+        return std::addressof (child.get ()) == &dest;
+      }))
+    {
+      return;
+    }
+
+  childnodes_.emplace_back (dest);
+
+  terminal_ = false;
+}
+
+void
+GraphNode::add_depends (GraphNode &src)
+{
+  ++init_refcount_;
+  refcount_ = init_refcount_;
+
+  /* add parent nodes */
+  parentnodes_.emplace_back (src);
+
+  initial_ = false;
+}
+
+bool
+GraphNode::remove_feed (const GraphNode &feed)
+{
+  const auto erased_elements =
+    std::erase_if (childnodes_, [&] (const auto &child_node) {
+      return std::addressof (child_node.get ()) == std::addressof (feed);
+    });
+  return erased_elements > 0;
+}
+
+bool
+GraphNode::remove_depend (const GraphNode &depend)
+{
+  std::erase_if (dependency_configs_, [&] (const auto &entry) {
+    return entry.first == std::addressof (depend);
+  });
+  const auto erased_elements =
+    std::erase_if (parentnodes_, [&] (const auto &parent_node) {
+      return std::addressof (parent_node.get ()) == std::addressof (depend);
+    });
+  return erased_elements > 0;
+}
+
+void
+GraphNode::set_route_playback_latency (units::sample_u32_t dest_latency)
+{
+  /*long max_latency = 0, parent_latency;*/
+
+  /* set route playback latency */
+  if (dest_latency > route_playback_latency_)
+    {
+      route_playback_latency_ = dest_latency;
+    }
+  else
+    {
+      /* assumed that parent nodes already have the previous
+       * latency set */
+      /* TODO double-check if this is OK to do, needs testing */
+      return;
+    }
+
+  for (const auto parent : parentnodes_)
+    {
+      parent.get ().set_route_playback_latency (route_playback_latency_);
+#if 0
+      z_info (
+        "added %d route playback latency from node %s to "
+        "parent %s. Total route latency on parent: %d",
+        dest_latency,
+        graph_node_get_name (node),
+        graph_node_get_name (parent),
+        parent->route_playback_latency);
+#endif
+    }
+}
+
+void
+GraphNode::connect_to (GraphNode &target, std::optional<ConnectionConfig> config)
+{
+  if (std::addressof (target) == this)
+    {
+      throw std::runtime_error (
+        fmt::format (
+          "Self-connection attempted on node '{}' ({})",
+          get_processable ().get_node_name (), static_cast<const void *> (this)));
+    }
+
+  if (std::ranges::any_of (childnodes_, [&target] (const auto &cur) {
+        return std::addressof (cur.get ()) == &target;
+      }))
+    {
+      if (config.has_value ())
+        {
+          target.store_config_for_dependency (*this, std::move (*config));
+        }
+      return;
+    }
+
+  add_feeds (target);
+  target.add_depends (*this);
+  if (config.has_value ())
+    {
+      target.store_config_for_dependency (*this, std::move (*config));
+    }
+
+  assert (!terminal_ && !target.initial_);
+}
+
+std::optional<ConnectionConfig>
+GraphNode::connection_for_dependency (const GraphNode &parent) const
+{
+  const auto it = std::ranges::find (
+    dependency_configs_, &parent,
+    &std::pair<GraphNode *, ConnectionConfig>::first);
+  return it != dependency_configs_.end ()
+           ? std::optional<ConnectionConfig> (it->second)
+           : std::nullopt;
+}
+
+void
+GraphNode::store_config_for_dependency (
+  GraphNode       &parent,
+  ConnectionConfig config)
+{
+  const auto it = std::ranges::find (
+    dependency_configs_, &parent,
+    &std::pair<GraphNode *, ConnectionConfig>::first);
+  if (it != dependency_configs_.end ())
+    {
+      it->second = std::move (config);
+    }
+  else
+    {
+      dependency_configs_.emplace_back (&parent, std::move (config));
+    }
+}
+
+units::sample_u32_t
+GraphNodeCollection::get_max_route_playback_latency () const
+{
+  if (graph_nodes_.empty ()) [[unlikely]]
+    {
+      return {};
+    }
+
+  z_return_val_if_fail (!trigger_nodes_.empty (), {});
+
+  return std::ranges::max (
+    trigger_nodes_ | std::views::transform ([] (const auto &node) {
+      return node.get ().route_playback_latency_;
+    }));
+}
+
+void
+GraphNodeCollection::update_latencies ()
+{
+  z_info ("updating graph latencies...");
+
+  /* reset latencies */
+  auto &nodes = graph_nodes_;
+  z_debug ("setting all latencies to 0");
+  for (auto &node : nodes)
+    {
+      node->playback_latency_ = units::samples (0);
+      node->route_playback_latency_ = units::samples (0);
+    }
+  z_debug ("done setting all latencies to 0");
+
+  z_debug ("iterating over {} nodes...", nodes.size ());
+  units::sample_u32_t max_playback_latency = units::samples (0);
+  for (auto &node : nodes)
+    {
+      node->playback_latency_ = node->get_single_playback_latency ();
+      if (node->playback_latency_ > units::samples (0))
+        {
+          node->set_route_playback_latency (node->playback_latency_);
+
+          max_playback_latency =
+            std::max (node->playback_latency_, max_playback_latency);
+        }
+    }
+  z_debug ("iterating done...");
+
+  z_info (
+    "Total latencies:\n"
+    "Playback: {}\n"
+    "Recording: {}\n",
+    max_playback_latency, 0);
+}
+
+void
+GraphNodeCollection::set_initial_and_terminal_nodes ()
+{
+  terminal_nodes_.clear ();
+  trigger_nodes_.clear ();
+  for (const auto &node : graph_nodes_)
+    {
+      if (node->feeds ().empty ())
+        {
+          /* terminal node */
+          node->terminal_ = true;
+          terminal_nodes_.emplace_back (*node);
+        }
+      if (node->init_refcount_ == 0)
+        {
+          /* initial node */
+          node->initial_ = true;
+          trigger_nodes_.emplace_back (*node);
+        }
+    }
+}
+
+GraphNode *
+GraphNodeCollection::find_node_for_processable (
+  const IProcessable &processable) const
+{
+  auto it = std::ranges::find_if (graph_nodes_, [&] (const auto &node) {
+    return std::addressof (node->get_processable ())
+           == std::addressof (processable);
+  });
+  if (it != graph_nodes_.end ())
+    {
+      return it->get ();
+    }
+  return nullptr;
+}
+
+void
+ProcessBlockInfo::print () const
+{
+  z_info (
+    "Transport position: {} | buffer offset: {} | num frames: {}",
+    transport_position_, buffer_offset_, nframes_);
+}
+
+} // namespace zrythm::dsp::graph

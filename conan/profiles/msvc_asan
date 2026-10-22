@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+include(msvc_debug)
+
+[settings]
+compiler.sanitizer=Address
+compiler.runtime_type=Release
+
+[conf]
+tools.build:cxxflags+=["/fsanitize=address", "/Zi"]
+tools.build:exelinkflags+=["/fsanitize=address"]

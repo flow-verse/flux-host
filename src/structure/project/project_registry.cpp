@@ -1,0 +1,1023 @@
+// SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "utils/format_qt.h"
+
+#include "dsp/file_audio_source.h"
+#include "dsp/parameter.h"
+#include "dsp/port_all.h"
+#include "dsp/port_fwd.h"
+#include "plugins/plugin.h"
+#include "plugins/plugin_factory.h"
+#include "structure/arrangement/arranger_object_factory.h"
+#include "structure/arrangement/arranger_object_fwd.h"
+#include "structure/arrangement/tempo_object_manager.h"
+#include "structure/project/project_registry.h"
+#include "structure/scenes/clip_slot.h"
+#include "structure/tracks/automation_track.h"
+#include "structure/tracks/track_factory.h"
+#include "structure/tracks/track_fwd.h"
+#include "structure/tracks/track_lane.h"
+#include "utils/exceptions.h"
+#include "utils/serialization.h"
+#include "utils/traits.h"
+#include "utils/variant_helpers.h"
+
+#include <boost/unordered/unordered_flat_map.hpp>
+
+namespace zrythm::structure::project
+{
+
+struct ProjectRegistry::Impl
+{
+  using Category = ProjectRegistry::ObjectCategory;
+
+  ~Impl ()
+  {
+    for (auto &[id, var] : ports_)
+      std::visit ([] (auto * p) { delete p; }, var);
+    for (auto &[id, ptr] : params_)
+      delete ptr;
+    for (auto &[id, var] : plugins_)
+      std::visit ([] (auto * p) { delete p; }, var);
+    for (auto &[id, var] : tracks_)
+      std::visit ([] (auto * p) { delete p; }, var);
+    for (auto &[id, ptr] : automation_tracks_)
+      delete ptr;
+    for (auto &[id, ptr] : lanes_)
+      delete ptr;
+    for (auto &[id, ptr] : clip_slots_)
+      delete ptr;
+    for (auto &[id, var] : arranger_objects_)
+      std::visit ([] (auto * p) { delete p; }, var);
+    for (auto &[id, ptr] : file_audio_sources_)
+      delete ptr;
+    for (auto &[id, ptr] : tempo_object_managers_)
+      delete ptr;
+  }
+
+  boost::unordered::unordered_flat_map<QUuid, dsp::PortPtrVariant> ports_;
+  boost::unordered::unordered_flat_map<QUuid, dsp::ProcessorParameter *> params_;
+  boost::unordered::unordered_flat_map<QUuid, plugins::PluginPtrVariant> plugins_;
+  boost::unordered::unordered_flat_map<QUuid, structure::tracks::TrackPtrVariant>
+    tracks_;
+  boost::unordered::unordered_flat_map<QUuid, structure::tracks::AutomationTrack *>
+    automation_tracks_;
+  boost::unordered::unordered_flat_map<QUuid, structure::tracks::TrackLane *>
+    lanes_;
+  boost::unordered::unordered_flat_map<QUuid, structure::scenes::ClipSlot *>
+    clip_slots_;
+  boost::unordered::
+    unordered_flat_map<QUuid, structure::arrangement::ArrangerObjectPtrVariant>
+      arranger_objects_;
+  boost::unordered::unordered_flat_map<QUuid, dsp::FileAudioSource *>
+    file_audio_sources_;
+
+  boost::unordered::
+    unordered_flat_map<QUuid, structure::arrangement::TempoObjectManager *>
+      tempo_object_managers_;
+
+  boost::unordered::unordered_flat_map<QUuid, Category> uuid_to_category_;
+  boost::unordered::unordered_flat_map<QUuid, int>      ref_counts_;
+
+  std::optional<DeserializationDependencies> deserialization_dependencies_;
+};
+
+ProjectRegistry::ProjectRegistry (QObject * parent)
+    : QObject (parent), impl_ (std::make_unique<Impl> ())
+{
+}
+
+ProjectRegistry::~ProjectRegistry ()
+{
+  destroying_ = true;
+  impl_.reset ();
+}
+
+void
+ProjectRegistry::set_deserialization_dependencies (
+  DeserializationDependencies deps)
+{
+  impl_->deserialization_dependencies_.emplace (std::move (deps));
+}
+
+void
+ProjectRegistry::register_object_impl (utils::UuidIdentifiableBase &base)
+{
+  auto * qobj = static_cast<QObject *> (&base);
+  assert (qobj != nullptr);
+  const auto uuid = base.raw_uuid ();
+
+  if (impl_->uuid_to_category_.contains (uuid))
+    {
+      throw utils::ZrythmException (
+        fmt::format ("duplicate UUID: {}", uuid.toString ()));
+    }
+
+  if (auto * port = qobject_cast<dsp::Port *> (qobj))
+    {
+      auto var = utils::convert_to_variant_qobj<dsp::PortPtrVariant> (port);
+      impl_->ports_.emplace (uuid, var);
+      impl_->uuid_to_category_.emplace (uuid, Impl::Category::Port);
+      qobj->setParent (this);
+      return;
+    }
+
+  if (auto * param = qobject_cast<dsp::ProcessorParameter *> (qobj))
+    {
+      impl_->params_.emplace (uuid, param);
+      impl_->uuid_to_category_.emplace (uuid, Impl::Category::Param);
+      qobj->setParent (this);
+      return;
+    }
+
+  if (auto * plugin = qobject_cast<plugins::Plugin *> (qobj))
+    {
+      auto var =
+        utils::convert_to_variant_qobj<plugins::PluginPtrVariant> (plugin);
+      impl_->plugins_.emplace (uuid, var);
+      impl_->uuid_to_category_.emplace (uuid, Impl::Category::Plugin);
+      qobj->setParent (this);
+      return;
+    }
+
+  if (auto * track = qobject_cast<structure::tracks::Track *> (qobj))
+    {
+      auto var = utils::convert_to_variant_qobj<
+        structure::tracks::TrackPtrVariant> (track);
+      impl_->tracks_.emplace (uuid, var);
+      impl_->uuid_to_category_.emplace (uuid, Impl::Category::Track);
+      qobj->setParent (this);
+      return;
+    }
+
+  if (
+    auto * automation_track =
+      qobject_cast<structure::tracks::AutomationTrack *> (qobj))
+    {
+      impl_->automation_tracks_.emplace (uuid, automation_track);
+      impl_->uuid_to_category_.emplace (uuid, Impl::Category::AutomationTrack);
+      qobj->setParent (this);
+      return;
+    }
+
+  if (auto * lane = qobject_cast<structure::tracks::TrackLane *> (qobj))
+    {
+      impl_->lanes_.emplace (uuid, lane);
+      impl_->uuid_to_category_.emplace (uuid, Impl::Category::Lane);
+      qobj->setParent (this);
+      return;
+    }
+
+  if (auto * clip_slot = qobject_cast<structure::scenes::ClipSlot *> (qobj))
+    {
+      impl_->clip_slots_.emplace (uuid, clip_slot);
+      impl_->uuid_to_category_.emplace (uuid, Impl::Category::ClipSlot);
+      qobj->setParent (this);
+      return;
+    }
+
+  if (auto * obj = qobject_cast<structure::arrangement::ArrangerObject *> (qobj))
+    {
+      auto var = utils::convert_to_variant_qobj<
+        structure::arrangement::ArrangerObjectPtrVariant> (obj);
+      impl_->arranger_objects_.emplace (uuid, var);
+      impl_->uuid_to_category_.emplace (uuid, Impl::Category::ArrangerObject);
+      qobj->setParent (this);
+      return;
+    }
+
+  if (auto * fas = qobject_cast<dsp::FileAudioSource *> (qobj))
+    {
+      impl_->file_audio_sources_.emplace (uuid, fas);
+      impl_->uuid_to_category_.emplace (uuid, Impl::Category::FileAudioSource);
+      qobj->setParent (this);
+      return;
+    }
+
+  if (
+    auto * tom =
+      qobject_cast<structure::arrangement::TempoObjectManager *> (qobj))
+    {
+      impl_->tempo_object_managers_.emplace (uuid, tom);
+      impl_->uuid_to_category_.emplace (
+        uuid, Impl::Category::TempoObjectManager);
+      qobj->setParent (this);
+      return;
+    }
+
+  throw std::runtime_error (
+    fmt::format ("Unknown object type in ProjectRegistry: {}", uuid.toString ()));
+}
+
+void
+ProjectRegistry::acquire_reference_impl (const QUuid &id)
+{
+  if (!impl_->uuid_to_category_.contains (id))
+    {
+      throw std::runtime_error (
+        fmt::format ("acquire_reference: unknown UUID {}", id.toString ()));
+    }
+  impl_->ref_counts_[id]++;
+}
+
+void
+ProjectRegistry::release_reference_impl (const QUuid &id)
+{
+  if (destroying_)
+    return;
+  auto it = impl_->ref_counts_.find (id);
+  if (it == impl_->ref_counts_.end () || it->second <= 0)
+    {
+      throw std::runtime_error (
+        fmt::format (
+          "release_reference: invalid ref count for UUID {}", id.toString ()));
+    }
+  if (--it->second <= 0)
+    delete_object_by_id (id);
+}
+
+utils::UuidIdentifiableBase *
+ProjectRegistry::find_by_raw_uuid_impl (const QUuid &id) const
+{
+  const auto cat_it = impl_->uuid_to_category_.find (id);
+  if (cat_it == impl_->uuid_to_category_.end ())
+    return nullptr;
+
+  auto extract_base = [] (const auto &variant) -> utils::UuidIdentifiableBase * {
+    return std::visit (
+      [] (auto * ptr) -> utils::UuidIdentifiableBase * { return ptr; }, variant);
+  };
+
+  switch (cat_it->second)
+    {
+    case Impl::Category::Port:
+      {
+        auto it = impl_->ports_.find (id);
+        return it != impl_->ports_.end () ? extract_base (it->second) : nullptr;
+      }
+    case Impl::Category::Param:
+      {
+        auto it = impl_->params_.find (id);
+        return it != impl_->params_.end () ? it->second : nullptr;
+      }
+    case Impl::Category::Plugin:
+      {
+        auto it = impl_->plugins_.find (id);
+        return it != impl_->plugins_.end () ? extract_base (it->second) : nullptr;
+      }
+    case Impl::Category::Track:
+      {
+        auto it = impl_->tracks_.find (id);
+        return it != impl_->tracks_.end () ? extract_base (it->second) : nullptr;
+      }
+    case Impl::Category::AutomationTrack:
+      {
+        auto it = impl_->automation_tracks_.find (id);
+        return it != impl_->automation_tracks_.end () ? it->second : nullptr;
+      }
+    case Impl::Category::Lane:
+      {
+        auto it = impl_->lanes_.find (id);
+        return it != impl_->lanes_.end () ? it->second : nullptr;
+      }
+    case Impl::Category::ClipSlot:
+      {
+        auto it = impl_->clip_slots_.find (id);
+        return it != impl_->clip_slots_.end () ? it->second : nullptr;
+      }
+    case Impl::Category::ArrangerObject:
+      {
+        auto it = impl_->arranger_objects_.find (id);
+        return it != impl_->arranger_objects_.end ()
+                 ? extract_base (it->second)
+                 : nullptr;
+      }
+    case Impl::Category::FileAudioSource:
+      {
+        auto it = impl_->file_audio_sources_.find (id);
+        return it != impl_->file_audio_sources_.end () ? it->second : nullptr;
+      }
+    case Impl::Category::TempoObjectManager:
+      {
+        auto it = impl_->tempo_object_managers_.find (id);
+        return it != impl_->tempo_object_managers_.end () ? it->second : nullptr;
+      }
+    }
+  return nullptr;
+}
+
+bool
+ProjectRegistry::contains_impl (const QUuid &id) const
+{
+  return impl_->uuid_to_category_.contains (id);
+}
+
+// ============================================================================
+// Type-filtered iteration
+// ============================================================================
+
+void
+ProjectRegistry::for_each_matching_impl (
+  const QMetaObject &meta_type,
+  ObjectVisitor      visitor) const
+{
+  auto visit_if_matching = [&] (utils::UuidIdentifiableBase &obj) {
+    if (obj.metaObject ()->inherits (&meta_type))
+      visitor (obj);
+  };
+
+  if (meta_type.inherits (&dsp::FileAudioSource::staticMetaObject))
+    {
+      for (const auto &[uuid, ptr] : impl_->file_audio_sources_)
+        visit_if_matching (*ptr);
+      return;
+    }
+  if (
+    meta_type.inherits (
+      &structure::arrangement::TempoObjectManager::staticMetaObject))
+    {
+      for (const auto &[uuid, ptr] : impl_->tempo_object_managers_)
+        visit_if_matching (*ptr);
+      return;
+    }
+  if (
+    meta_type.inherits (
+      &structure::arrangement::ArrangerObject::staticMetaObject))
+    {
+      for (const auto &[uuid, var] : impl_->arranger_objects_)
+        std::visit ([&] (auto * p) { visit_if_matching (*p); }, var);
+      return;
+    }
+  if (meta_type.inherits (&structure::tracks::Track::staticMetaObject))
+    {
+      for (const auto &[uuid, var] : impl_->tracks_)
+        std::visit ([&] (auto * p) { visit_if_matching (*p); }, var);
+      return;
+    }
+  if (meta_type.inherits (&structure::tracks::AutomationTrack::staticMetaObject))
+    {
+      for (const auto &[uuid, ptr] : impl_->automation_tracks_)
+        visit_if_matching (*ptr);
+      return;
+    }
+  if (meta_type.inherits (&structure::tracks::TrackLane::staticMetaObject))
+    {
+      for (const auto &[uuid, ptr] : impl_->lanes_)
+        visit_if_matching (*ptr);
+      return;
+    }
+  if (meta_type.inherits (&structure::scenes::ClipSlot::staticMetaObject))
+    {
+      for (const auto &[uuid, ptr] : impl_->clip_slots_)
+        visit_if_matching (*ptr);
+      return;
+    }
+  if (meta_type.inherits (&plugins::Plugin::staticMetaObject))
+    {
+      for (const auto &[uuid, var] : impl_->plugins_)
+        std::visit ([&] (auto * p) { visit_if_matching (*p); }, var);
+      return;
+    }
+  if (meta_type.inherits (&dsp::ProcessorParameter::staticMetaObject))
+    {
+      for (const auto &[uuid, ptr] : impl_->params_)
+        visit_if_matching (*ptr);
+      return;
+    }
+  if (meta_type.inherits (&dsp::Port::staticMetaObject))
+    {
+      for (const auto &[uuid, var] : impl_->ports_)
+        std::visit ([&] (auto * p) { visit_if_matching (*p); }, var);
+      return;
+    }
+}
+
+// ============================================================================
+// Private
+// ============================================================================
+
+bool
+ProjectRegistry::has_live_references (const QUuid &id) const
+{
+  const auto ref_it = impl_->ref_counts_.find (id);
+  return ref_it != impl_->ref_counts_.end () && ref_it->second > 0;
+}
+
+void
+ProjectRegistry::delete_objects_in_any_order (std::span<const QUuid> ids)
+{
+  // Deleting an object releases its references, and a reference count
+  // reaching zero deletes its target immediately, so one pass that
+  // deletes every currently-unreferenced object cascades whole
+  // reference chains. Further passes only drop already-deleted ids and
+  // detect the no-progress case below
+  std::vector<QUuid> pending{ ids.begin (), ids.end () };
+  while (!pending.empty ())
+    {
+      const auto remaining_before = pending.size ();
+      std::erase_if (pending, [this] (const QUuid &id) {
+        if (contains (id) && has_live_references (id))
+          return false;
+        delete_object_by_id (id);
+        return true;
+      });
+      if (pending.size () == remaining_before)
+        {
+          z_warning (
+            "{} of {} objects are still referenced and will stay registered",
+            pending.size (), ids.size ());
+          return;
+        }
+    }
+}
+
+void
+ProjectRegistry::delete_object_by_id (const QUuid &id)
+{
+  const auto cat_it = impl_->uuid_to_category_.find (id);
+  if (cat_it == impl_->uuid_to_category_.end ())
+    return;
+
+  // Force-deleting an object that is still referenced would make the next
+  // release of one of its references throw in an arbitrary destructor
+  const auto ref_it = impl_->ref_counts_.find (id);
+  if (ref_it != impl_->ref_counts_.end () && ref_it->second != 0)
+    {
+      z_error (
+        "delete_object_by_id: object {} still has {} live references", id,
+        ref_it->second);
+      return;
+    }
+
+  QObject * raw = nullptr;
+
+  auto extract = [] (const auto &var) -> QObject * {
+    return std::visit ([] (auto * p) -> QObject * { return p; }, var);
+  };
+
+  switch (cat_it->second)
+    {
+    case Impl::Category::Port:
+      {
+        auto it = impl_->ports_.find (id);
+        if (it != impl_->ports_.end ())
+          {
+            raw = extract (it->second);
+            impl_->ports_.erase (it);
+          }
+        break;
+      }
+    case Impl::Category::Param:
+      {
+        auto it = impl_->params_.find (id);
+        if (it != impl_->params_.end ())
+          {
+            raw = it->second;
+            impl_->params_.erase (it);
+          }
+        break;
+      }
+    case Impl::Category::Plugin:
+      {
+        auto it = impl_->plugins_.find (id);
+        if (it != impl_->plugins_.end ())
+          {
+            raw = extract (it->second);
+            impl_->plugins_.erase (it);
+          }
+        break;
+      }
+    case Impl::Category::Track:
+      {
+        auto it = impl_->tracks_.find (id);
+        if (it != impl_->tracks_.end ())
+          {
+            raw = extract (it->second);
+            impl_->tracks_.erase (it);
+          }
+        break;
+      }
+    case Impl::Category::AutomationTrack:
+      {
+        auto it = impl_->automation_tracks_.find (id);
+        if (it != impl_->automation_tracks_.end ())
+          {
+            raw = it->second;
+            impl_->automation_tracks_.erase (it);
+          }
+        break;
+      }
+    case Impl::Category::Lane:
+      {
+        auto it = impl_->lanes_.find (id);
+        if (it != impl_->lanes_.end ())
+          {
+            raw = it->second;
+            impl_->lanes_.erase (it);
+          }
+        break;
+      }
+    case Impl::Category::ClipSlot:
+      {
+        auto it = impl_->clip_slots_.find (id);
+        if (it != impl_->clip_slots_.end ())
+          {
+            raw = it->second;
+            impl_->clip_slots_.erase (it);
+          }
+        break;
+      }
+    case Impl::Category::ArrangerObject:
+      {
+        auto it = impl_->arranger_objects_.find (id);
+        if (it != impl_->arranger_objects_.end ())
+          {
+            raw = extract (it->second);
+            impl_->arranger_objects_.erase (it);
+          }
+        break;
+      }
+    case Impl::Category::FileAudioSource:
+      {
+        auto it = impl_->file_audio_sources_.find (id);
+        if (it != impl_->file_audio_sources_.end ())
+          {
+            raw = it->second;
+            impl_->file_audio_sources_.erase (it);
+          }
+        break;
+      }
+    case Impl::Category::TempoObjectManager:
+      {
+        auto it = impl_->tempo_object_managers_.find (id);
+        if (it != impl_->tempo_object_managers_.end ())
+          {
+            raw = it->second;
+            impl_->tempo_object_managers_.erase (it);
+          }
+        break;
+      }
+    }
+
+  impl_->uuid_to_category_.erase (id);
+  impl_->ref_counts_.erase (id);
+  delete raw;
+}
+
+// ============================================================================
+// Serialization
+// ============================================================================
+
+std::optional<ProjectRegistry::ObjectCategory>
+ProjectRegistry::serialize_object_by_uuid (
+  const QUuid    &id,
+  nlohmann::json &j_out) const
+{
+  const auto cat_it = impl_->uuid_to_category_.find (id);
+  if (cat_it == impl_->uuid_to_category_.end ())
+    return std::nullopt;
+
+  switch (cat_it->second)
+    {
+    case ObjectCategory::Port:
+      j_out = impl_->ports_.at (id);
+      break;
+    case ObjectCategory::Param:
+      j_out = *impl_->params_.at (id);
+      break;
+    case ObjectCategory::Plugin:
+      j_out = impl_->plugins_.at (id);
+      break;
+    case ObjectCategory::Track:
+      j_out = impl_->tracks_.at (id);
+      break;
+    case ObjectCategory::AutomationTrack:
+      j_out = *impl_->automation_tracks_.at (id);
+      break;
+    case ObjectCategory::Lane:
+      j_out = *impl_->lanes_.at (id);
+      break;
+    case ObjectCategory::ClipSlot:
+      j_out = *impl_->clip_slots_.at (id);
+      break;
+    case ObjectCategory::ArrangerObject:
+      j_out = impl_->arranger_objects_.at (id);
+      break;
+    case ObjectCategory::FileAudioSource:
+      j_out = *impl_->file_audio_sources_.at (id);
+      break;
+    case ObjectCategory::TempoObjectManager:
+      j_out = *impl_->tempo_object_managers_.at (id);
+      break;
+    }
+  return cat_it->second;
+}
+
+void
+to_json (nlohmann::json &j, const ProjectRegistry &registry)
+{
+  j = nlohmann::json::object ();
+
+  auto serialize_bucket_variant = [] (const auto &map) {
+    nlohmann::json arr = nlohmann::json::array ();
+    for (const auto &[uuid, var] : map)
+      {
+        arr.push_back (var);
+      }
+    return arr;
+  };
+
+  auto serialize_bucket_ptr = [] (const auto &map) {
+    nlohmann::json arr = nlohmann::json::array ();
+    for (const auto &[uuid, ptr] : map)
+      {
+        nlohmann::json obj_json;
+        obj_json = *ptr;
+        arr.push_back (obj_json);
+      }
+    return arr;
+  };
+
+  j[ProjectRegistry::kPortsKey] =
+    serialize_bucket_variant (registry.impl_->ports_);
+  j[ProjectRegistry::kParametersKey] =
+    serialize_bucket_ptr (registry.impl_->params_);
+  j[ProjectRegistry::kPluginsKey] =
+    serialize_bucket_variant (registry.impl_->plugins_);
+  j[ProjectRegistry::kTracksKey] =
+    serialize_bucket_variant (registry.impl_->tracks_);
+  j[ProjectRegistry::kAutomationTracksKey] =
+    serialize_bucket_ptr (registry.impl_->automation_tracks_);
+  j[ProjectRegistry::kLanesKey] = serialize_bucket_ptr (registry.impl_->lanes_);
+  j[ProjectRegistry::kClipSlotsKey] =
+    serialize_bucket_ptr (registry.impl_->clip_slots_);
+  j[ProjectRegistry::kArrangerObjectsKey] =
+    serialize_bucket_variant (registry.impl_->arranger_objects_);
+  j[ProjectRegistry::kFileAudioSourcesKey] =
+    serialize_bucket_ptr (registry.impl_->file_audio_sources_);
+}
+
+// ============================================================================
+// Deserialization builders
+// ============================================================================
+
+struct PortBuilder
+{
+  template <typename T> std::unique_ptr<T> build () const
+  {
+    if constexpr (std::is_same_v<T, dsp::AudioPort>)
+      {
+        return std::make_unique<T> (
+          utils::Utf8String{}, dsp::PortFlow::Input,
+          dsp::SpeakerArrangement::mono ());
+      }
+    else if constexpr (std::is_same_v<T, dsp::MidiPort>)
+      {
+        return std::make_unique<T> (utils::Utf8String{}, dsp::PortFlow::Input);
+      }
+    else if constexpr (std::is_same_v<T, dsp::CVPort>)
+      {
+        return std::make_unique<T> (utils::Utf8String{}, dsp::PortFlow::Input);
+      }
+    else
+      {
+        static_assert (false, "Unsupported port type in PortBuilder");
+      }
+  }
+};
+
+struct ParamBuilder
+{
+  ProjectRegistry                         &reg;
+  template <typename T> std::unique_ptr<T> build () const
+  {
+    return std::make_unique<T> (
+      reg, dsp::ProcessorParameter::UniqueId{}, dsp::ParameterRange{},
+      utils::Utf8String{});
+  }
+};
+
+struct PluginBuilder
+{
+  plugins::PluginFactory                  &factory;
+  template <typename T> std::unique_ptr<T> build () const
+  {
+    return factory.build_for_deserialization<T> ();
+  }
+};
+
+struct TrackBuilder
+{
+  structure::tracks::TrackFactory         &factory;
+  template <typename T> std::unique_ptr<T> build () const
+  {
+    return factory.get_builder<T> ().build_for_deserialization ();
+  }
+};
+
+struct AutomationTrackBuilder
+{
+  dsp::TempoMapWrapper                    &tempo_map;
+  ProjectRegistry                         &registry;
+  template <typename T> std::unique_ptr<T> build () const
+  {
+    static_assert (std::is_same_v<T, structure::tracks::AutomationTrack>);
+    return std::make_unique<T> (tempo_map, registry);
+  }
+};
+
+struct TrackLaneBuilder
+{
+  ProjectRegistry                         &registry;
+  template <typename T> std::unique_ptr<T> build () const
+  {
+    static_assert (std::is_same_v<T, structure::tracks::TrackLane>);
+    // Neutral dependencies: the owning TrackLaneList rewires the lane when
+    // it attaches it
+    return std::make_unique<T> (
+      structure::tracks::TrackLane::TrackLaneDependencies{ registry, nullptr });
+  }
+};
+
+struct ClipSlotBuilder
+{
+  ProjectRegistry                         &registry;
+  template <typename T> std::unique_ptr<T> build () const
+  {
+    static_assert (std::is_same_v<T, structure::scenes::ClipSlot>);
+    return std::make_unique<T> (registry, nullptr);
+  }
+};
+
+struct ArrangerObjectBuilder
+{
+  structure::arrangement::ArrangerObjectFactory &factory;
+  template <typename T> std::unique_ptr<T>       build () const
+  {
+    return factory.get_builder<T> ().build_empty ();
+  }
+};
+
+struct FileAudioSourceBuilder
+{
+  template <typename T> std::unique_ptr<T> build () const
+  {
+    return std::make_unique<T> ();
+  }
+};
+
+// ============================================================================
+// Two-phase deserialization helpers
+// ============================================================================
+
+/**
+ * @brief Phase 1 helper: create and register all objects for a variant bucket.
+ *
+ * Sets UUID from JSON before registering so each object is registered under
+ * its correct UUID. Appends (variant, json) pairs to @p deferred for Phase 2.
+ */
+template <
+  typename VariantT,
+  utils::RangeOf<std::pair<VariantT, nlohmann::json>> DeferredRange,
+  typename BuilderT>
+void
+create_and_register_all (
+  ProjectRegistry      &registry,
+  const nlohmann::json &entries,
+  const BuilderT       &builder,
+  DeferredRange        &deferred)
+{
+  for (const auto &entry : entries)
+    {
+      VariantT var;
+      utils::serialization::variant_create_object_only (entry, var, builder);
+
+      try
+        {
+          std::visit (
+            [&entry] (auto &&ptr) {
+              from_json (
+                entry, static_cast<utils::UuidIdentifiableBase &> (*ptr));
+            },
+            var);
+          std::visit ([&] (auto * p) { registry.register_object (*p); }, var);
+        }
+      catch (...)
+        {
+          // registration failed: the registry does not own the object, so
+          // it is deleted here to avoid leaking it
+          std::visit ([] (auto * p) { delete p; }, var);
+          throw;
+        }
+      deferred.emplace_back (var, entry);
+    }
+}
+
+/**
+ * @brief Phase 1 helper: create and register all objects for a pointer bucket.
+ *
+ * Releases ownership after registration (registry owns via QObject
+ * parentship). Appends (raw pointer, json) pairs to @p deferred for Phase 2.
+ */
+template <
+  typename T,
+  utils::RangeOf<std::pair<T *, nlohmann::json>> DeferredRange,
+  typename BuilderT>
+void
+create_and_register_ptr_all (
+  ProjectRegistry      &registry,
+  const nlohmann::json &entries,
+  const BuilderT       &builder,
+  DeferredRange        &deferred)
+{
+  for (const auto &entry : entries)
+    {
+      auto obj = builder.template build<T> ();
+      from_json (entry, static_cast<utils::UuidIdentifiableBase &> (*obj));
+      try
+        {
+          registry.register_object (*obj);
+        }
+      catch (...)
+        {
+          obj->setParent (nullptr);
+          throw;
+        }
+      deferred.emplace_back (obj.release (), entry);
+    }
+}
+
+/**
+ * @brief Phase 2: deserialize data into all objects in a variant deferred
+ * range.
+ */
+template <
+  typename VariantT,
+  utils::RangeOf<std::pair<VariantT, nlohmann::json>> DeferredRange>
+void
+deserialize_all (DeferredRange &deferred)
+{
+  for (auto &[object_var, json] : deferred)
+    {
+      utils::serialization::variant_deserialize_data (json, object_var);
+    }
+}
+
+/**
+ * @brief Phase 2: deserialize data into all objects in a pointer deferred
+ * range.
+ */
+template <typename T, utils::RangeOf<std::pair<T *, nlohmann::json>> DeferredRange>
+void
+deserialize_ptr_all (DeferredRange &deferred)
+{
+  for (auto &[ptr, json] : deferred)
+    {
+      nlohmann::json value_json = json;
+      value_json.erase (utils::serialization::kVariantTypeKey);
+      value_json.get_to (*ptr);
+    }
+}
+
+// ============================================================================
+// Deserialization
+// ============================================================================
+
+void
+from_json (const nlohmann::json &j, ProjectRegistry &registry)
+{
+  if (!registry.impl_->deserialization_dependencies_.has_value ())
+    {
+      throw std::runtime_error (
+        "set_deserialization_dependencies() must be called before from_json");
+    }
+  const auto &deps = *registry.impl_->deserialization_dependencies_;
+
+  // Deferred work storage for each bucket.
+  std::vector<std::pair<dsp::PortPtrVariant, nlohmann::json>> deferred_ports;
+  std::vector<std::pair<dsp::ProcessorParameter *, nlohmann::json>>
+    deferred_params;
+  std::vector<std::pair<plugins::PluginPtrVariant, nlohmann::json>>
+    deferred_plugins;
+  std::vector<std::pair<dsp::FileAudioSource *, nlohmann::json>>
+    deferred_file_audio_sources;
+  std::vector<
+    std::pair<structure::arrangement::ArrangerObjectPtrVariant, nlohmann::json>>
+    deferred_arranger_objects;
+  std::vector<std::pair<structure::tracks::TrackPtrVariant, nlohmann::json>>
+    deferred_tracks;
+  std::vector<std::pair<structure::tracks::AutomationTrack *, nlohmann::json>>
+    deferred_automation_tracks;
+  std::vector<std::pair<structure::tracks::TrackLane *, nlohmann::json>>
+    deferred_lanes;
+  std::vector<std::pair<structure::scenes::ClipSlot *, nlohmann::json>>
+    deferred_clip_slots;
+
+  // --- Phase 1: Create and register ALL objects from ALL buckets ---
+  // All objects are created, assigned their UUIDs from JSON, and registered.
+  // No data deserialization happens yet — objects exist but have no data.
+  // This ensures every UUID is resolvable before any from_json reads
+  // references.
+
+  if (j.contains (ProjectRegistry::kPortsKey))
+    {
+      deferred_ports.reserve (j[ProjectRegistry::kPortsKey].size ());
+      create_and_register_all<dsp::PortPtrVariant> (
+        registry, j[ProjectRegistry::kPortsKey], PortBuilder{}, deferred_ports);
+    }
+
+  if (j.contains (ProjectRegistry::kParametersKey))
+    {
+      deferred_params.reserve (j[ProjectRegistry::kParametersKey].size ());
+      create_and_register_ptr_all<dsp::ProcessorParameter> (
+        registry, j[ProjectRegistry::kParametersKey], ParamBuilder{ registry },
+        deferred_params);
+    }
+
+  if (j.contains (ProjectRegistry::kPluginsKey))
+    {
+      deferred_plugins.reserve (j[ProjectRegistry::kPluginsKey].size ());
+      create_and_register_all<plugins::PluginPtrVariant> (
+        registry, j[ProjectRegistry::kPluginsKey],
+        PluginBuilder{ deps.plugin_factory }, deferred_plugins);
+    }
+
+  if (j.contains (ProjectRegistry::kFileAudioSourcesKey))
+    {
+      deferred_file_audio_sources.reserve (
+        j[ProjectRegistry::kFileAudioSourcesKey].size ());
+      create_and_register_ptr_all<dsp::FileAudioSource> (
+        registry, j[ProjectRegistry::kFileAudioSourcesKey],
+        FileAudioSourceBuilder{}, deferred_file_audio_sources);
+    }
+
+  if (j.contains (ProjectRegistry::kArrangerObjectsKey))
+    {
+      deferred_arranger_objects.reserve (
+        j[ProjectRegistry::kArrangerObjectsKey].size ());
+      create_and_register_all<structure::arrangement::ArrangerObjectPtrVariant> (
+        registry, j[ProjectRegistry::kArrangerObjectsKey],
+        ArrangerObjectBuilder{ deps.arranger_object_factory },
+        deferred_arranger_objects);
+    }
+
+  if (j.contains (ProjectRegistry::kTracksKey))
+    {
+      deferred_tracks.reserve (j[ProjectRegistry::kTracksKey].size ());
+      create_and_register_all<structure::tracks::TrackPtrVariant> (
+        registry, j[ProjectRegistry::kTracksKey],
+        TrackBuilder{ deps.track_factory }, deferred_tracks);
+    }
+
+  if (j.contains (ProjectRegistry::kAutomationTracksKey))
+    {
+      deferred_automation_tracks.reserve (
+        j[ProjectRegistry::kAutomationTracksKey].size ());
+      create_and_register_ptr_all<structure::tracks::AutomationTrack> (
+        registry, j[ProjectRegistry::kAutomationTracksKey],
+        AutomationTrackBuilder{ deps.tempo_map_wrapper, registry },
+        deferred_automation_tracks);
+    }
+
+  if (j.contains (ProjectRegistry::kLanesKey))
+    {
+      deferred_lanes.reserve (j[ProjectRegistry::kLanesKey].size ());
+      create_and_register_ptr_all<structure::tracks::TrackLane> (
+        registry, j[ProjectRegistry::kLanesKey], TrackLaneBuilder{ registry },
+        deferred_lanes);
+    }
+
+  if (j.contains (ProjectRegistry::kClipSlotsKey))
+    {
+      deferred_clip_slots.reserve (j[ProjectRegistry::kClipSlotsKey].size ());
+      create_and_register_ptr_all<structure::scenes::ClipSlot> (
+        registry, j[ProjectRegistry::kClipSlotsKey],
+        ClipSlotBuilder{ registry }, deferred_clip_slots);
+    }
+
+  // --- Phase 2: Deserialize data into ALL objects from ALL buckets ---
+  // Same order as Phase 1: ports → params → plugins → file audio sources →
+  // arranger objects → tracks → automation tracks → lanes → clip slots.
+  // Within each bucket, JSON array order is preserved so children are
+  // deserialized before parents. Lanes come after tracks: the tracks'
+  // TrackLaneLists attach the (still empty) lanes and wire their
+  // dependencies, so the clips arriving during lane data deserialization
+  // see a live timebase source. Automation tracks likewise come after
+  // tracks: the tracks' AutomationTracklists attach them and rewire
+  // their timebase providers before their clips arrive.
+
+  deserialize_all<dsp::PortPtrVariant> (deferred_ports);
+  deserialize_ptr_all<dsp::ProcessorParameter> (deferred_params);
+  deserialize_all<plugins::PluginPtrVariant> (deferred_plugins);
+  deserialize_ptr_all<dsp::FileAudioSource> (deferred_file_audio_sources);
+  deserialize_all<structure::arrangement::ArrangerObjectPtrVariant> (
+    deferred_arranger_objects);
+  deserialize_all<structure::tracks::TrackPtrVariant> (deferred_tracks);
+  deserialize_ptr_all<structure::tracks::AutomationTrack> (
+    deferred_automation_tracks);
+  deserialize_ptr_all<structure::tracks::TrackLane> (deferred_lanes);
+  deserialize_ptr_all<structure::scenes::ClipSlot> (deferred_clip_slots);
+}
+
+} // namespace zrythm::structure::project

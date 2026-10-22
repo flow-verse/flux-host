@@ -1,0 +1,5 @@
+upstream: https://github.com/zrythm/zrythm (official mirror of https://gitlab.zrythm.org/zrythm/zrythm)
+tag:      v2.0.0-alpha.6
+commit:   c653abd1979f053e170126b4bd64afdf111c8c27
+date:     2026-10-04
+status:   prerelease

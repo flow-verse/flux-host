@@ -1,0 +1,153 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "dsp/cv_port.h"
+
+#include "unit/dsp/graph_helpers.h"
+#include <gtest/gtest.h>
+
+namespace zrythm::dsp
+{
+
+class CVPortTest : public ::testing::Test
+{
+protected:
+  static constexpr auto SAMPLE_RATE = units::sample_rate (44100);
+  static constexpr auto BLOCK_LENGTH = units::samples (256);
+
+  void SetUp () override
+  {
+    input_port = std::make_unique<CVPort> (
+      utils::Utf8String::from_utf8_encoded_string ("CV In"), PortFlow::Input);
+    output_port = std::make_unique<CVPort> (
+      utils::Utf8String::from_utf8_encoded_string ("CV Out"), PortFlow::Output);
+
+    // Set up mock transport
+    mock_transport_ = std::make_unique<graph_test::MockTransport> ();
+    tempo_map_ = std::make_unique<dsp::TempoMap> (SAMPLE_RATE);
+
+    input_port->prepare_for_processing (nullptr, SAMPLE_RATE, BLOCK_LENGTH);
+    output_port->prepare_for_processing (nullptr, SAMPLE_RATE, BLOCK_LENGTH);
+
+    // Fill output buffer with test signal
+    for (
+      const auto i :
+      std::views::iota (size_t{ 0 }, BLOCK_LENGTH.in<size_t> (units::samples)))
+      {
+        output_port->buf_[i] =
+          0.5f
+          * std::cos (
+            2.0f * std::numbers::pi_v<float> * 1.0f * static_cast<float> (i)
+            / BLOCK_LENGTH.in<float> (units::samples));
+      }
+  }
+
+  std::unique_ptr<CVPort>                    input_port;
+  std::unique_ptr<CVPort>                    output_port;
+  std::unique_ptr<graph_test::MockTransport> mock_transport_;
+  std::unique_ptr<dsp::TempoMap>             tempo_map_;
+};
+
+TEST_F (CVPortTest, BasicProperties)
+{
+  EXPECT_TRUE (input_port->is_cv ());
+  EXPECT_TRUE (input_port->is_input ());
+  EXPECT_EQ (input_port->get_label (), "CV In");
+
+  EXPECT_TRUE (output_port->is_cv ());
+  EXPECT_TRUE (output_port->is_output ());
+}
+
+TEST_F (CVPortTest, BufferClearing)
+{
+  // Add some data to input buffer
+  std::fill (input_port->buf_.begin (), input_port->buf_.end (), 1.0f);
+  input_port->clear_buffer (0, BLOCK_LENGTH.in<size_t> (units::samples));
+
+  for (
+    const auto i :
+    std::views::iota (size_t{ 0 }, BLOCK_LENGTH.in<size_t> (units::samples)))
+    {
+      EXPECT_EQ (input_port->buf_[i], 0.0f);
+    }
+}
+
+TEST_F (CVPortTest, SignalProcessing)
+{
+  // Process output port (signal generation)
+  auto time_info = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), BLOCK_LENGTH);
+  output_port->process_block (time_info, *mock_transport_, *tempo_map_);
+
+  // Verify signal was processed
+  EXPECT_NE (output_port->buf_[0], 0.0f);
+}
+
+TEST_F (CVPortTest, ResourceManagement)
+{
+  EXPECT_FALSE (output_port->buf_.empty ());
+
+  output_port->release_resources ();
+
+  EXPECT_TRUE (output_port->buf_.empty ());
+}
+
+TEST_F (CVPortTest, OutputPortPreservesDataThroughProcessBlock)
+{
+  // Write test signal to output port (simulating a processor writing output)
+  for (
+    const auto i :
+    std::views::iota (size_t{ 0 }, BLOCK_LENGTH.in<size_t> (units::samples)))
+    {
+      output_port->buf_[i] = static_cast<float> (i) * 0.01f;
+    }
+
+  auto time_info = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), BLOCK_LENGTH);
+  output_port->process_block (time_info, *mock_transport_, *tempo_map_);
+
+  // Output port should not clear — processor-written data survives
+  for (
+    const auto i :
+    std::views::iota (size_t{ 0 }, BLOCK_LENGTH.in<size_t> (units::samples)))
+    {
+      EXPECT_NEAR (output_port->buf_[i], static_cast<float> (i) * 0.01f, 1e-6f);
+    }
+}
+
+TEST_F (CVPortTest, CachedConnectionMultiplierIsApplied)
+{
+  std::ranges::fill (output_port->buf_, 1.0f);
+
+  graph::GraphNode src_node{ 0, *output_port };
+  graph::GraphNode dest_node{ 1, *input_port };
+  src_node.connect_to (
+    dest_node, graph::ConnectionConfig{ .multiplier_ = 0.5f });
+  input_port->prepare_for_processing (&dest_node, SAMPLE_RATE, BLOCK_LENGTH);
+  std::ranges::fill (input_port->buf_, 0.0f);
+
+  auto time_info = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), BLOCK_LENGTH);
+  input_port->process_block (time_info, *mock_transport_, *tempo_map_);
+
+  EXPECT_FLOAT_EQ (input_port->buf_[0], 0.5f);
+}
+
+TEST_F (CVPortTest, DisabledCachedConnectionSkipsSource)
+{
+  std::ranges::fill (output_port->buf_, 1.0f);
+
+  graph::GraphNode src_node{ 0, *output_port };
+  graph::GraphNode dest_node{ 1, *input_port };
+  src_node.connect_to (dest_node, graph::ConnectionConfig{ .enabled_ = false });
+  input_port->prepare_for_processing (&dest_node, SAMPLE_RATE, BLOCK_LENGTH);
+  std::ranges::fill (input_port->buf_, 0.0f);
+
+  auto time_info = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), BLOCK_LENGTH);
+  input_port->process_block (time_info, *mock_transport_, *tempo_map_);
+
+  EXPECT_FLOAT_EQ (input_port->buf_[0], 0.0f);
+}
+
+} // namespace zrythm::dsp

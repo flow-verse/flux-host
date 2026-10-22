@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+[settings]
+compiler.sanitizer=Thread
+
+[conf]
+qt/*:tools.build.cross_building:cross_build=True
+tools.build:cflags+=["-fsanitize=thread", "-fno-omit-frame-pointer"]
+tools.build:cxxflags+=["-fsanitize=thread", "-fno-omit-frame-pointer"]
+tools.build:exelinkflags+=["-fsanitize=thread"]
+tools.build:sharedlinkflags+=["-fsanitize=thread"]
+
+[buildenv]
+TSAN_OPTIONS=halt_on_error=0

@@ -1,0 +1,305 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include <exception>
+#include <expected>
+#include <span>
+#include <utility>
+
+#include "commands/add_arranger_object_command.h"
+#include "commands/arranger_object_owner_ref.h"
+#include "dsp/midi_file.h"
+#include "dsp/snap_grid.h"
+#include "structure/arrangement/arranger_object_all.h"
+#include "structure/arrangement/arranger_object_factory.h"
+#include "structure/arrangement/arranger_object_owner.h"
+#include "structure/arrangement/tempo_object_manager.h"
+#include "structure/scenes/clip_slot.h"
+#include "structure/tracks/track_all.h"
+#include "undo/undo_stack.h"
+#include "utils/logger.h"
+
+namespace zrythm::actions
+{
+class ArrangerObjectCreator : public QObject
+{
+  Q_OBJECT
+  QML_ELEMENT
+  QML_UNCREATABLE ("One instance per project")
+
+public:
+  explicit ArrangerObjectCreator (
+    undo::UndoStack                               &undo_stack,
+    structure::arrangement::ArrangerObjectFactory &arranger_object_factory,
+    dsp::SnapGrid                                 &snap_grid_timeline,
+    dsp::SnapGrid                                 &snap_grid_editor,
+    QObject *                                      parent = nullptr)
+      : QObject (parent), arranger_object_factory_ (arranger_object_factory),
+        snap_grid_timeline_ (snap_grid_timeline),
+        snap_grid_editor_ (snap_grid_editor), undo_stack_ (undo_stack)
+  {
+  }
+
+  Q_INVOKABLE structure::arrangement::Marker * addMarker (
+    structure::arrangement::Marker::MarkerType markerType,
+    structure::tracks::MarkerTrack *           markerTrack,
+    const QString                             &name,
+    double                                     startTicks);
+
+  Q_INVOKABLE structure::arrangement::TempoObject * addTempoObject (
+    structure::arrangement::TempoObjectManager *   tempoObjectManager,
+    double                                         bpm,
+    structure::arrangement::TempoObject::CurveType curveType,
+    double                                         startTicks);
+
+  Q_INVOKABLE structure::arrangement::TimeSignatureObject *
+              addTimeSignatureObject (
+                structure::arrangement::TempoObjectManager * tempoObjectManager,
+                int                                          numerator,
+                int                                          denominator,
+                double                                       startTicks);
+
+  Q_INVOKABLE structure::arrangement::MidiClip * addEmptyMidiClip (
+    structure::tracks::Track *     track,
+    structure::tracks::TrackLane * lane,
+    double                         startTicks);
+
+  Q_INVOKABLE structure::arrangement::MidiClip * addEmptyMidiClipToClip (
+    structure::tracks::Track *    track,
+    structure::scenes::ClipSlot * clipSlot);
+
+  Q_INVOKABLE structure::arrangement::ChordClip *
+  addEmptyChordClip (structure::tracks::ChordTrack * track, double startTicks);
+
+  /**
+   * @brief Creates a scale object with the default scale at the given
+   * timeline position.
+   */
+  Q_INVOKABLE structure::arrangement::ScaleObject *
+  addScaleObject (structure::tracks::ChordTrack * track, double startTicks);
+
+  Q_INVOKABLE structure::arrangement::AutomationClip * addEmptyAutomationClip (
+    structure::tracks::Track *           track,
+    structure::tracks::AutomationTrack * automationTrack,
+    double                               startTicks);
+
+  /**
+   * @brief
+   *
+   * @param lane
+   * @param clip_id
+   * @param start_ticks
+   * @return AudioClip*
+   */
+  structure::arrangement::AudioClip * add_audio_clip_with_clip (
+    structure::tracks::Track         &track,
+    structure::tracks::TrackLane     &lane,
+    dsp::FileAudioSourceUuidReference clip_id,
+    units::precise_tick_t             start_ticks);
+
+  structure::arrangement::ScaleObject * add_scale_object (
+    structure::tracks::ChordTrack             &chord_track,
+    utils::QObjectUniquePtr<dsp::MusicalScale> scale,
+    units::precise_tick_t                      start_ticks);
+
+  structure::arrangement::ArrangerObjectUuidReference
+  add_audio_clip_for_recording (
+    structure::tracks::Track        &track,
+    structure::tracks::TrackLane    &lane,
+    const utils::audio::AudioBuffer &initial_frames,
+    const utils::Utf8String         &clip_name,
+    units::precise_tick_t            start_ticks);
+
+  structure::arrangement::ArrangerObjectUuidReference
+  add_midi_clip_for_recording (
+    structure::tracks::Track     &track,
+    structure::tracks::TrackLane &lane,
+    units::precise_tick_t         start_ticks);
+
+  structure::arrangement::ArrangerObjectUuidReference
+  add_chord_clip_for_recording (
+    structure::tracks::ChordTrack &chord_track,
+    units::precise_tick_t          start_ticks);
+
+  structure::arrangement::MidiControlEvent * add_midi_control_event (
+    structure::arrangement::MidiClip                   &clip,
+    units::precise_tick_t                               startTicks,
+    structure::arrangement::MidiControlEvent::EventType type,
+    int                                                 channel,
+    int                                                 controller,
+    int                                                 value);
+
+  Q_INVOKABLE structure::arrangement::AudioClip * addAudioClipFromFile (
+    structure::tracks::Track *     track,
+    structure::tracks::TrackLane * lane,
+    const QString                 &absPath,
+    double                         startTicks);
+
+  Q_INVOKABLE structure::arrangement::AudioClip *
+              addAudioClipToClipSlotFromFile (
+                structure::tracks::Track *    track,
+                structure::scenes::ClipSlot * clipSlot,
+                const QString                &absPath);
+
+  /**
+   * @brief Creates a MIDI clip at @p lane holding the notes of the given
+   * parsed MIDI tracks, starting at @p startTicks.
+   *
+   * @return A reference to the created clip, or a user-facing refusal
+   * reason.
+   */
+  [[nodiscard]] std::expected<
+    utils::TypedUuidReference<structure::arrangement::MidiClip>,
+    utils::Utf8String>
+  add_midi_clip_from_note_tracks (
+    structure::tracks::Track *                track,
+    structure::tracks::TrackLane *            lane,
+    double                                    startTicks,
+    std::span<const dsp::MidiFile::NoteTrack> note_tracks);
+
+  /**
+   * @brief Creates a MIDI clip in @p clipSlot merging the notes of all the
+   * given parsed MIDI tracks.
+   *
+   * @return A reference to the created clip, or a user-facing refusal
+   * reason.
+   */
+  [[nodiscard]] std::expected<
+    utils::TypedUuidReference<structure::arrangement::MidiClip>,
+    utils::Utf8String>
+  add_midi_clip_to_clip_slot_from_note_tracks (
+    structure::tracks::Track *                track,
+    structure::scenes::ClipSlot *             clipSlot,
+    std::span<const dsp::MidiFile::NoteTrack> note_tracks);
+
+  /**
+   * @brief Creates a MIDI clip at @p lane from the given @p descr
+   * starting at @p startTicks.
+   */
+  Q_INVOKABLE structure::arrangement::MidiClip *
+              addMidiClipFromChordDescriptor (
+                structure::tracks::Track *     track,
+                structure::tracks::TrackLane * lane,
+                const dsp::ChordDescriptor    &descr,
+                double                         startTicks);
+
+  Q_INVOKABLE structure::arrangement::MidiNote * addMidiNote (
+    structure::arrangement::MidiClip * clip,
+    double                             startTicks,
+    int                                pitch);
+
+  Q_INVOKABLE structure::arrangement::AutomationPoint * addAutomationPoint (
+    structure::arrangement::AutomationClip * clip,
+    double                                   startTicks,
+    double                                   value);
+
+  Q_INVOKABLE structure::arrangement::ChordObject * addChordObject (
+    structure::arrangement::ChordClip * clip,
+    double                              startTicks,
+    const int                           chordIndex);
+
+  Q_INVOKABLE structure::arrangement::ChordObject * addChordObjectFromFields (
+    structure::arrangement::ChordClip * clip,
+    double                              startTicks,
+    dsp::MusicalNote                    rootNote,
+    dsp::ChordType                      chordType,
+    dsp::ChordAccent                    chordAccent,
+    bool                                hasBass,
+    dsp::MusicalNote                    bassNote,
+    int                                 inversion);
+
+  Q_INVOKABLE structure::arrangement::ChordObject *
+              addChordObjectFromDescriptor (
+                structure::arrangement::ChordClip * clip,
+                double                              startTicks,
+                zrythm::dsp::ChordDescriptor *      descriptor);
+
+  /**
+   * @brief Sets the descriptor of one or more chord objects to the given fields.
+   *
+   * Pushes one EditChordObjectCommand per object inside a macro, so the whole
+   * batch is a single undo step.
+   */
+  Q_INVOKABLE void editChordObjectsDescriptor (
+    QVariantList     chordObjects,
+    dsp::MusicalNote rootNote,
+    dsp::ChordType   chordType,
+    dsp::ChordAccent chordAccent,
+    bool             hasBass,
+    dsp::MusicalNote bassNote,
+    int              inversion);
+
+private:
+  /**
+   * @brief Used for MIDI/Audio clips.
+   *
+   * @return Whether the attach command was pushed.
+   */
+  bool add_laned_object (
+    structure::tracks::Track                           &track,
+    structure::tracks::TrackLane                       &lane,
+    structure::arrangement::ArrangerObjectUuidReference obj_ref);
+
+  void add_object_to_clip_slot (
+    structure::tracks::Track                           &track,
+    structure::scenes::ClipSlot                        &clip_slot,
+    structure::arrangement::ArrangerObjectUuidReference obj_ref);
+
+  /**
+   * @brief Used to create and add editor objects.
+   *
+   * @param clip Clip editor clip.
+   * @param startTicks Start position of the object in ticks.
+   * @param value Either pitch (int), automation point value (double) or chord
+   * ID.
+   */
+  template <structure::arrangement::EditorObject ChildT>
+  auto add_editor_object (
+    structure::arrangement::ClipObject auto &clip,
+    units::precise_tick_t                    startTicks,
+    std::variant<int, double>                value) -> ChildT *
+  {
+    auto obj_ref =
+      arranger_object_factory_.create_editor_object<ChildT> (startTicks, value);
+    if (!push_add_command<ChildT> (clip, obj_ref))
+      return nullptr;
+    auto obj = obj_ref.template get_object_as<ChildT> ();
+    return obj;
+  }
+
+  /**
+   * @brief Constructs and pushes the add command attaching @p obj_ref
+   * to @p owner.
+   *
+   * @return Whether the command was pushed. A construction failure
+   * (owner not registered, or owner/object type mismatch) is logged
+   * and leaves the undo stack unchanged.
+   */
+  template <typename ObjectT, typename OwnerT>
+  bool push_add_command (
+    OwnerT                                                    &owner,
+    const structure::arrangement::ArrangerObjectUuidReference &obj_ref)
+  {
+    try
+      {
+        undo_stack_.push (new commands::AddArrangerObjectCommand<ObjectT> (
+          commands::make_owner_ref (owner, arranger_object_factory_.registry ()),
+          obj_ref));
+        return true;
+      }
+    catch (const std::exception &e)
+      {
+        z_error ("Failed to attach object to its owner: {}", e.what ());
+        return false;
+      }
+  }
+
+private:
+  structure::arrangement::ArrangerObjectFactory &arranger_object_factory_;
+  dsp::SnapGrid                                 &snap_grid_timeline_;
+  dsp::SnapGrid                                 &snap_grid_editor_;
+  undo::UndoStack                               &undo_stack_;
+};
+} // namespace zrythm::actions

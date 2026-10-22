@@ -1,0 +1,299 @@
+// SPDX-FileCopyrightText: © 2018-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <mutex>
+#include <set>
+#include <tuple>
+
+#include "dsp/panning.h"
+#include "dsp/port_all.h"
+#include "utils/float_ranges.h"
+#include "utils/logger.h"
+#include "utils/math_utils.h"
+
+#include <fmt/format.h>
+#include <nlohmann/json.hpp>
+
+namespace zrythm::dsp
+{
+
+namespace
+{
+using RoutingDropWarningKey = std::
+  tuple<SpeakerArrangement::Kind, uint64_t, SpeakerArrangement::Kind, uint64_t>;
+
+uint64_t
+arrangement_payload_for_key (const SpeakerArrangement &arrangement)
+{
+  return arrangement.kind () == SpeakerArrangement::Kind::Speakers
+           ? arrangement.speaker_bits ()
+           : arrangement.channel_count ();
+}
+
+void
+warn_once_if_routing_drops_content (const AudioPort &src, const AudioPort &dest)
+{
+  // arrangement pairs that a dropped-content warning was already emitted
+  // for (warnings are one-time)
+  static std::mutex                      warnings_mutex;
+  static std::set<RoutingDropWarningKey> warnings_given;
+
+  if (!derived_routing_drops_content (src.arrangement (), dest.arrangement ()))
+    return;
+
+  const RoutingDropWarningKey key{
+    src.arrangement ().kind (), arrangement_payload_for_key (src.arrangement ()),
+    dest.arrangement ().kind (),
+    arrangement_payload_for_key (dest.arrangement ())
+  };
+  std::lock_guard lock (warnings_mutex);
+  if (warnings_given.insert (key).second)
+    {
+      z_warning (
+        "Routing from '{}' ({}) to '{}' ({}) discards or mis-maps source "
+        "channels; set an explicit channel matrix on the connection to "
+        "control the mapping",
+        src.get_full_designation (), src.arrangement (),
+        dest.get_full_designation (), dest.arrangement ());
+    }
+}
+} // namespace
+AudioPort::AudioPort (
+  utils::Utf8String  label,
+  PortFlow           flow,
+  SpeakerArrangement arrangement,
+  Purpose            purpose)
+    : Port (std::move (label), PortType::Audio, flow),
+      arrangement_ (arrangement), purpose_ (purpose)
+{
+}
+
+void
+AudioPort::set_arrangement (SpeakerArrangement new_arrangement)
+{
+  if (arrangement_ == new_arrangement)
+    return;
+  arrangement_ = new_arrangement;
+  // drop the buffer so that a missed re-prepare trips the null-buffer
+  // assertions in the processing path instead of indexing a buffer with the
+  // old channel count
+  buf_.reset ();
+}
+
+void
+init_from (
+  AudioPort             &obj,
+  const AudioPort       &other,
+  utils::ObjectCloneType clone_type)
+{
+  init_from (
+    static_cast<Port &> (obj), static_cast<const Port &> (other), clone_type);
+  obj.arrangement_ = other.arrangement_;
+  obj.purpose_ = other.purpose_;
+  obj.external_port_id_ = other.external_port_id_;
+}
+
+void
+AudioPort::add_source_rt (
+  const AudioPort              &src,
+  const AudioBusChannelRouting &routing,
+  dsp::graph::ProcessBlockInfo  time_nfo,
+  float                         multiplier)
+{
+  assert (buf_ != nullptr && src.buf_ != nullptr);
+
+  const auto offset = time_nfo.buffer_offset_.in<int> (units::samples);
+  const auto nframes = time_nfo.nframes_.in<int> (units::samples);
+
+  // destination channels with no contribution keep the signal already summed
+  // into them by other sources
+  routing.for_each_route (
+    src.arrangement_, arrangement_,
+    [&] (unsigned dest_ch, unsigned src_ch, float gain) {
+      assert (dest_ch < num_channels () && src_ch < src.num_channels ());
+      buf_->addFrom (
+        static_cast<int> (dest_ch), offset, *src.buf_,
+        static_cast<int> (src_ch), offset, nframes, gain * multiplier);
+    });
+}
+
+void
+AudioPort::copy_source_rt (
+  const AudioPort              &src,
+  const AudioBusChannelRouting &routing,
+  dsp::graph::ProcessBlockInfo  time_nfo,
+  float                         multiplier)
+{
+  assert (buf_ != nullptr && src.buf_ != nullptr);
+
+  const auto offset = time_nfo.buffer_offset_.in<int> (units::samples);
+  const auto nframes = time_nfo.nframes_.in<int> (units::samples);
+
+  // a channel for channel routing writes every destination channel exactly
+  // once, so it can overwrite in place
+  if (routing.is_channel_for_channel (src.arrangement_, arrangement_))
+    {
+      const auto unity_gain =
+        utils::math::floats_near (multiplier, 1.f, 0.00001f);
+      for (const auto ch : std::views::iota (0u, num_channels ()))
+        {
+          if (unity_gain)
+            {
+              buf_->copyFrom (
+                static_cast<int> (ch), offset, *src.buf_, static_cast<int> (ch),
+                offset, nframes);
+            }
+          else
+            {
+              buf_->copyFrom (
+                static_cast<int> (ch), offset,
+                src.buf_->getReadPointer (static_cast<int> (ch), offset),
+                nframes, multiplier);
+            }
+        }
+      return;
+    }
+
+  // otherwise a destination channel may take several contributions or none at
+  // all, so start from silence and accumulate
+  for (const auto ch : std::views::iota (0u, num_channels ()))
+    {
+      buf_->clear (static_cast<int> (ch), offset, nframes);
+    }
+  routing.for_each_route (
+    src.arrangement_, arrangement_,
+    [&] (unsigned dest_ch, unsigned src_ch, float gain) {
+      assert (dest_ch < num_channels () && src_ch < src.num_channels ());
+      buf_->addFrom (
+        static_cast<int> (dest_ch), offset, *src.buf_,
+        static_cast<int> (src_ch), offset, nframes, gain * multiplier);
+    });
+}
+
+void
+AudioPort::clear_buffer (std::size_t offset, std::size_t nframes)
+{
+  assert (buf_ != nullptr);
+  buf_->clear (static_cast<int> (offset), static_cast<int> (nframes));
+}
+
+void
+AudioPort::prepare_for_processing_impl (
+  const graph::GraphNode * node,
+  units::sample_rate_t     sample_rate,
+  units::sample_u32_t      max_block_length)
+{
+  assert (
+    node == nullptr
+    || std::addressof (node->get_processable ())
+         == static_cast<graph::IProcessable *> (this));
+
+  if (node != nullptr && flow () == PortFlow::Input)
+    {
+      auto source_audio_ports =
+        node->depends ()
+        | std::views::transform ([node] (const auto &child_node) {
+            return std::pair{
+              dynamic_cast<AudioPort *> (&child_node.get ().get_processable ()),
+              node->connection_for_dependency (child_node.get ())
+            };
+          })
+        | std::views::filter ([] (const auto &pair) {
+            return pair.first != nullptr;
+          });
+      set_port_sources (source_audio_ports);
+
+      for (const auto &[src_port, config] : port_sources ())
+        {
+          // only derived routings drop content unintentionally; explicit
+          // matrices are user intent
+          if (config.routing_.is_derived ())
+            {
+              warn_once_if_routing_drops_content (*src_port, *this);
+            }
+        }
+    }
+
+  auto max = std::max (max_block_length, units::samples (1u));
+  buf_ = std::make_unique<juce::AudioSampleBuffer> (
+    num_channels (), max.in<int> (units::samples));
+  buf_->clear ();
+}
+
+void
+AudioPort::release_resources ()
+{
+  buf_.reset ();
+}
+
+void
+AudioPort::process_block (
+  dsp::graph::ProcessBlockInfo time_nfo,
+  const dsp::ITransport       &transport,
+  const dsp::TempoMap         &tempo_map) noexcept
+{
+  // detached ports are excluded from the graph and from their owner's
+  // processing, so reaching this is a programmer error
+  assert (!detached ());
+
+  /* Input ports: aggregate from sources. */
+  if (flow () == PortFlow::Input)
+    {
+      for (const auto &[_src_port, config] : port_sources ())
+        {
+          if (!config.enabled_)
+            continue;
+
+          add_source_rt (
+            *_src_port, config.routing_, time_nfo, config.multiplier_);
+        }
+    }
+
+  /* Limiting + ring buffer (both input and output). */
+  if (requires_limiting_)
+    {
+      constexpr float max_allowed_peak = 2.f;
+      float           abs_peak = buf_->getMagnitude (
+        time_nfo.buffer_offset_.in<int> (units::samples),
+        time_nfo.nframes_.in<int> (units::samples));
+      if (abs_peak > max_allowed_peak)
+        {
+          for (const auto ch : std::views::iota (0u, num_channels ()))
+            {
+              /* this limiting wastes around 50% of port processing so only do
+               * it if we exceed maxf */
+              utils::float_ranges::clip (
+                { buf_->getWritePointer (
+                    static_cast<int> (ch),
+                    time_nfo.buffer_offset_.in<int> (units::samples)),
+                  time_nfo.nframes_.in (units::samples) },
+                -max_allowed_peak, max_allowed_peak);
+            }
+        }
+    }
+}
+
+void
+to_json (nlohmann::json &j, const AudioPort &port)
+{
+  to_json (j, static_cast<const Port &> (port));
+  j[AudioPort::kSpeakerArrangementId] = port.arrangement_;
+  j[AudioPort::kPurposeId] = port.purpose_;
+  j[AudioPort::kRequiresLimitingId] = port.requires_limiting_;
+  if (port.external_port_id_.has_value ())
+    {
+      j[AudioPort::kExternalPortIdId] = *port.external_port_id_;
+    }
+}
+
+void
+from_json (const nlohmann::json &j, AudioPort &port)
+{
+  from_json (j, static_cast<Port &> (port));
+  j.at (AudioPort::kSpeakerArrangementId).get_to (port.arrangement_);
+  j.at (AudioPort::kPurposeId).get_to (port.purpose_);
+  j.at (AudioPort::kRequiresLimitingId).get_to (port.requires_limiting_);
+  port.external_port_id_ =
+    j.value (AudioPort::kExternalPortIdId, std::optional<uint32_t>{});
+}
+} // namespace zrythm::dsp

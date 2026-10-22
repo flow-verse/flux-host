@@ -1,0 +1,618 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <numbers>
+
+#include "utils/format_qt.h"
+#include <fmt/std.h>
+
+#include "dsp/cv_port.h"
+#include "dsp/parameter.h"
+#include "dsp/tempo_map.h"
+#include "utils/enum_utils.h"
+#include "utils/format_boost.h"
+#include "utils/logger.h"
+#include "utils/object_registry.h"
+#include "utils/registry_utils.h"
+
+#include <QSignalSpy>
+
+#include "unit/dsp/graph_helpers.h"
+#include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
+
+namespace zrythm::dsp
+{
+
+class ProcessorParameterTest : public ::testing::Test
+{
+protected:
+  static constexpr auto SAMPLE_RATE = units::sample_rate (44100);
+  static constexpr auto BLOCK_LENGTH = units::samples (256);
+
+  void SetUp () override
+  {
+    // Create parameter with new constructor
+    param_ref = utils::create_object<ProcessorParameter> (
+      registry, registry,
+      ProcessorParameter::UniqueId (
+        utils::Utf8String::from_utf8_encoded_string ("Cutoff")),
+      ParameterRange (
+        ParameterRange::Type::Logarithmic, 20.f, 20000.f, 20.f, 1000.f),
+      utils::Utf8String::from_utf8_encoded_string ("Cutoff"));
+    param = param_ref->get_object_as<ProcessorParameter> ();
+    param_mod_input =
+      param->get_modulation_input_port_ref ().get_object_as<CVPort> ();
+
+    // Create modulation source CV port
+    mod_source_ref = utils::create_object<CVPort> (
+      registry, utils::Utf8String::from_utf8_encoded_string ("LFO"),
+      PortFlow::Output);
+    mod_source = mod_source_ref->get_object_as<CVPort> ();
+
+    // Set up processing
+    param->prepare_for_processing (nullptr, SAMPLE_RATE, BLOCK_LENGTH);
+    mod_source->prepare_for_processing (nullptr, SAMPLE_RATE, BLOCK_LENGTH);
+
+    // Create connection between CV port and parameter
+    mod_sources.emplace_back (mod_source, graph::ConnectionConfig{});
+    param_mod_input->set_port_sources (mod_sources);
+
+    // Fill modulation source with test signal
+    for (
+      const auto i :
+      std::views::iota (size_t{ 0 }, BLOCK_LENGTH.in<size_t> (units::samples)))
+      {
+        mod_source->buf_[i] =
+          0.5f
+          * std::cos (
+            2.0f * std::numbers::pi_v<float>
+            * static_cast<float> (i) / BLOCK_LENGTH.in<float> (units::samples));
+      }
+
+    // Set up mock transport
+    mock_transport_ = std::make_unique<graph_test::MockTransport> ();
+    tempo_map_ = std::make_unique<dsp::TempoMap> (SAMPLE_RATE);
+  }
+
+  utils::ObjectRegistry                            registry;
+  std::optional<ProcessorParameterUuidReference>   param_ref;
+  ProcessorParameter *                             param;
+  CVPort *                                         param_mod_input{};
+  std::optional<utils::TypedUuidReference<CVPort>> mod_source_ref;
+  CVPort *                                         mod_source{};
+  std::vector<graph::PortSourceConfig<CVPort>>     mod_sources;
+  std::unique_ptr<graph_test::MockTransport>       mock_transport_;
+  std::unique_ptr<dsp::TempoMap>                   tempo_map_;
+
+  /** Re-applies the single modulation source with the given configuration. */
+  void set_mod_source_config (const graph::ConnectionConfig &config)
+  {
+    mod_sources[0].second = config;
+    param_mod_input->set_port_sources (mod_sources);
+  }
+};
+
+TEST_F (ProcessorParameterTest, BasicParameterSetup)
+{
+  EXPECT_EQ (param->baseValue (), param->range ().convertTo0To1 (1000.f));
+}
+
+TEST_F (ProcessorParameterTest, AutomationValueApplication)
+{
+  // disable modulation
+  set_mod_source_config ({ .enabled_ = false });
+
+  const float auto_value = 0.8f;
+  param->set_automation_provider ([&] (auto) {
+    return std::optional{ auto_value };
+  });
+
+  param->process_block (
+    { .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (0),
+      .nframes_ = BLOCK_LENGTH },
+    *mock_transport_, *tempo_map_);
+
+  EXPECT_FLOAT_EQ (param->currentValue (), auto_value);
+  EXPECT_FLOAT_EQ (param->valueAfterAutomationApplied (), auto_value);
+}
+
+TEST_F (ProcessorParameterTest, ModulationApplication)
+{
+  // Set base value to 0.5 (normalized)
+  param->setBaseValue (0.5f);
+
+  // Process block with modulation
+  param->process_block (
+    { .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (0),
+      .nframes_ = BLOCK_LENGTH },
+    *mock_transport_, *tempo_map_);
+
+  // Verify modulation applied (0.5 base + 0.5 * 1.0 = 1.0)
+  EXPECT_NEAR (param->currentValue (), 1.0f, 1e-5f);
+}
+
+TEST_F (ProcessorParameterTest, ModulationWithMultiplier)
+{
+  param->setBaseValue (0.5f);
+  set_mod_source_config ({ .multiplier_ = 0.5f });
+
+  param->process_block (
+    { .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (0),
+      .nframes_ = BLOCK_LENGTH },
+    *mock_transport_, *tempo_map_);
+
+  // Verify scaled modulation (0.5 base + 0.5 * 0.5 = 0.75)
+  EXPECT_NEAR (param->currentValue (), 0.75f, 1e-5f);
+}
+
+TEST_F (ProcessorParameterTest, BipolarModulation)
+{
+  param->setBaseValue (0.5f);
+  set_mod_source_config ({ .bipolar_ = true });
+
+  param->process_block (
+    { .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (0),
+      .nframes_ = BLOCK_LENGTH },
+    *mock_transport_, *tempo_map_);
+
+  // 0.5 CV value becomes 0 after bipolar conversion
+  // Modulation amount: (0.5 * 2 - 1) * 0.5 = 0
+  EXPECT_NEAR (param->currentValue (), 0.5f, 1e-5f);
+}
+
+TEST_F (ProcessorParameterTest, ModulationWithAutomation)
+{
+  // Enable both automation and modulation
+  param->set_automation_provider ([&] (auto) {
+    return 0.7f; // Automation value
+  });
+
+  param->process_block (
+    { .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (0),
+      .nframes_ = BLOCK_LENGTH },
+    *mock_transport_, *tempo_map_);
+
+  // Verify automation + modulation (0.7 auto + 0.5 mod = 1.2 -> clamped to 1.0)
+  EXPECT_NEAR (param->currentValue (), 1.0f, 1e-5f);
+}
+
+TEST_F (ProcessorParameterTest, MultipleModulationSources)
+{
+  // Create second modulation source
+  auto mod_source2_ref = utils::create_object<CVPort> (
+    registry, utils::Utf8String::from_utf8_encoded_string ("LFO2"),
+    PortFlow::Output);
+  auto mod_source2 = mod_source2_ref.get_object_as<CVPort> ();
+  mod_source2->prepare_for_processing (nullptr, SAMPLE_RATE, BLOCK_LENGTH);
+
+  // Fill with different signal
+  for (
+    const auto i :
+    std::views::iota (size_t{ 0 }, BLOCK_LENGTH.in<size_t> (units::samples)))
+    {
+      mod_source2->buf_[i] = 0.25f;
+    }
+
+  // Add second connection
+  mod_sources.emplace_back (
+    mod_source2, graph::ConnectionConfig{ .multiplier_ = 0.5f });
+  param_mod_input->set_port_sources (mod_sources);
+
+  param->setBaseValue (0.5f);
+
+  param->process_block (
+    { .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (0),
+      .nframes_ = BLOCK_LENGTH },
+    *mock_transport_, *tempo_map_);
+
+  // Verify combined modulation:
+  // Source1: 0.5 * 1.0 = 0.5
+  // Source2: 0.25 * 0.5 = 0.125
+  // Total: 0.5 + 0.5 + 0.125 = 1.125 -> clamped to 1.0
+  EXPECT_NEAR (param->currentValue (), 1.0f, 1e-5f);
+}
+
+TEST_F (ProcessorParameterTest, GestureBlocksAutomation)
+{
+  param->beginUserGesture ();
+  const float initial_value = param->baseValue ();
+
+  param->process_block (
+    { .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (0),
+      .nframes_ = BLOCK_LENGTH },
+    *mock_transport_, *tempo_map_);
+  param->endUserGesture ();
+
+  EXPECT_FLOAT_EQ (param->currentValue (), initial_value);
+}
+
+TEST_F (ProcessorParameterTest, GestureBlocksModulation)
+{
+  param->beginUserGesture ();
+  param->setBaseValue (0.5f);
+
+  param->process_block (
+    { .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (0),
+      .nframes_ = BLOCK_LENGTH },
+    *mock_transport_, *tempo_map_);
+
+  // During gesture, modulation should not be applied
+  EXPECT_FLOAT_EQ (param->currentValue (), 0.5f);
+
+  param->endUserGesture ();
+}
+
+TEST_F (ProcessorParameterTest, GroupPathDefaultsToEmpty)
+{
+  EXPECT_TRUE (param->group_path ().empty ());
+  EXPECT_TRUE (param->groupPath ().isEmpty ());
+}
+
+TEST_F (ProcessorParameterTest, GroupPathSerializationRoundTrip)
+{
+  param->set_group_path (
+    { utils::Utf8String::from_utf8_encoded_string ("Osc"),
+      utils::Utf8String::from_utf8_encoded_string ("Filter") });
+
+  nlohmann::json j;
+  to_json (j, *param);
+
+  auto new_param = std::make_unique<ProcessorParameter> (
+    registry,
+    ProcessorParameter::UniqueId (
+      utils::Utf8String::from_utf8_encoded_string ("Cutoff")),
+    ParameterRange (
+      ParameterRange::Type::Logarithmic, 20.f, 20000.f, 20.f, 1000.f),
+    utils::Utf8String::from_utf8_encoded_string ("Cutoff"));
+  from_json (j, *new_param);
+
+  ASSERT_EQ (new_param->group_path ().size (), 2u);
+  EXPECT_EQ (new_param->group_path ()[0].view (), "Osc");
+  EXPECT_EQ (new_param->group_path ()[1].view (), "Filter");
+  EXPECT_EQ (new_param->groupPath (), QStringList ({ "Osc", "Filter" }));
+}
+
+TEST_F (ProcessorParameterTest, MissingGroupPathDeserializesAsUngrouped)
+{
+  // Projects saved before group support have no "groupPath" key
+  nlohmann::json j;
+  to_json (j, *param);
+  j.erase ("groupPath");
+
+  auto new_param = std::make_unique<ProcessorParameter> (
+    registry,
+    ProcessorParameter::UniqueId (
+      utils::Utf8String::from_utf8_encoded_string ("Cutoff")),
+    ParameterRange (
+      ParameterRange::Type::Logarithmic, 20.f, 20000.f, 20.f, 1000.f),
+    utils::Utf8String::from_utf8_encoded_string ("Cutoff"));
+  from_json (j, *new_param);
+
+  EXPECT_TRUE (new_param->group_path ().empty ());
+}
+
+TEST_F (ProcessorParameterTest, SerializationRoundTrip)
+{
+  // Set non-default value
+  const float test_value = 0.75f;
+  param->setBaseValue (test_value);
+
+  // Serialize
+  nlohmann::json j;
+  to_json (j, *param);
+
+  // Create new param from JSON
+  auto new_param = std::make_unique<ProcessorParameter> (
+    registry,
+    ProcessorParameter::UniqueId (
+      utils::Utf8String::from_utf8_encoded_string ("Cutoff")),
+    ParameterRange (
+      ParameterRange::Type::Logarithmic, 20.f, 20000.f, 20.f, 1000.f),
+    utils::Utf8String::from_utf8_encoded_string ("Cutoff"));
+  from_json (j, *new_param);
+
+  EXPECT_FLOAT_EQ (new_param->baseValue (), test_value);
+  EXPECT_EQ (
+    new_param->get_modulation_input_port_ref ().id (),
+    param->get_modulation_input_port_ref ().id ());
+}
+
+TEST_F (ProcessorParameterTest, ParameterTypeHandling)
+{
+  // Test Linear type
+  ProcessorParameter linearParam (
+    registry, ProcessorParameter::UniqueId (u8"linear"),
+    ParameterRange (ParameterRange::Type::Linear, 4.f, 8.f), u8"Linear");
+  EXPECT_FLOAT_EQ (linearParam.range ().convertFrom0To1 (0.5f), 6.f);
+
+  // Test Logarithmic type
+  ProcessorParameter logParam (
+    registry, ProcessorParameter::UniqueId (u8"log"),
+    ParameterRange (ParameterRange::Type::Logarithmic, 20.f, 20000.f), u8"Log");
+  EXPECT_NEAR (logParam.range ().convertFrom0To1 (0.8f), 5023.7734f, 0.1f);
+
+  // Test Toggle type
+  ProcessorParameter toggleParam (
+    registry, ProcessorParameter::UniqueId (u8"toggle"),
+    ParameterRange (ParameterRange::Type::Toggle, 0.f, 1.f), u8"Toggle");
+  EXPECT_FLOAT_EQ (
+    toggleParam.range ().convertFrom0To1 (0.5f), 1.f); // Should clamp to 1
+}
+
+TEST_F (ProcessorParameterTest, ValueClamping)
+{
+  param->setBaseValue (1.5f);
+  EXPECT_FLOAT_EQ (param->baseValue (), 1.0f);
+  param->setBaseValue (-0.5f);
+  EXPECT_FLOAT_EQ (param->baseValue (), 0.0f);
+}
+
+TEST_F (ProcessorParameterTest, NodeNameVerification)
+{
+  EXPECT_EQ (param->get_node_name ().view (), "Cutoff");
+}
+
+TEST_F (ProcessorParameterTest, PreparationAndRelease)
+{
+  EXPECT_NO_THROW (
+    param->prepare_for_processing (nullptr, SAMPLE_RATE, BLOCK_LENGTH));
+  EXPECT_NO_THROW (param->release_resources ());
+}
+
+TEST_F (ProcessorParameterTest, SignalEmissions)
+{
+  QSignalSpy spy (param, &ProcessorParameter::baseValueChanged);
+  param->setBaseValue (0.75f);
+  EXPECT_EQ (spy.count (), 1);
+  EXPECT_FLOAT_EQ (spy.first ()[0].toFloat (), 0.75f);
+}
+
+TEST_F (ProcessorParameterTest, RangeClamping)
+{
+  auto range = ParameterRange (ParameterRange::Type::Linear, 10.f, 20.f);
+  EXPECT_FLOAT_EQ (range.clamp_to_range (15.f), 15.f);
+  EXPECT_FLOAT_EQ (range.clamp_to_range (25.f), 20.f);
+  EXPECT_FLOAT_EQ (range.clamp_to_range (5.f), 10.f);
+}
+
+TEST_F (ProcessorParameterTest, UnitConversion)
+{
+  EXPECT_EQ (
+    ParameterRange::unit_to_string (ParameterRange::Unit::Hz).view (), "Hz");
+  EXPECT_EQ (
+    ParameterRange::unit_to_string (ParameterRange::Unit::Db).view (), "dB");
+  EXPECT_EQ (
+    ParameterRange::unit_to_string (ParameterRange::Unit::Us).view (), "μs");
+}
+
+TEST_F (ProcessorParameterTest, DefaultNormalizedValue)
+{
+  // gain amplitude: default 1.0 (0 dB) maps to (192/198)^8 on the fader
+  // curve
+  const auto gain_range = ParameterRange::make_gain (2.f);
+  EXPECT_NEAR (
+    gain_range.defaultNormalizedValue (), std::pow (192.f / 198.f, 8.f), 1e-6f);
+
+  // linear: default 0.5 maps to the middle
+  const auto linear_range =
+    ParameterRange (ParameterRange::Type::Linear, 0.f, 1.f, 0.5f, 0.5f);
+  EXPECT_FLOAT_EQ (linear_range.defaultNormalizedValue (), 0.5f);
+
+  // logarithmic: default 1000 Hz maps proportionally in log space
+  const auto log_range = ParameterRange (
+    ParameterRange::Type::Logarithmic, 20.f, 20000.f, 20.f, 1000.f);
+  EXPECT_NEAR (
+    log_range.defaultNormalizedValue (),
+    std::log (1000.f / 20.f) / std::log (20000.f / 20.f), 1e-6f);
+}
+
+TEST_F (ProcessorParameterTest, DisabledAutomation)
+{
+  param->unset_automation_provider ();
+  param->process_block ({}, *mock_transport_, *tempo_map_);
+  EXPECT_FLOAT_EQ (param->valueAfterAutomationApplied (), param->baseValue ());
+}
+
+TEST_F (ProcessorParameterTest, NoModulationSources)
+{
+  mod_sources.clear ();
+  param_mod_input->set_port_sources (mod_sources);
+  param->setBaseValue (0.5f);
+  param->process_block ({}, *mock_transport_, *tempo_map_);
+  EXPECT_FLOAT_EQ (param->currentValue (), 0.5f);
+}
+TEST_F (ProcessorParameterTest, ParameterRegistryLifecycle)
+{
+  // Verify initial registry state (param + its internal CV port + mod source)
+  const auto initial_size =
+    registry.count_matching<dsp::ProcessorParameter> ()
+    + registry.count_matching<dsp::CVPort> ();
+  EXPECT_EQ (initial_size, 3u);
+
+  // Create second parameter (adds param + its internal CV port)
+  auto param2_ref = std::make_optional (
+    utils::create_object<ProcessorParameter> (
+      registry, registry, ProcessorParameter::UniqueId (u8"Resonance"),
+      ParameterRange (ParameterRange::Type::Linear, 0.f, 1.f), u8"Resonance"));
+  EXPECT_EQ (
+    registry.count_matching<dsp::ProcessorParameter> ()
+      + registry.count_matching<dsp::CVPort> (),
+    initial_size + 2);
+
+  // Release reference - should deregister both the param and its internal port
+  param2_ref.reset ();
+  EXPECT_EQ (
+    registry.count_matching<dsp::ProcessorParameter> ()
+      + registry.count_matching<dsp::CVPort> (),
+    initial_size);
+}
+
+TEST_F (ProcessorParameterTest, UuidReferenceSerialization)
+{
+  // Serialize UUID reference
+  nlohmann::json j;
+  to_json (j, param_ref.value ());
+
+  // Create new reference from JSON
+  ProcessorParameterUuidReference new_ref (registry);
+  from_json (j, new_ref);
+
+  // Verify same object
+  EXPECT_EQ (
+    new_ref.get_object_as<ProcessorParameter> ()->get_unique_id (),
+    param->get_unique_id ());
+}
+
+TEST_F (ProcessorParameterTest, RegistryLookupByUniqueId)
+{
+  // Find by unique ID via iteration
+  ProcessorParameter * found_param = nullptr;
+  registry.for_each_matching<dsp::ProcessorParameter> (
+    [&] (dsp::ProcessorParameter &pp) {
+      if (pp.get_unique_id () == param->get_unique_id ())
+        {
+          found_param = &pp;
+        }
+    });
+  EXPECT_NE (found_param, nullptr);
+  EXPECT_EQ (found_param, param);
+
+  // Test non-existent ID
+  ProcessorParameter::UniqueId non_existent (u8"NonExistent");
+  bool                         found = false;
+  registry.for_each_matching<dsp::ProcessorParameter> (
+    [&] (dsp::ProcessorParameter &pp) {
+      if (pp.get_unique_id () == non_existent)
+        {
+          found = true;
+        }
+    });
+  EXPECT_FALSE (found);
+}
+TEST_F (ProcessorParameterTest, Formatting)
+{
+  // Test formatting of UniqueId via format_as
+  const auto uuid_str = fmt::format ("{}", param->get_unique_id ());
+  EXPECT_EQ (uuid_str, "Cutoff");
+
+  // Test formatting of ProcessorParameter using BOOST_DESCRIBE_CLASS
+  const auto param_str = fmt::format ("{}", *param);
+  EXPECT_NE (
+    param_str.find (
+      fmt::format (
+        "uuid_={}",
+        type_safe::get (param->get_uuid ()).toString (QUuid::WithoutBraces))),
+    std::string::npos);
+  EXPECT_NE (param_str.find ("label_=Cutoff"), std::string::npos);
+}
+
+// Test that logarithmic convertTo0To1 returns a finite value when real_val is
+// zero (log(0) would produce -inf without a guard).
+TEST_F (ProcessorParameterTest, LogarithmicConvertToNormalizedZeroValue)
+{
+  ParameterRange log_range (ParameterRange::Type::Logarithmic, 20.f, 20000.f);
+  const float    result = log_range.convertTo0To1 (0.f);
+  EXPECT_TRUE (std::isfinite (result))
+    << "convertTo0To1(0) returned non-finite value: " << result;
+  EXPECT_GE (result, 0.f);
+  EXPECT_LE (result, 1.f);
+}
+
+TEST_F (ProcessorParameterTest, EnumerationCreateAndGetLabels)
+{
+  auto range =
+    ParameterRange::make_enumeration ({ u8"Red", u8"Green", u8"Blue" });
+  ASSERT_EQ (range.enumCount (), 3);
+  EXPECT_EQ (range.enum_label (0).view (), "Red");
+  EXPECT_EQ (range.enum_label (1).view (), "Green");
+  EXPECT_EQ (range.enum_label (2).view (), "Blue");
+}
+
+TEST_F (ProcessorParameterTest, EnumerationNormalizedRoundTrip)
+{
+  auto range = ParameterRange::make_enumeration ({ u8"Off", u8"On", u8"Auto" });
+  for (size_t i = 0; i < range.enumCount (); ++i)
+    {
+      const auto normalized = range.normalizedEnumValue (i);
+      EXPECT_GE (normalized, 0.f);
+      EXPECT_LE (normalized, 1.f);
+      EXPECT_EQ (range.enumIndex (normalized), i);
+    }
+}
+
+TEST_F (ProcessorParameterTest, EnumerationNormalizedFromEnumAndEnumValue)
+{
+  enum class TestColor : uint8_t
+  {
+    Red,
+    Green,
+    Blue,
+  };
+  auto range =
+    ParameterRange::make_enumeration ({ u8"Red", u8"Green", u8"Blue" });
+  for (const auto color : { TestColor::Red, TestColor::Green, TestColor::Blue })
+    {
+      const auto normalized = range.normalized_from_enum (color);
+      const auto result = range.enum_value<TestColor> (normalized);
+      EXPECT_EQ (result, color);
+    }
+}
+
+TEST_F (ProcessorParameterTest, EnumerationDefaultIndex)
+{
+  auto range =
+    ParameterRange::make_enumeration ({ u8"Off", u8"On", u8"Auto" }, 2);
+  EXPECT_FLOAT_EQ (range.deff_, 2.f);
+  const auto normalized_default = range.convertTo0To1 (range.deff_);
+  EXPECT_EQ (range.enumIndex (normalized_default), 2u);
+  EXPECT_EQ (range.enum_label (2).view (), "Auto");
+}
+
+TEST_F (ProcessorParameterTest, EnumerationSerializationRoundTrip)
+{
+  auto range =
+    ParameterRange::make_enumeration ({ u8"Off", u8"On", u8"Auto" }, 1);
+
+  nlohmann::json j;
+  to_json (j, range);
+
+  ParameterRange loaded;
+  from_json (j, loaded);
+
+  EXPECT_EQ (loaded.type_, ParameterRange::Type::Enumeration);
+  ASSERT_EQ (loaded.enumCount (), 3);
+  EXPECT_EQ (loaded.enum_label (0).view (), "Off");
+  EXPECT_EQ (loaded.enum_label (1).view (), "On");
+  EXPECT_EQ (loaded.enum_label (2).view (), "Auto");
+  EXPECT_FLOAT_EQ (loaded.deff_, 1.f);
+}
+
+TEST_F (ProcessorParameterTest, EnumerationRejectsEmptyLabels)
+{
+  EXPECT_THROW (ParameterRange::make_enumeration ({}), std::invalid_argument);
+}
+
+TEST_F (ProcessorParameterTest, EnumerationRejectsOutOfRangeDefaultIndex)
+{
+  EXPECT_THROW (
+    ParameterRange::make_enumeration ({ u8"A", u8"B" }, 5),
+    std::invalid_argument);
+}
+
+TEST_F (ProcessorParameterTest, EnumIndexClampsOutOfRangeValues)
+{
+  auto range = ParameterRange::make_enumeration ({ u8"A", u8"B", u8"C" });
+  EXPECT_EQ (range.enumIndex (-0.5f), 0u);
+  EXPECT_EQ (range.enumIndex (1.5f), 2u);
+}
+
+} // namespace zrythm::dsp

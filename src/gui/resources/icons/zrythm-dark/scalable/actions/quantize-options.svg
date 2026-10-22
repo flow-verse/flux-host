@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="quantize-optionss.svg"
+   id="svg4"
+   version="1.1"
+   fill="none"
+   viewBox="0 0 22 18"
+   height="18"
+   width="22">
+  <metadata
+     id="metadata10">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs8" />
+  <sodipodi:namedview
+     inkscape:current-layer="svg4"
+     inkscape:window-maximized="1"
+     inkscape:window-y="27"
+     inkscape:window-x="0"
+     inkscape:cy="9.5166535"
+     inkscape:cx="4.4297402"
+     inkscape:zoom="26.966482"
+     showgrid="false"
+     id="namedview6"
+     inkscape:window-height="1025"
+     inkscape:window-width="1920"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     inkscape:document-rotation="0" />
+  <path
+     style="fill:#e6e6e6;stroke-width:0.903017"
+     id="path2"
+     fill="black"
+     d="m 19.127154,16.224136 h 1.806034 V 1.7758632 H 19.127154 Z M 17.32112,15.321119 V 2.6788803 c 0,-0.9974456 -0.808589,-1.8060341 -1.806034,-1.8060341 H 6.4849152 c -0.997473,0 -1.806034,0.8085885 -1.806034,1.8060341 V 15.321119 c 0,0.997473 0.808561,1.806035 1.806034,1.806035 h 9.0301708 c 0.997445,0 1.806034,-0.808562 1.806034,-1.806035 z M 6.4849152,2.6788803 H 15.515086 V 15.321119 H 6.4849152 Z M 2.8728462,16.224136 H 1.0668122 V 1.7758632 h 1.806034 z"
+     clip-rule="evenodd"
+     fill-rule="evenodd" />
+</svg>

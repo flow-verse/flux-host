@@ -1,0 +1,431 @@
+// SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "structure/project/project.h"
+#include "utils/app_settings.h"
+#include "utils/io_utils.h"
+#include "utils/object_registry.h"
+#include "utils/registry_utils.h"
+
+#include "helpers/mock_hardware_audio_interface.h"
+#include "helpers/mock_hardware_midi_interface.h"
+#include "helpers/mock_settings_backend.h"
+#include "helpers/scoped_juce_qapplication.h"
+
+#include <gtest/gtest.h>
+#include <juce_audio_processors/juce_audio_processors.h>
+
+namespace zrythm::structure::project
+{
+using namespace ::testing;
+
+// Fixture for testing Project functionality
+class ProjectTest : public ::testing::Test, public test_helpers::ScopedJuceQApplication
+{
+protected:
+  void SetUp () override
+  {
+    // Create a temporary directory for the project
+    temp_dir_obj = utils::io::make_tmp_dir ();
+    project_dir =
+      utils::Utf8String::from_qstring (temp_dir_obj->path ()).to_path ();
+
+    hw_interface = std::make_unique<test_helpers::MockHardwareAudioInterface> ();
+
+    plugin_format_manager = std::make_shared<juce::AudioPluginFormatManager> ();
+    juce::addDefaultFormatsToManager (*plugin_format_manager);
+
+    // Create a mock settings backend
+    auto mock_backend = std::make_unique<test_helpers::MockSettingsBackend> ();
+    mock_backend_ptr = mock_backend.get ();
+
+    // Set up default expectations for common settings
+    ON_CALL (*mock_backend_ptr, value (testing::_, testing::_))
+      .WillByDefault (testing::Return (QVariant ()));
+
+    app_settings =
+      std::make_unique<utils::AppSettings> (std::move (mock_backend));
+
+    // Create registry and monitor fader
+    registry_ = std::make_unique<utils::ObjectRegistry> ();
+    monitor_fader = utils::make_qobject_unique<dsp::Fader> (
+      *registry_, dsp::PortType::Audio,
+      true,  // hard_limit_output
+      false, // make_params_automatable
+      [] () -> utils::Utf8String { return u8"Test Control Room"; },
+      [] (bool fader_solo_status) { return false; });
+
+    // Create metronome with test samples
+    juce::AudioSampleBuffer emphasis_sample (2, 512);
+    juce::AudioSampleBuffer normal_sample (2, 512);
+    metronome = utils::make_qobject_unique<dsp::Metronome> (
+      *registry_, emphasis_sample, normal_sample, true, 1.0f, nullptr);
+  }
+
+  void TearDown () override
+  {
+    metronome.reset ();
+    monitor_fader.reset ();
+    registry_.reset ();
+    app_settings.reset ();
+    plugin_format_manager.reset ();
+    hw_interface.reset ();
+  }
+
+  std::unique_ptr<Project> create_minimal_project ()
+  {
+    structure::project::Project::ProjectDirectoryPathProvider path_provider =
+      [this] (bool for_backup) {
+        if (for_backup)
+          {
+            return project_dir / "backups";
+          }
+        return project_dir;
+      };
+
+    plugins::PluginHostWindowFactory window_factory =
+      [] (plugins::Plugin &) -> std::unique_ptr<plugins::PluginHostWindow> {
+      return nullptr;
+    };
+
+    auto project = std::make_unique<Project> (
+      *app_settings, path_provider, *hw_interface, midi_interface_,
+      plugin_format_manager, window_factory, *metronome, *monitor_fader);
+
+    project->install_recording_callback (
+      [] (
+        const structure::tracks::Track::Uuid &, units::sample_t,
+        const dsp::ITransport &, const dsp::MidiEventBuffer *,
+        std::optional<structure::tracks::TrackProcessor::ConstStereoPortPair>,
+        units::sample_u32_t) { });
+
+    return project;
+  }
+
+  std::unique_ptr<QTemporaryDir>                  temp_dir_obj;
+  std::filesystem::path                           project_dir;
+  std::unique_ptr<dsp::IHardwareAudioInterface>   hw_interface;
+  test_helpers::MockHardwareMidiInterface         midi_interface_;
+  std::shared_ptr<juce::AudioPluginFormatManager> plugin_format_manager;
+  test_helpers::MockSettingsBackend *             mock_backend_ptr{};
+  std::unique_ptr<utils::AppSettings>             app_settings;
+  std::unique_ptr<utils::ObjectRegistry>          registry_;
+  utils::QObjectUniquePtr<dsp::Fader>             monitor_fader;
+  utils::QObjectUniquePtr<dsp::Metronome>         metronome;
+};
+
+// ============================================================================
+// Registry Accessors Tests
+// ============================================================================
+
+TEST_F (ProjectTest, GetRegistries)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  EXPECT_NE (&project->get_registry (), nullptr);
+}
+
+// ============================================================================
+// Find Methods Tests
+// ============================================================================
+
+TEST_F (ProjectTest, FindPortByIdNotFound)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Try to find a port with a random UUID - should return nullopt
+  dsp::Port::Uuid random_uuid (QUuid::createUuid ());
+  EXPECT_FALSE (utils::contains (project->get_registry (), random_uuid));
+}
+
+TEST_F (ProjectTest, FindParamByIdNotFound)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Try to find a param with a random UUID - should return nullptr
+  dsp::ProcessorParameter::Uuid random_uuid (QUuid::createUuid ());
+  EXPECT_FALSE (utils::contains (project->get_registry (), random_uuid));
+}
+
+TEST_F (ProjectTest, FindPluginByIdNotFound)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Try to find a plugin with a random UUID - should return nullopt
+  plugins::Plugin::Uuid random_uuid (QUuid::createUuid ());
+  EXPECT_FALSE (utils::contains (project->get_registry (), random_uuid));
+}
+
+TEST_F (ProjectTest, FindTrackByIdNotFound)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Try to find a track with a random UUID - should return nullopt
+  structure::tracks::Track::Uuid random_uuid (QUuid::createUuid ());
+  EXPECT_FALSE (utils::contains (project->get_registry (), random_uuid));
+}
+
+TEST_F (ProjectTest, FindArrangerObjectByIdNotFound)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Try to find an arranger object with a random UUID - should return nullopt
+  structure::arrangement::ArrangerObject::Uuid random_uuid (
+    QUuid::createUuid ());
+  EXPECT_FALSE (utils::contains (project->get_registry (), random_uuid));
+}
+
+// ============================================================================
+// Add Default Tracks Tests
+// ============================================================================
+
+TEST_F (ProjectTest, AddDefaultTracks)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Add default tracks
+  project->add_default_tracks ();
+
+  // Verify that singleton tracks exist in the tracklist
+  auto * singleton_tracks = project->tracklist ()->singletonTracks ();
+  ASSERT_NE (singleton_tracks, nullptr);
+
+  EXPECT_NE (singleton_tracks->chordTrack (), nullptr);
+  EXPECT_NE (singleton_tracks->markerTrack (), nullptr);
+  EXPECT_NE (singleton_tracks->masterTrack (), nullptr);
+  EXPECT_NE (singleton_tracks->modulatorTrack (), nullptr);
+
+  // Verify the tracks can be found via the registry
+  auto chord_track_uuid = singleton_tracks->chordTrack ()->get_uuid ();
+  EXPECT_TRUE (utils::contains (project->get_registry (), chord_track_uuid));
+}
+
+// ============================================================================
+// Get Final Track Dependencies Tests
+// ============================================================================
+
+// ============================================================================
+// Get Final Track Dependencies Tests
+// ============================================================================
+
+TEST_F (ProjectTest, GetFinalTrackDependencies)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Add default tracks so we have some tracks to work with
+  project->add_default_tracks ();
+
+  // Get final track dependencies
+  auto deps = project->get_final_track_dependencies ();
+
+  // Verify that dependencies object is valid
+  // The exact content depends on the implementation
+  (void) deps; // Suppress unused warning
+}
+
+// ============================================================================
+// QML Property Accessors Tests
+// ============================================================================
+
+TEST_F (ProjectTest, QmlPropertyAccessors)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Test QML property accessors - should all return non-null
+  EXPECT_NE (project->tracklist (), nullptr);
+  EXPECT_NE (project->clipLauncher (), nullptr);
+  EXPECT_NE (project->clipPlaybackService (), nullptr);
+  EXPECT_NE (project->engine (), nullptr);
+  EXPECT_NE (project->getTransport (), nullptr);
+  EXPECT_NE (project->getTempoMap (), nullptr);
+  EXPECT_NE (project->tempoObjectManager (), nullptr);
+}
+
+// ============================================================================
+// Tempo Map Tests
+// ============================================================================
+
+TEST_F (ProjectTest, TempoMapAccess)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Test tempo_map() accessor
+  const auto &tempo_map = project->tempo_map ();
+  (void) tempo_map; // Suppress unused warning
+
+  // Test getTempoMap() QML accessor
+  auto * tempo_map_wrapper = project->getTempoMap ();
+  EXPECT_NE (tempo_map_wrapper, nullptr);
+}
+
+// ============================================================================
+// Component Accessors Tests
+// ============================================================================
+
+TEST_F (ProjectTest, ComponentAccessors)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Test various component accessors
+  EXPECT_NE (project->arrangerObjectFactory (), nullptr);
+  EXPECT_NE (project->plugin_factory_.get (), nullptr);
+  EXPECT_NE (project->track_factory_.get (), nullptr);
+}
+
+// ============================================================================
+// Monitor Fader and Metronome Tests
+// ============================================================================
+
+TEST_F (ProjectTest, MonitorFaderAndMetronome)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Test monitor_fader() accessor
+  auto &fader = project->monitor_fader ();
+  EXPECT_EQ (&fader, monitor_fader.get ());
+
+  // Test metronome() accessor
+  auto &metro = project->metronome ();
+  EXPECT_EQ (&metro, metronome.get ());
+}
+
+// ============================================================================
+// Snap Grid Tests
+// ============================================================================
+
+// ============================================================================
+// Transport Tests
+// ============================================================================
+
+TEST_F (ProjectTest, TransportAccess)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Test transport accessor
+  auto * transport = project->getTransport ();
+  EXPECT_NE (transport, nullptr);
+
+  // Verify transport_ member is the same
+  EXPECT_EQ (transport, project->transport_.get ());
+}
+
+// ============================================================================
+// Engine Tests
+// ============================================================================
+
+TEST_F (ProjectTest, EngineAccess)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  // Test engine accessor
+  auto * engine = project->engine ();
+  EXPECT_NE (engine, nullptr);
+
+  // Verify audio_engine_ member is the same
+  EXPECT_EQ (engine, project->audio_engine_.get ());
+}
+
+// ============================================================================
+// Install Recording Callback Tests
+// ============================================================================
+
+TEST_F (ProjectTest, InstallRecordingCallbackAndGetFinalTrackDependencies)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  auto deps = project->get_final_track_dependencies ();
+
+  EXPECT_TRUE (static_cast<bool> (deps.track_recording_callback));
+}
+
+TEST_F (ProjectTest, RecordingCallbackPropagatedToCreatedTracks)
+{
+  auto project = create_minimal_project ();
+  ASSERT_NE (project, nullptr);
+
+  project->add_default_tracks ();
+
+  auto * singleton_tracks = project->tracklist ()->singletonTracks ();
+  ASSERT_NE (singleton_tracks, nullptr);
+
+  // Chord track has TrackFeatures::Recording
+  auto * chord_track = singleton_tracks->chordTrack ();
+  ASSERT_NE (chord_track, nullptr);
+  EXPECT_NE (chord_track->recordingParam (), nullptr);
+
+  // Master track does NOT have TrackFeatures::Recording
+  auto * master_track = singleton_tracks->masterTrack ();
+  ASSERT_NE (master_track, nullptr);
+  EXPECT_EQ (master_track->recordingParam (), nullptr);
+}
+
+TEST_F (ProjectTest, GetFinalTrackDependenciesThrowsWhenNotInstalled)
+{
+  auto project = std::make_unique<Project> (
+    *app_settings, [this] (bool) { return project_dir; }, *hw_interface,
+    midi_interface_, plugin_format_manager,
+    [] (plugins::Plugin &) -> std::unique_ptr<plugins::PluginHostWindow> {
+      return nullptr;
+    },
+    *metronome, *monitor_fader);
+
+  EXPECT_THROW (project->get_final_track_dependencies (), std::runtime_error);
+}
+
+TEST_F (ProjectTest, InstallRecordingCallbackThrowsOnDoubleInstall)
+{
+  auto project = create_minimal_project ();
+  EXPECT_THROW (
+    project->install_recording_callback (
+      [] (
+        const structure::tracks::Track::Uuid &, units::sample_t,
+        const dsp::ITransport &, const dsp::MidiEventBuffer *,
+        std::optional<structure::tracks::TrackProcessor::ConstStereoPortPair>,
+        units::sample_u32_t) { }),
+    std::runtime_error);
+}
+
+// ============================================================================
+// Port Connection Sanitation Tests
+// ============================================================================
+
+TEST_F (ProjectTest, DropPortConnectionsWithMissingPorts)
+{
+  auto project = create_minimal_project ();
+  project->add_default_tracks ();
+
+  auto * master_processor =
+    project->tracklist ()
+      ->singletonTracks ()
+      ->masterTrack ()
+      ->get_track_processor ();
+  auto &out_port = master_processor->get_stereo_out_port ();
+  auto &in_port = master_processor->get_stereo_in_port ();
+
+  auto * mgr = project->port_connections_manager_.get ();
+  mgr->add_default_connection (out_port.get_uuid (), in_port.get_uuid (), false);
+  const auto bogus_src = dsp::PortUuid{ QUuid::createUuid () };
+  mgr->add_default_connection (bogus_src, in_port.get_uuid (), false);
+
+  project->drop_port_connections_with_missing_ports ();
+
+  EXPECT_TRUE (
+    mgr->connection_exists (out_port.get_uuid (), in_port.get_uuid ()));
+  EXPECT_FALSE (mgr->connection_exists (bogus_src, in_port.get_uuid ()));
+}
+}

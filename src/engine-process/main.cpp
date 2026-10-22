@@ -1,0 +1,45 @@
+// SPDX-FileCopyrightText: © 2024 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "zrythm-config.h"
+
+#include "utils/logger.h"
+
+#include <QCoreApplication>
+
+#include "engine-process/audio_engine_application.h"
+
+#if 0
+/**
+ * Application entry point.
+ */
+int
+main (int argc, char ** argv)
+{
+  zrythm::engine::AudioEngineApplication app (argc, argv);
+  z_info ("Starting audio engine...");
+
+// TODO
+#  if HAVE_X11 && false
+  /* init xlib threads */
+  z_info ("Initing X threads...");
+  XInitThreads ();
+#  endif
+
+  /* init fftw */
+  z_info ("Making fftw planner thread safe...");
+  fftw_make_planner_thread_safe ();
+  fftwf_make_planner_thread_safe ();
+
+  return app.exec ();
+}
+#endif
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wcast-qual"
+#endif // __GNUC__
+START_JUCE_APPLICATION (zrythm::engine::AudioEngineApplication)
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif // __GNUC__

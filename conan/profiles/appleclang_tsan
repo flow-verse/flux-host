@@ -1,0 +1,4 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+include(appleclang_debug)
+include(_tsan)

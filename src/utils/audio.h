@@ -1,0 +1,175 @@
+// SPDX-FileCopyrightText: © 2019-2024 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <filesystem>
+#include <span>
+
+#include <juce_audio_basics/juce_audio_basics.h>
+
+namespace zrythm::utils::audio
+{
+
+/**
+ * Bit depth.
+ */
+enum class BitDepth
+{
+  BIT_DEPTH_8,
+  BIT_DEPTH_16,
+  BIT_DEPTH_24,
+  BIT_DEPTH_32
+};
+
+/**
+ * constexpr map for bit depth conversions.
+ * Shared single source of truth for enum-to-int mappings.
+ */
+constexpr std::array<std::pair<int, BitDepth>, 4> bit_depth_map = {
+  std::pair{ 8,  BitDepth::BIT_DEPTH_8  },
+  std::pair{ 16, BitDepth::BIT_DEPTH_16 },
+  std::pair{ 24, BitDepth::BIT_DEPTH_24 },
+  std::pair{ 32, BitDepth::BIT_DEPTH_32 }
+};
+
+constexpr int
+bit_depth_enum_to_int (BitDepth depth)
+{
+  auto it =
+    std::ranges::find (bit_depth_map, depth, &std::pair<int, BitDepth>::second);
+  assert (it != bit_depth_map.end ());
+  return it->first;
+}
+
+constexpr BitDepth
+bit_depth_int_to_enum (int depth)
+{
+  auto it =
+    std::ranges::find (bit_depth_map, depth, &std::pair<int, BitDepth>::first);
+  assert (it != bit_depth_map.end ());
+  return it->second;
+}
+
+/**
+ * Returns the number of frames in the given audio
+ * file.
+ */
+uint32_t
+get_num_frames (const std::filesystem::path &filepath);
+
+/**
+ * Returns whether the frame buffers are equal.
+ */
+bool
+frames_equal (
+  std::span<const float> src1,
+  std::span<const float> src2,
+  float                  epsilon);
+
+/**
+ * Returns whether the file contents are equal.
+ *
+ * @param num_frames Maximum number of frames to check. Passing
+ *   0 will check all frames.
+ */
+bool
+audio_files_equal (
+  const char * f1,
+  const char * f2,
+  size_t       num_frames,
+  float        epsilon);
+
+/**
+ * Returns whether the frame buffer is empty (zero).
+ */
+bool
+frames_silent (std::span<const float> src);
+
+/**
+ * Detect BPM.
+ *
+ * @return The BPM, or 0 if not found.
+ */
+double
+detect_bpm (
+  const float *       src,
+  size_t              num_frames,
+  unsigned int        samplerate,
+  std::vector<float> &candidates);
+
+bool
+audio_file_is_silent (const std::filesystem::path &filepath);
+
+/**
+ * Returns the number of CPU cores.
+ */
+int
+get_num_cores ();
+
+class AudioBuffer : public juce::AudioSampleBuffer
+{
+public:
+  AudioBuffer () = default;
+  AudioBuffer (int num_channels, int num_frames_per_channel)
+      : juce::AudioSampleBuffer (num_channels, num_frames_per_channel)
+  {
+  }
+
+  /**
+   * Creates an AudioBuffer from interleaved audio data.
+   *
+   * @param src Pointer to the interleaved audio data
+   * @param num_frames Number of frames in the audio data, per channel
+   * @param num_channels Number of channels in the audio data
+   * @return A unique pointer to the new AudioBuffer
+   * @throw std::invalid_argument on invalid arguments
+   */
+  static std::unique_ptr<AudioBuffer>
+  from_interleaved (const float * src, size_t num_frames, size_t num_channels);
+
+  /**
+   * Interleaves the samples in this buffer from non-interleaved
+   * (planar) format to interleaved format.
+   */
+  void interleave_samples ();
+
+  /**
+   * De-interleaves the samples in this buffer from interleaved
+   * format to non-interleaved (planar) format.
+   *
+   * @param num_channels Number of channels in this buffer to de-interleave from.
+   */
+  void deinterleave_samples (size_t num_channels);
+
+  // algorithms (each channel is treated as a separate signal)
+
+  void invert_phase ();
+  void normalize_peak ();
+};
+
+/**
+ * Returns true if any sample in the given JUCE buffer exceeds @p threshold.
+ */
+bool
+buffer_has_audio (
+  const juce::AudioSampleBuffer &buffer,
+  size_t                         offset,
+  size_t                         num_frames,
+  float                          threshold = 1e-6f);
+
+}; // namespace zrythm::utils::audio
+
+// TODO
+#if 0
+DEFINE_ENUM_FORMATTER (
+  zrythm::utils::audio::BitDepth,
+  BitDepth,
+  QT_TR_NOOP_UTF8 ("8 bit"),
+  QT_TR_NOOP_UTF8 ("16 bit"),
+  QT_TR_NOOP_UTF8 ("24 bit"),
+  QT_TR_NOOP_UTF8 ("32 bit"));
+#endif

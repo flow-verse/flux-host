@@ -1,0 +1,84 @@
+# SPDX-FileCopyrightText: © 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+add_executable(zrythm_dsp_unit_tests
+  audio_bus_channel_routing_test.cpp
+  audio_bus_configuration_test.cpp
+  audio_callback_test.cpp
+  audio_pool_test.cpp
+  audio_input_processor_test.cpp
+  audio_port_test.cpp
+  audio_sample_processor_test.cpp
+  chord_audition_state_test.cpp
+  chord_descriptor_test.cpp
+  chord_preset_test.cpp
+  chord_suggestion_test.cpp
+  content_time_warp_test.cpp
+  curve_test.cpp
+  cv_port_test.cpp
+  ditherer_test.cpp
+  engine_test.cpp
+  fader_test.cpp
+  file_audio_source_test.cpp
+  fork_join_executor_test.cpp
+  graph_builder_test.cpp
+  graph_dispatcher_test.cpp
+  graph_export_test.cpp
+  graph_helpers.h
+  graph_node_test.cpp
+  graph_pruner_test.cpp
+  graph_renderer_test.cpp
+  graph_scheduler_test.cpp
+  graph_test.cpp
+  kmeter_dsp_test.cpp
+  loop_tempo_estimator_test.cpp
+  metronome_test.cpp
+  midi_activity_provider_test.cpp
+  midi_device_buffer_test.cpp
+  midi_event_buffer_test.cpp
+  midi_event_test.cpp
+  midi_file_test.cpp
+  midi_input_processor_test.cpp
+  midi_panic_processor_test.cpp
+  midi_port_test.cpp
+  modulator_macro_processor_test.cpp
+  musical_scale_test.cpp
+  parameter_test.cpp
+  panning_test.cpp
+  position_test.cpp
+  passthrough_processors_test.cpp
+  peak_dsp_test.cpp
+  peak_fall_smooth_test.cpp
+  playhead_test.cpp
+  playhead_qml_adapter_test.cpp
+  poly_voice_manager_test.cpp
+  port_observation_manager_test.cpp
+  port_observer_test.cpp
+  port_test.cpp
+  processor_base_test.cpp
+  rubberband_timestretch_engine_test.cpp
+  snap_grid_test.cpp
+  speaker_arrangement_test.cpp
+  tick_types_test.cpp
+  tempo_map_test.cpp
+  tempo_map_qml_adapter_test.cpp
+  tempo_warp_map_test.cpp
+  timebase_test.cpp
+  timeline_data_cache_test.cpp
+  transport_test.cpp
+  true_peak_dsp_test.cpp
+  time_warp_map_test.cpp
+)
+
+set_target_properties(zrythm_dsp_unit_tests PROPERTIES
+  AUTOMOC OFF
+  UNITY_BUILD ${ZRYTHM_UNITY_BUILD}
+)
+
+target_link_libraries(zrythm_dsp_unit_tests PRIVATE
+  GTest::gmock_main
+  zrythm_dsp_lib
+  zrythm_test_helpers_lib
+)
+
+zrythm_discover_tests(zrythm_dsp_unit_tests)

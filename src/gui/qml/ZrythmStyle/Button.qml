@@ -1,0 +1,55 @@
+// SPDX-FileCopyrightText: © 2024, 2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-FileCopyrightText: Copyright (C) 2017 The Qt Company Ltd.
+// SPDX-License-Identifier: GPL-3.0-only
+
+import QtQuick
+import QtQuick.Controls.impl
+import QtQuick.Templates as T
+import ZrythmStyle
+
+T.Button {
+  id: control
+
+  font: ZrythmTheme.buttonTextFont
+  horizontalPadding: 6
+  hoverEnabled: true
+  implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding)
+  implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset, implicitContentWidth + leftPadding + rightPadding)
+  layer.enabled: true
+  opacity: ZrythmTheme.getOpacity(control.enabled, control.Window.active)
+  padding: 4
+  spacing: 4
+
+  background: ButtonBackgroundRect {
+    control: control
+  }
+
+  contentItem: IconLabel {
+    color: ZrythmTheme.buttonContentColor(control)
+    display: control.display
+    font: control.font
+    icon: control.icon
+    mirrored: control.mirrored
+    spacing: control.spacing
+    text: control.text
+
+    Behavior on color {
+      animation: ZrythmTheme.propertyAnimation
+    }
+  }
+  layer.effect: DropShadowEffect {
+  }
+
+  TextMetrics {
+    id: textMetrics
+
+    font: control.font
+    text: "Test"
+  }
+
+  icon {
+    // height: 24
+    color: ZrythmTheme.buttonContentColor(control)
+    width: Math.max(control.height - padding * 2, textMetrics.height)
+  }
+}

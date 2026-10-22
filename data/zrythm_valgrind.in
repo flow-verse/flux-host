@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+# SPDX-FileCopyrightText: © 2021, 2024, 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+set -xe
+
+jack_path=$(dirname $(ldconfig -p | grep 'libjack.so ' | head -n 1 | cut -d ' ' -f 4))
+export LD_LIBRARY_PATH="@zrythm_libdir@:$jack_path:@CMAKE_INSTALL_FULL_LIBDIR@:$LD_LIBRARY_PATH"
+
+export GSETTINGS_SCHEMA_DIR=@gschemas_dir@
+export G_MESSAGES_DEBUG=zrythm
+
+user_dir="`gsettings get org.zrythm.Zrythm.preferences.general.paths zrythm-dir | sed s/\'//g`"
+user_valgrind_dir="$user_dir/valgrind"
+mkdir -p "$user_valgrind_dir"
+date_str=`date +%Y-%m-%d_%H-%M-%S`
+valgrind_out_file="$user_valgrind_dir/valgrind_$date_str"
+
+# TODO install suppressions
+#--suppressions=tools/vg.sup
+
+valgrind --log-file="$valgrind_out_file" \
+  --num-callers=30 \
+  @BIN_DIR@/@PROGRAM_NAME_LOWERCASE@ "$@"

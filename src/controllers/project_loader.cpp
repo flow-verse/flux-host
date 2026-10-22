@@ -1,0 +1,135 @@
+// SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <fmt/std.h>
+
+#include "controllers/project_json_serializer.h"
+#include "controllers/project_loader.h"
+#include "controllers/project_saver.h"
+#include "plugins/plugin.h"
+#include "plugins/plugin_instantiation_wait.h"
+#include "structure/project/project_path_provider.h"
+#include "structure/project/project_ui_state.h"
+#include "undo/undo_stack.h"
+#include "utils/io_utils.h"
+
+#include <QCoreApplication>
+#include <QtConcurrentRun>
+
+#include <nlohmann/json.hpp>
+
+namespace zrythm::controllers
+{
+
+std::string
+ProjectLoader::get_uncompressed_project_text (
+  const std::filesystem::path &project_dir)
+{
+  return ProjectSaver::get_existing_uncompressed_text (project_dir);
+}
+
+nlohmann::json
+ProjectLoader::parse_and_validate (const std::string &json_str)
+{
+  nlohmann::json j;
+  try
+    {
+      j = nlohmann::json::parse (json_str);
+    }
+  catch (const nlohmann::json::parse_error &e)
+    {
+      throw ZrythmException (
+        fmt::format ("Failed to parse project JSON: {}", e.what ()));
+    }
+
+  // Validate against schema
+  ProjectJsonSerializer::validate_json (j);
+
+  return j;
+}
+
+utils::Utf8String
+ProjectLoader::extract_title (const nlohmann::json &j)
+{
+  if (j.contains (ProjectJsonSerializer::kTitle))
+    {
+      return utils::Utf8String::from_utf8_encoded_string (
+        j[ProjectJsonSerializer::kTitle].get<std::string> ());
+    }
+  return utils::Utf8String::from_utf8_encoded_string ("Untitled");
+}
+
+QFuture<ProjectLoader::LoadResult>
+ProjectLoader::load_from_directory (const std::filesystem::path &project_dir)
+{
+  z_info ("Loading project from {}", project_dir);
+
+  return QtConcurrent::run ([project_dir] (QPromise<LoadResult> &promise) {
+    promise.setProgressRange (0, 4);
+
+    // 1. Verify directory exists
+    promise.setProgressValueAndText (0, QObject::tr ("Verifying directory..."));
+    promise.suspendIfRequested ();
+    if (promise.isCanceled ())
+      return;
+
+    if (!std::filesystem::is_directory (project_dir))
+      {
+        throw ZrythmException (
+          fmt::format ("Project directory does not exist: {}", project_dir));
+      }
+
+    // 2. Read and decompress
+    promise.setProgressValueAndText (1, QObject::tr ("Reading project file..."));
+    promise.suspendIfRequested ();
+    if (promise.isCanceled ())
+      return;
+
+    auto json_str = get_uncompressed_project_text (project_dir);
+
+    // 3. Parse and validate
+    promise.setProgressValueAndText (2, QObject::tr ("Parsing project data..."));
+    promise.suspendIfRequested ();
+    if (promise.isCanceled ())
+      return;
+
+    auto j = parse_and_validate (json_str);
+
+    // 4. Extract metadata
+    promise.setProgressValueAndText (3, QObject::tr ("Extracting metadata..."));
+    promise.suspendIfRequested ();
+    if (promise.isCanceled ())
+      return;
+
+    auto title = extract_title (j);
+
+    promise.setProgressValueAndText (4, QObject::tr ("Load complete"));
+
+    promise.addResult (
+      LoadResult{
+        .json = std::move (j),
+        .title = std::move (title),
+        .project_directory = project_dir });
+  });
+}
+
+void
+ProjectLoader::deserialize (
+  const nlohmann::json               &j,
+  structure::project::Project        &project,
+  structure::project::ProjectUiState &ui_state,
+  undo::UndoStack                    &undo_stack)
+{
+  ProjectJsonSerializer::deserialize (j, project, ui_state, undo_stack);
+
+  // Load audio files for each FileAudioSource
+  project.pool_->init_loaded ();
+
+  // Wait for all asynchronously-instantiating plugins to finish.
+  // JUCE (VST3/AU) plugins instantiate asynchronously — deserialization
+  // triggers the init but returns before it completes. If we don't wait,
+  // the engine can start processing before buffers are allocated.
+  plugins::wait_for_plugin_instantiations (project.get_registry ());
+}
+
+}

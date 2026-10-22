@@ -1,0 +1,263 @@
+// SPDX-FileCopyrightText: © 2020-2022, 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "structure/tracks/channel_send.h"
+#include "utils/float_ranges.h"
+#include "utils/math_utils.h"
+#include "utils/registry_utils.h"
+
+#include <fmt/format.h>
+#include <nlohmann/json.hpp>
+
+namespace zrythm::structure::tracks
+{
+
+ChannelSend::ChannelSend (
+  utils::IObjectRegistry &object_registry,
+  dsp::PortType           signal_type,
+  int                     slot,
+  bool                    is_prefader,
+  QObject *               parent)
+    : dsp::ProcessorBase (object_registry, u8"Channel Send", parent),
+      signal_type_ (signal_type), is_prefader_ (is_prefader)
+{
+  // Amount parameter (volume/gain)
+  add_parameter (
+    utils::create_object<dsp::ProcessorParameter> (
+      registry (), registry (),
+      dsp::ProcessorParameter::UniqueId (
+        utils::Utf8String::from_utf8_encoded_string (
+          fmt::format ("channel_send_{}_amount", slot + 1))),
+      dsp::ParameterRange (
+        dsp::ParameterRange::Type::GainAmplitude, 0.f, 2.f, 0.f, 1.f),
+      utils::Utf8String::from_qstring (QObject::tr ("Amount"))));
+
+  // Enabled parameter (toggle)
+  add_parameter (
+    utils::create_object<dsp::ProcessorParameter> (
+      registry (), registry (),
+      dsp::ProcessorParameter::UniqueId (
+        utils::Utf8String::from_utf8_encoded_string (
+          fmt::format ("channel_send_{}_enabled", slot + 1))),
+      dsp::ParameterRange::make_toggle (true),
+      utils::Utf8String::from_qstring (QObject::tr ("Enabled"))));
+
+  if (is_audio ())
+    {
+      {
+        auto port = utils::create_object<dsp::AudioPort> (
+          registry (), u8"Audio Input", dsp::PortFlow::Input,
+          dsp::SpeakerArrangement::stereo ());
+        port.get_object_as<dsp::AudioPort> ()->set_symbol (
+          utils::Utf8String::from_utf8_encoded_string (
+            fmt::format ("channel_send_{}_audio_in", slot + 1)));
+        add_input_port (port);
+      }
+
+      {
+        auto port = utils::create_object<dsp::AudioPort> (
+          registry (), u8"Audio Output", dsp::PortFlow::Output,
+          dsp::SpeakerArrangement::stereo ());
+        port.get_object_as<dsp::AudioPort> ()->set_symbol (
+          utils::Utf8String::from_utf8_encoded_string (
+            fmt::format ("channel_send_{}_audio_out", slot + 1)));
+        add_output_port (port);
+      }
+    }
+  else if (is_midi ())
+    {
+      add_input_port (
+        utils::create_object<dsp::MidiPort> (
+          registry (),
+          utils::Utf8String::from_qstring (QObject::tr ("MIDI input")),
+          dsp::PortFlow::Input));
+      auto &midi_in_port = get_midi_in_port ();
+      midi_in_port.set_symbol (
+        utils::Utf8String::from_utf8_encoded_string (
+          fmt::format ("channel_send_{}_midi_in", slot + 1)));
+
+      add_output_port (
+        utils::create_object<dsp::MidiPort> (
+          registry (),
+          utils::Utf8String::from_qstring (QObject::tr ("MIDI output")),
+          dsp::PortFlow::Output));
+      auto &midi_out_port = get_midi_out_port ();
+      midi_out_port.set_symbol (
+        utils::Utf8String::from_utf8_encoded_string (
+          fmt::format ("channel_send_{}_midi_out", slot + 1)));
+    }
+
+  set_name (
+    utils::Utf8String::from_utf8_encoded_string (
+      fmt::format (
+        "{} Send {}", is_prefader_ ? "Pre-Fader" : "Post-Fader", slot + 1)));
+}
+
+dsp::ProcessorParameter *
+ChannelSend::enabledParam () const
+{
+  return get_parameters ().at (1).get ();
+}
+
+QVariant
+ChannelSend::destinationPort () const
+{
+  if (destination_port_)
+    {
+      return QVariant::fromValue (destination_port_->get ());
+    }
+  return QVariant{};
+}
+
+void
+ChannelSend::setDestinationPort (const QVariant &port)
+{
+  const auto * port_ptr = port.value<dsp::Port *> ();
+  set_destination_port (
+    dsp::PortUuidReference{ port_ptr->get_uuid (), registry () });
+}
+
+void
+ChannelSend::set_destination_port (dsp::PortUuidReference port)
+{
+  auto * port_ptr = port.get_object_as<dsp::Port> ();
+  if (!port_ptr->is_input ())
+    {
+      throw std::invalid_argument (
+        "Destination port must be an input port, not an output port");
+    }
+
+  const auto port_type = port_ptr->type ();
+  if (port_type != signal_type_)
+    {
+      throw std::invalid_argument (
+        fmt::format (
+          "Destination port type {} does not match send type {}. "
+          "Only Audio and MIDI ports of matching types are allowed.",
+          static_cast<int> (port_type), static_cast<int> (signal_type_)));
+    }
+
+  destination_port_.emplace (std::move (port));
+  Q_EMIT destinationPortChanged ();
+}
+
+void
+ChannelSend::clear_destination_port ()
+{
+  destination_port_.reset ();
+  Q_EMIT destinationPortChanged ();
+}
+
+void
+ChannelSend::custom_process_block (
+  const dsp::graph::ProcessBlockInfo time_nfo,
+  const dsp::ITransport             &transport,
+  const dsp::TempoMap               &tempo_map) noexcept
+{
+  const auto local_offset = time_nfo.buffer_offset_;
+  const auto nframes = time_nfo.nframes_;
+
+  // Check if enabled
+  const auto is_enabled = processing_caches_->enabled_param_->range ().isToggled (
+    processing_caches_->enabled_param_->currentValue ());
+
+  if (is_audio ())
+    {
+      const auto &amount_param = processing_caches_->amount_param_;
+      const auto  amount_val =
+        is_enabled
+          ? amount_param->range ().convertFrom0To1 (amount_param->currentValue ())
+          : 0.f;
+      for (
+        const auto &[out, in] : std::views::zip (
+          processing_caches_->audio_outs_rt_, processing_caches_->audio_ins_rt_))
+        {
+          out->copy_source_rt (*in, time_nfo, amount_val);
+        }
+    }
+  else if (is_midi ())
+    {
+      if (is_enabled)
+        {
+          dsp::midi_event::append_in_range (
+            processing_caches_->midi_out_rt_->buffer_,
+            processing_caches_->midi_in_rt_->buffer_,
+            std::pair{ local_offset, local_offset + nframes });
+        }
+      // When disabled, don't copy any MIDI events (output remains empty)
+    }
+}
+
+void
+ChannelSend::custom_prepare_for_processing (
+  const dsp::graph::GraphNode * node,
+  units::sample_rate_t          sample_rate,
+  units::sample_u32_t           max_block_length)
+{
+  processing_caches_ = std::make_unique<ChannelSendProcessingCaches> ();
+
+  processing_caches_->amount_param_ = amountParam ();
+  processing_caches_->enabled_param_ = enabledParam ();
+  if (is_midi ())
+    {
+      processing_caches_->midi_in_rt_ = &get_midi_in_port ();
+      processing_caches_->midi_out_rt_ = &get_midi_out_port ();
+    }
+  else if (is_audio ())
+    {
+      processing_caches_->audio_ins_rt_.push_back (&get_stereo_in_port ());
+      processing_caches_->audio_outs_rt_.push_back (&get_stereo_out_port ());
+    }
+}
+
+void
+ChannelSend::custom_release_resources ()
+{
+  processing_caches_.reset ();
+}
+
+void
+init_from (
+  ChannelSend           &obj,
+  const ChannelSend     &other,
+  utils::ObjectCloneType clone_type)
+{
+  // TODO
+  // init_from (
+  //   static_cast<dsp::ProcessorBase &> (obj),
+  //   static_cast<const dsp::ProcessorBase &> (other), clone_type);
+  obj.signal_type_ = other.signal_type_;
+  obj.is_prefader_ = other.is_prefader_;
+  if (other.destination_port_)
+    {
+      obj.destination_port_.emplace (*other.destination_port_);
+    }
+}
+
+void
+to_json (nlohmann::json &j, const ChannelSend &p)
+{
+  to_json (j, static_cast<const dsp::ProcessorBase &> (p));
+  j[ChannelSend::kSignalTypeKey] = p.signal_type_;
+  j[ChannelSend::kIsPrefaderKey] = p.is_prefader_;
+  if (p.destination_port_)
+    {
+      j[ChannelSend::kDestinationPortKey] = *p.destination_port_;
+    }
+}
+
+void
+from_json (const nlohmann::json &j, ChannelSend &p)
+{
+  from_json (j, static_cast<dsp::ProcessorBase &> (p));
+  j.at (ChannelSend::kSignalTypeKey).get_to (p.signal_type_);
+  j.at (ChannelSend::kIsPrefaderKey).get_to (p.is_prefader_);
+  if (j.contains (ChannelSend::kDestinationPortKey))
+    {
+      p.destination_port_.emplace (p.registry ());
+      j.at (ChannelSend::kDestinationPortKey).get_to (*p.destination_port_);
+    }
+}
+
+ChannelSend::~ChannelSend () = default;
+}

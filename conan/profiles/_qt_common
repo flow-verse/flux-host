@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+
+# Qt options must be set here (not only in conanfile.py) because Conan 2
+# only propagates consumer options to HOST-context dependencies. Tool_requires
+# (the build-context Qt used for tools during cross-building) get their options
+# from the build profile. These must match conanfile.py's Qt options.
+[options]
+qt/*:qtdeclarative=True
+qt/*:qtquickcontrols2=True
+qt/*:qttools=True
+qt/*:qttranslations=True
+qt/*:qtcanvaspainter=True
+qt/*:qtlanguageserver=True
+qt/*:qtsvg=True
+qt/*:qtshadertools=True
+qt/*:with_pq=False
+qt/*:with_odbc=False
+qt/*:with_glib=False
+harfbuzz/*:with_glib=False

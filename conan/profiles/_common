@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: CC0-1.0
+[tool_requires]
+cmake/[>=4.3]
+!cmake/*: ninja/[>=1]
+
+[conf]
+tools.cmake.cmaketoolchain:generator=Ninja

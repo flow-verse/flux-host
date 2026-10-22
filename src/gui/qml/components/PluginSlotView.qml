@@ -1,0 +1,431 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Zrythm
+
+Control {
+  id: root
+
+  required property var deviceGroupOrPlugin
+  property bool down: false
+
+  // Drop handling
+  property bool dropHovered: false
+  required property int index
+  readonly property bool isCurrentTrack: {
+    const currentIdx = root.trackSelectionModel.currentIndex;
+    return currentIdx && currentIdx.valid ? currentIdx.data(TrackCollection.TrackPtrRole) === root.track : false;
+  }
+  readonly property Plugin plugin: deviceGroupOrPlugin as Plugin
+  readonly property bool pluginEnabled: root.plugin && root.plugin.bypassParameter.baseValue < 0.5
+  required property PluginGroup pluginGroup
+  required property PluginImporter pluginImporter
+  required property PluginOperator pluginOperator
+  required property PluginSelectionModel pluginSelectionModel
+  required property Track track
+  required property TrackSelectionModel trackSelectionModel
+  required property ViewContext viewContext
+
+  signal pluginClicked(Plugin plugin)
+
+  function gatherSelectedPlugins() {
+    const plugins = [];
+    const groupModel = root.pluginGroup;
+    for (let i = 0; i < groupModel.rowCount(); ++i) {
+      const idx = root.pluginSelectionModel.getModelIndex(i);
+      if (root.pluginSelectionModel.isSelected(idx)) {
+        const pl = root.pluginSelectionModel.getPluginFromModelIndex(idx);
+        if (pl)
+          plugins.push(pl);
+      }
+    }
+    if (plugins.length === 0 && root.plugin)
+      plugins.push(root.plugin);
+    return plugins;
+  }
+
+  // Returns a fresh model index for this delegate's plugin. Must be called at
+  // time of use - QModelIndex values must not be cached in QML because they
+  // are frozen snapshots that go stale when model rows change.
+  function pluginModelIndex(): var {
+    return pluginSelectionModel.getModelIndex(index);
+  }
+
+  function selectCurrentTrack() {
+    if (!root.isCurrentTrack) {
+      const trackModel = root.trackSelectionModel.model;
+      const count = trackModel.rowCount();
+      for (let i = 0; i < count; ++i) {
+        if (trackModel.index(i, 0).data(TrackCollection.TrackPtrRole) === root.track) {
+          root.trackSelectionModel.selectSingleTrack(trackModel.index(i, 0));
+          break;
+        }
+      }
+    }
+  }
+
+  implicitHeight: 20
+  implicitWidth: 48
+  width: parent ? parent.width : 200
+
+  // Context menu
+  ContextMenu.menu: Menu {
+    id: contextMenu
+
+    onAboutToShow: {
+      if (root.plugin) {
+        const selCount = root.gatherSelectedPlugins().length;
+        removeMenuItem.visible = true;
+        removeMenuItem.text = selCount > 1 ? qsTr("Remove %1 Plugins").arg(selCount) : qsTr("Remove Plugin");
+        cutMenuItem.visible = true;
+        cutMenuItem.text = selCount > 1 ? qsTr("Cut %1 Plugins").arg(selCount) : qsTr("Cut Plugin");
+        copyMenuItem.visible = true;
+        copyMenuItem.text = selCount > 1 ? qsTr("Copy %1 Plugins").arg(selCount) : qsTr("Copy Plugin");
+        duplicateMenuItem.visible = true;
+        duplicateMenuItem.text = selCount > 1 ? qsTr("Duplicate %1 Plugins").arg(selCount) : qsTr("Duplicate Plugin");
+      } else {
+        removeMenuItem.visible = false;
+        cutMenuItem.visible = false;
+        copyMenuItem.visible = false;
+        duplicateMenuItem.visible = false;
+      }
+    }
+
+    MenuItem {
+      id: cutMenuItem
+
+      enabled: root.plugin !== null
+      text: qsTr("Cut Plugin")
+
+      onTriggered: {
+        if (root.plugin) {
+          root.viewContext.cutRequested();
+        }
+      }
+    }
+
+    MenuItem {
+      id: copyMenuItem
+
+      enabled: root.plugin !== null
+      text: qsTr("Copy Plugin")
+
+      onTriggered: {
+        if (root.plugin) {
+          root.viewContext.copyRequested();
+        }
+      }
+    }
+
+    MenuItem {
+      enabled: root.pluginOperator.canPastePlugins
+      text: qsTr("Paste")
+
+      onTriggered: {
+        const pastedIds = root.pluginOperator.pastePlugins(root.pluginGroup, root.index);
+        if (pastedIds.length > 0)
+          root.pluginSelectionModel.selectPluginsByUuidStrings(pastedIds);
+      }
+    }
+
+    MenuItem {
+      id: duplicateMenuItem
+
+      enabled: root.plugin !== null
+      text: qsTr("Duplicate Plugin")
+
+      onTriggered: {
+        if (root.plugin) {
+          root.viewContext.duplicateRequested();
+        }
+      }
+    }
+
+    MenuSeparator {
+    }
+
+    MenuItem {
+      id: removeMenuItem
+
+      enabled: root.plugin !== null
+      text: qsTr("Remove Plugin")
+
+      onTriggered: {
+        if (root.plugin) {
+          root.pluginOperator.removePlugins(root.gatherSelectedPlugins(), root.pluginGroup, root.track);
+        }
+      }
+    }
+
+    MenuItem {
+      enabled: root.plugin !== null
+      text: qsTr("Show Plugin UI")
+
+      onTriggered: {
+        if (root.plugin) {
+          root.plugin.uiVisible = true;
+        }
+      }
+    }
+
+    MenuSeparator {
+    }
+
+    MenuItem {
+      enabled: root.plugin !== null
+      text: qsTr("Properties")
+
+      onTriggered: {
+        if (root.plugin) {
+          PluginInspectorController.showInspector(root.plugin);
+        }
+      }
+    }
+  }
+
+  SelectionTracker {
+    id: selectionTracker
+
+    modelIndexProvider: root.pluginModelIndex
+    selectionModel: root.pluginSelectionModel
+  }
+
+  TapHandler {
+    acceptedButtons: Qt.LeftButton
+    acceptedModifiers: Qt.NoModifier
+
+    onTapped: (eventPoint, button) => {
+      root.forceActiveFocus();
+      if (root.plugin) {
+        root.selectCurrentTrack();
+        root.pluginSelectionModel.selectSinglePlugin(root.pluginModelIndex());
+        root.pluginClicked(root.plugin);
+      }
+    }
+  }
+
+  TapHandler {
+    acceptedButtons: Qt.LeftButton
+    acceptedModifiers: Qt.ControlModifier
+
+    onTapped: (eventPoint, button) => {
+      root.forceActiveFocus();
+      if (root.plugin) {
+        root.selectCurrentTrack();
+        root.pluginSelectionModel.select(root.pluginModelIndex(), ItemSelectionModel.Toggle);
+        root.pluginSelectionModel.setCurrentIndex(root.pluginModelIndex(), ItemSelectionModel.NoUpdate);
+      }
+    }
+  }
+
+  TapHandler {
+    acceptedButtons: Qt.LeftButton
+    acceptedModifiers: Qt.ShiftModifier
+
+    onTapped: (eventPoint, button) => {
+      root.forceActiveFocus();
+      if (root.plugin) {
+        root.selectCurrentTrack();
+        const currentIdx = root.pluginSelectionModel.currentIndex;
+        const thisIdx = root.pluginModelIndex();
+        if (currentIdx && currentIdx.valid) {
+          const top = Math.min(currentIdx.row, thisIdx.row);
+          const bottom = Math.max(currentIdx.row, thisIdx.row);
+          const sel = QmlUtils.createRangeSelection(root.pluginSelectionModel.model, top, bottom);
+          root.pluginSelectionModel.select(sel, ItemSelectionModel.ClearAndSelect);
+        } else {
+          root.pluginSelectionModel.selectSinglePlugin(thisIdx);
+        }
+      }
+    }
+  }
+
+  TapHandler {
+    acceptedButtons: Qt.LeftButton
+    acceptedModifiers: Qt.ControlModifier | Qt.ShiftModifier
+
+    onTapped: (eventPoint, button) => {
+      root.forceActiveFocus();
+      if (root.plugin) {
+        root.selectCurrentTrack();
+        const currentIdx = root.pluginSelectionModel.currentIndex;
+        const thisIdx = root.pluginModelIndex();
+        if (currentIdx && currentIdx.valid) {
+          const top = Math.min(currentIdx.row, thisIdx.row);
+          const bottom = Math.max(currentIdx.row, thisIdx.row);
+          const sel = QmlUtils.createRangeSelection(root.pluginSelectionModel.model, top, bottom);
+          root.pluginSelectionModel.select(sel, ItemSelectionModel.Select);
+        } else {
+          root.pluginSelectionModel.selectSinglePlugin(thisIdx);
+        }
+      }
+    }
+  }
+
+  TapHandler {
+    acceptedButtons: Qt.RightButton
+
+    onTapped: (eventPoint, button) => {
+      root.forceActiveFocus();
+      if (root.plugin) {
+        root.selectCurrentTrack();
+        if (!root.pluginSelectionModel.isSelected(root.pluginModelIndex()))
+          root.pluginSelectionModel.selectSinglePlugin(root.pluginModelIndex());
+      }
+      contextMenu.popup();
+    }
+  }
+
+  TapHandler {
+    onDoubleTapped: (eventPoint, button) => {
+      if (root.plugin) {
+        root.plugin.uiVisible = !root.plugin.uiVisible;
+      }
+    }
+  }
+
+  // Drag support for reordering/moving plugins
+  DragHandler {
+    id: pluginDragHandler
+
+    target: null
+
+    onActiveChanged: {
+      if (active && root.plugin) {
+        const plugins = root.gatherSelectedPlugins();
+
+        dragItem.selectedPlugins = plugins;
+        dragItem.sourceGroup = root.pluginGroup;
+        dragItem.sourceTrack = root.track;
+        dragItem.Drag.active = true;
+      } else {
+        dragItem.Drag.active = false;
+      }
+    }
+  }
+
+  PluginDragItem {
+    id: dragItem
+  }
+
+  DropArea {
+    id: dropArea
+
+    anchors.fill: parent
+
+    onDropped: drop => {
+      root.dropHovered = false;
+      const pluginSrc = drop.source as PluginDragItem;
+      if (pluginSrc && pluginSrc.selectedPlugins.length > 0) {
+        root.pluginOperator.movePlugins(pluginSrc.selectedPlugins, pluginSrc.sourceGroup, pluginSrc.sourceTrack, root.pluginGroup, root.track, root.index);
+      }
+      const descSrc = drop.source as DescriptorDragItem;
+      if (descSrc && descSrc.descriptor) {
+        root.pluginImporter.importPluginToGroup(descSrc.descriptor, root.pluginGroup, root.index);
+      }
+    }
+    onEntered: drag => {
+      const src = drag.source;
+      root.dropHovered = (src as PluginDragItem) !== null || (src as DescriptorDragItem) !== null;
+    }
+    onExited: {
+      root.dropHovered = false;
+    }
+  }
+
+  Rectangle {
+    id: bgRect
+
+    readonly property color baseColor: {
+      let c = root.pluginEnabled ? palette.base : palette.window;
+      if (root.plugin && root.plugin.uiVisible) {
+        c = ZrythmTheme.getColorBlendedTowardsContrast(c);
+      }
+      return c;
+    }
+
+    anchors.fill: parent
+    border.color: {
+      if (root.isCurrentTrack && selectionTracker.isSelected)
+        return palette.highlight;
+      return palette.alternateBase;
+    }
+    border.width: 1
+    color: ZrythmTheme.adjustColorForHoverOrVisualFocusOrDown(baseColor, root.hovered, root.visualFocus, root.down)
+    radius: 6
+
+    // Drop insert indicator: top border only
+    Rectangle {
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
+      color: palette.highlight
+      height: 2
+      visible: root.dropHovered
+    }
+  }
+
+  RowLayout {
+    anchors.fill: parent
+    spacing: 4
+
+    // Activate button
+    RoundButton {
+      id: activateButton
+
+      Layout.alignment: Qt.AlignVCenter
+      Layout.leftMargin: 4
+      Layout.preferredHeight: 8
+      Layout.preferredWidth: 8
+      checkable: true
+      checked: root.pluginEnabled
+      radius: 16
+
+      onClicked: {
+        if (root.plugin) {
+          root.plugin.bypassParameter.setBaseValueByUser((root.pluginEnabled) ? 1.0 : 0.0);
+        }
+      }
+    }
+
+    // Text display
+    Text {
+      id: slotText
+
+      Layout.alignment: Qt.AlignVCenter
+      Layout.fillWidth: true
+      Layout.rightMargin: 4
+      color: {
+        let c;
+        if (root.plugin && root.plugin.instantiationStatus === Plugin.Failed) {
+          c = ZrythmTheme.errorTextColor;
+        } else {
+          c = palette.text;
+        }
+        if (!root.pluginEnabled) {
+          return ZrythmTheme.getColorBlendedTowardsContrast(c);
+        }
+        return c;
+      }
+      elide: Text.ElideRight
+      text: {
+        if (root.plugin) {
+          if (root.plugin.instantiationStatus === Plugin.Failed) {
+            return "(!) " + root.plugin.configuration.descriptor.name;
+          } else {
+            return root.plugin.configuration.descriptor.name;
+          }
+        } else {
+          return "";
+        }
+      }
+    }
+  }
+
+  ToolTip {
+    text: root.plugin ? root.plugin.configuration.descriptor.name : ""
+  }
+}

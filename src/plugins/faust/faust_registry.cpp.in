@@ -1,0 +1,69 @@
+// SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+// GENERATED FILE - do not edit.
+// Generated from faust_registry.cpp.in. The plugin list lives in
+// cmake/FaustPlugins.cmake.
+
+#include <array>
+#include <ranges>
+
+#include "plugins/faust/faust_controls.h"
+#include "plugins/faust/faust_registry.h"
+#include "utils/hash.h"
+
+// Factory functions emitted by the Faust architecture file into each
+// generated source file (data/plugins/generated-cpp/)
+namespace zrythm_faust
+{
+@FAUST_EXTERN_DECLARATIONS@
+}
+
+namespace zrythm::plugins::faust
+{
+
+namespace
+{
+const std::array kFaustPlugins = {@FAUST_REGISTRY_ENTRIES@};
+}
+
+std::span<const FaustPluginInfo>
+available_faust_plugins ()
+{
+  return kFaustPlugins;
+}
+
+const FaustPluginInfo *
+find_faust_plugin_by_key (const utils::Utf8String &key)
+{
+  const auto it = std::ranges::find (kFaustPlugins, key, &FaustPluginInfo::key_);
+  return it != kFaustPlugins.end () ? &*it : nullptr;
+}
+
+std::unique_ptr<PluginDescriptor>
+make_faust_plugin_descriptor (const FaustPluginInfo &info)
+{
+  auto            proto = info.create_ ();
+  FaustMetaReader meta;
+  proto->metadata (&meta);
+
+  auto descr = std::make_unique<PluginDescriptor> ();
+  descr->name_ = meta.get ("name");
+  if (descr->name_.str ().empty ())
+    descr->name_ = info.key_;
+  descr->author_ = meta.get ("author");
+  descr->category_ = info.category_;
+  descr->category_str_ = PluginDescriptor::category_to_string (info.category_);
+  descr->protocol_ = Protocol::ProtocolType::Internal;
+  descr->path_or_id_ = info.key_;
+  const auto key_sv = info.key_.str ();
+  descr->unique_id_ = static_cast<int64_t> (
+    utils::hash::get_custom_hash (key_sv.data (), key_sv.size ()));
+  descr->num_audio_ins_ = proto->getNumInputs ();
+  descr->num_audio_outs_ = proto->getNumOutputs ();
+  if (info.is_instrument_)
+    descr->num_midi_ins_ = 1;
+  return descr;
+}
+
+} // namespace zrythm::plugins::faust

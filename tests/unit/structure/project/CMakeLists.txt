@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+add_executable(zrythm_structure_project_unit_tests
+  arranger_tool_test.cpp
+  chord_pad_bank_test.cpp
+  clip_editor_test.cpp
+  clipboard_payload_test.cpp
+  editor_settings_test.cpp
+  midi_editor_test.cpp
+  port_connection_test.cpp
+  port_connections_manager_test.cpp
+  project_graph_builder_test.cpp
+  project_registry_test.cpp
+  project_test.cpp
+  project_ui_state_test.cpp
+)
+
+set_target_properties(zrythm_structure_project_unit_tests PROPERTIES
+  AUTOMOC ON
+  UNITY_BUILD ${ZRYTHM_UNITY_BUILD}
+)
+
+target_link_libraries(zrythm_structure_project_unit_tests PRIVATE
+  GTest::gmock_main
+  zrythm_structure_project_lib
+  zrythm_test_helpers_lib
+)
+
+zrythm_discover_tests(zrythm_structure_project_unit_tests)

@@ -1,0 +1,454 @@
+// SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "dsp/tempo_map_qml_adapter.h"
+#include "structure/tracks/track_lane.h"
+#include "structure/tracks/track_lane_list.h"
+#include "utils/app_settings.h"
+#include "utils/object_registry.h"
+#include "utils/registry_utils.h"
+
+#include <QObject>
+
+#include "helpers/in_memory_settings_backend.h"
+
+#include <gtest/gtest.h>
+
+namespace zrythm::structure::tracks
+{
+
+class TrackLaneTest : public ::testing::Test
+{
+protected:
+  void SetUp () override
+  {
+    registry_ = std::make_unique<utils::ObjectRegistry> ();
+
+    TrackLane::TrackLaneDependencies deps{ .registry_ = *registry_ };
+
+    midi_lane_ = std::make_unique<TrackLane> (deps);
+    audio_lane_ = std::make_unique<TrackLane> (deps);
+  }
+
+  void TearDown () override
+  {
+    midi_lane_.reset ();
+    audio_lane_.reset ();
+  }
+
+  std::unique_ptr<utils::ObjectRegistry> registry_;
+  std::unique_ptr<TrackLane>             midi_lane_;
+  std::unique_ptr<TrackLane>             audio_lane_;
+};
+
+TEST_F (TrackLaneTest, ConstructionAndBasicProperties)
+{
+  // Test default construction
+  EXPECT_NE (midi_lane_, nullptr);
+  EXPECT_NE (audio_lane_, nullptr);
+
+  // Test default values
+  EXPECT_TRUE (midi_lane_->name ().isEmpty ());
+  EXPECT_TRUE (audio_lane_->name ().isEmpty ());
+  EXPECT_DOUBLE_EQ (midi_lane_->height (), TrackLane::DEFAULT_HEIGHT);
+  EXPECT_DOUBLE_EQ (audio_lane_->height (), TrackLane::DEFAULT_HEIGHT);
+  EXPECT_FALSE (midi_lane_->muted ());
+  EXPECT_FALSE (audio_lane_->muted ());
+  EXPECT_FALSE (midi_lane_->soloed ());
+  EXPECT_FALSE (audio_lane_->soloed ());
+}
+
+TEST_F (TrackLaneTest, NameProperty)
+{
+  // Test name setting and getting
+  midi_lane_->setName ("Test MIDI Lane");
+  EXPECT_EQ (midi_lane_->name (), QString ("Test MIDI Lane"));
+
+  // Test empty name
+  midi_lane_->setName ("");
+  EXPECT_EQ (midi_lane_->name (), QString (""));
+
+  // Test name with special characters
+  midi_lane_->setName ("MIDI Lane 2 - ドラム");
+  EXPECT_EQ (midi_lane_->name (), QString ("MIDI Lane 2 - ドラム"));
+
+  // Test name change signal
+  bool    name_changed = false;
+  QString new_name;
+  QObject::connect (
+    midi_lane_.get (), &TrackLane::nameChanged, midi_lane_.get (),
+    [&] (const QString &name) {
+      name_changed = true;
+      new_name = name;
+    });
+  midi_lane_->setName ("New Name");
+  EXPECT_TRUE (name_changed);
+  EXPECT_EQ (new_name, QString ("New Name"));
+
+  // Test default name generation
+  midi_lane_->generate_name (0);
+  EXPECT_EQ (midi_lane_->name (), QString ("Lane 1"));
+}
+
+TEST_F (TrackLaneTest, HeightProperty)
+{
+  // Test height setting and getting
+  audio_lane_->setHeight (100.0);
+  EXPECT_DOUBLE_EQ (audio_lane_->height (), 100.0);
+
+  // Test height change signal
+  bool   height_changed = false;
+  double new_height = 0.0;
+  QObject::connect (
+    audio_lane_.get (), &TrackLane::heightChanged, audio_lane_.get (),
+    [&] (double height) {
+      height_changed = true;
+      new_height = height;
+    });
+  audio_lane_->setHeight (75.5);
+  EXPECT_TRUE (height_changed);
+  EXPECT_DOUBLE_EQ (new_height, 75.5);
+}
+
+TEST_F (TrackLaneTest, MuteProperty)
+{
+  // Test mute setting and getting
+  midi_lane_->setMuted (true);
+  EXPECT_TRUE (midi_lane_->muted ());
+
+  midi_lane_->setMuted (false);
+  EXPECT_FALSE (midi_lane_->muted ());
+
+  // Test mute change signal
+  bool mute_changed = false;
+  bool new_mute = false;
+  QObject::connect (
+    midi_lane_.get (), &TrackLane::muteChanged, midi_lane_.get (),
+    [&] (bool mute) {
+      mute_changed = true;
+      new_mute = mute;
+    });
+  midi_lane_->setMuted (true);
+  EXPECT_TRUE (mute_changed);
+  EXPECT_TRUE (new_mute);
+}
+
+TEST_F (TrackLaneTest, SoloProperty)
+{
+  // Test solo setting and getting
+  audio_lane_->setSoloed (true);
+  EXPECT_TRUE (audio_lane_->soloed ());
+
+  audio_lane_->setSoloed (false);
+  EXPECT_FALSE (audio_lane_->soloed ());
+
+  // Test solo change signal
+  bool solo_changed = false;
+  bool new_solo = false;
+  QObject::connect (
+    audio_lane_.get (), &TrackLane::soloChanged, audio_lane_.get (),
+    [&] (bool solo) {
+      solo_changed = true;
+      new_solo = solo;
+    });
+  audio_lane_->setSoloed (true);
+  EXPECT_TRUE (solo_changed);
+  EXPECT_TRUE (new_solo);
+}
+
+TEST_F (TrackLaneTest, EffectivelyMutedLogic)
+{
+  TrackLaneList list{ *registry_, nullptr };
+  auto *        lane = list.insertLane (0);
+  auto *        sibling = list.insertLane (1);
+
+  // No soloed lanes, lane not muted
+  lane->setMuted (false);
+  lane->setSoloed (false);
+  sibling->setSoloed (false);
+  EXPECT_FALSE (lane->effectivelyMuted ());
+
+  // No soloed lanes, lane muted
+  lane->setMuted (true);
+  EXPECT_TRUE (lane->effectivelyMuted ());
+
+  // A sibling lane is soloed, lane not soloed
+  lane->setMuted (false);
+  sibling->setSoloed (true);
+  EXPECT_TRUE (lane->effectivelyMuted ());
+
+  // A sibling lane is soloed, lane soloed
+  lane->setSoloed (true);
+  EXPECT_FALSE (lane->effectivelyMuted ());
+
+  // A sibling lane is soloed, lane soloed but muted
+  lane->setMuted (true);
+  EXPECT_TRUE (lane->effectivelyMuted ());
+
+  // A sibling lane is soloed, lane not muted but soloed
+  lane->setMuted (false);
+  EXPECT_FALSE (lane->effectivelyMuted ());
+
+  // A detached lane is never implicitly muted
+  midi_lane_->setMuted (false);
+  midi_lane_->setSoloed (false);
+  EXPECT_FALSE (midi_lane_->effectivelyMuted ());
+}
+
+TEST_F (TrackLaneTest, MidiClipManagement)
+{
+  // Test adding MIDI clips
+  EXPECT_EQ (midi_lane_->midiClips ()->rowCount (), 0);
+
+  // Create a MIDI clip
+  dsp::TempoMap        tempo_map{ units::sample_rate (44100) };
+  dsp::TempoMapWrapper tempo_map_wrapper{ tempo_map };
+  auto midi_clip_ref = utils::create_object<arrangement::MidiClip> (
+    *registry_, tempo_map_wrapper, *registry_);
+
+  // Add clip to lane
+  midi_lane_->arrangement::ArrangerObjectOwner<
+    arrangement::MidiClip>::add_object (midi_clip_ref);
+  EXPECT_EQ (midi_lane_->midiClips ()->rowCount (), 1);
+  EXPECT_EQ (
+    midi_lane_
+      ->arrangement::ArrangerObjectOwner<
+        arrangement::MidiClip>::get_children_vector ()
+      .at (0)
+      .id (),
+    midi_clip_ref.id ());
+
+  // Test removing MIDI clips
+  midi_lane_->arrangement::ArrangerObjectOwner<
+    arrangement::MidiClip>::remove_object (midi_clip_ref.id ());
+  EXPECT_EQ (midi_lane_->midiClips ()->rowCount (), 0);
+}
+
+TEST_F (TrackLaneTest, AudioClipManagement)
+{
+  // Test adding audio clips
+  EXPECT_EQ (audio_lane_->audioClips ()->rowCount (), 0);
+
+  // Create an audio clip
+  auto app_settings = std::make_unique<utils::AppSettings> (
+    std::make_unique<test_helpers::InMemorySettingsBackend> ());
+  dsp::TempoMap        tempo_map{ units::sample_rate (44100) };
+  dsp::TempoMapWrapper tempo_map_wrapper{ tempo_map };
+  auto audio_clip_ref = utils::create_object<arrangement::AudioClip> (
+    *registry_, tempo_map_wrapper, *registry_);
+
+  // Add clip to lane
+  audio_lane_->arrangement::ArrangerObjectOwner<
+    arrangement::AudioClip>::add_object (audio_clip_ref);
+  EXPECT_EQ (audio_lane_->audioClips ()->rowCount (), 1);
+  EXPECT_EQ (
+    audio_lane_
+      ->arrangement::ArrangerObjectOwner<
+        arrangement::AudioClip>::get_children_vector ()
+      .at (0)
+      .id (),
+    audio_clip_ref.id ());
+
+  // Test removing audio clips
+  audio_lane_->arrangement::ArrangerObjectOwner<
+    arrangement::AudioClip>::remove_object (audio_clip_ref.id ());
+  EXPECT_EQ (audio_lane_->audioClips ()->rowCount (), 0);
+}
+
+TEST_F (TrackLaneTest, JsonSerializationRoundtrip)
+{
+  // Set up test data
+  midi_lane_->setName ("Test MIDI Lane");
+  midi_lane_->setHeight (64.0);
+  midi_lane_->setMuted (true);
+  midi_lane_->setSoloed (false);
+
+  // Add a MIDI clip
+  dsp::TempoMap        tempo_map{ units::sample_rate (44100) };
+  dsp::TempoMapWrapper tempo_map_wrapper{ tempo_map };
+  auto midi_clip_ref = utils::create_object<arrangement::MidiClip> (
+    *registry_, tempo_map_wrapper, *registry_);
+  midi_lane_->arrangement::ArrangerObjectOwner<
+    arrangement::MidiClip>::add_object (midi_clip_ref);
+
+  // Serialize to JSON
+  nlohmann::json j = *midi_lane_;
+
+  // Create new lane from JSON
+  TrackLane::TrackLaneDependencies deps{ .registry_ = *registry_ };
+  TrackLane                        deserialized_lane (deps);
+
+  // Deserialize from JSON
+  from_json (j, deserialized_lane);
+
+  // Verify properties
+  EXPECT_EQ (deserialized_lane.name (), QString ("Test MIDI Lane"));
+  EXPECT_DOUBLE_EQ (deserialized_lane.height (), 64.0);
+  EXPECT_TRUE (deserialized_lane.muted ());
+  EXPECT_FALSE (deserialized_lane.soloed ());
+  EXPECT_EQ (deserialized_lane.midiClips ()->rowCount (), 1);
+  EXPECT_EQ (
+    deserialized_lane
+      .arrangement::ArrangerObjectOwner<
+        arrangement::MidiClip>::get_children_vector ()
+      .at (0)
+      .id (),
+    midi_clip_ref.id ());
+}
+
+TEST_F (TrackLaneTest, JsonSerializationAudioRoundtrip)
+{
+  // Set up test data
+  audio_lane_->setName ("Test Audio Lane");
+  audio_lane_->setHeight (96.0);
+  audio_lane_->setMuted (false);
+  audio_lane_->setSoloed (true);
+
+  // Add an audio clip
+  auto app_settings = std::make_unique<utils::AppSettings> (
+    std::make_unique<test_helpers::InMemorySettingsBackend> ());
+  dsp::TempoMap        tempo_map{ units::sample_rate (44100) };
+  dsp::TempoMapWrapper tempo_map_wrapper{ tempo_map };
+  auto audio_clip_ref = utils::create_object<arrangement::AudioClip> (
+    *registry_, tempo_map_wrapper, *registry_);
+  audio_lane_->arrangement::ArrangerObjectOwner<
+    arrangement::AudioClip>::add_object (audio_clip_ref);
+
+  // Serialize to JSON
+  nlohmann::json j = *audio_lane_;
+
+  // Create new lane from JSON
+  TrackLane::TrackLaneDependencies deps{ .registry_ = *registry_ };
+  TrackLane                        deserialized_lane (deps);
+
+  // Deserialize from JSON
+  from_json (j, deserialized_lane);
+
+  // Verify properties
+  EXPECT_EQ (deserialized_lane.name (), QString ("Test Audio Lane"));
+  EXPECT_DOUBLE_EQ (deserialized_lane.height (), 96.0);
+  EXPECT_FALSE (deserialized_lane.muted ());
+  EXPECT_TRUE (deserialized_lane.soloed ());
+  EXPECT_EQ (deserialized_lane.audioClips ()->rowCount (), 1);
+  EXPECT_EQ (
+    deserialized_lane
+      .arrangement::ArrangerObjectOwner<
+        arrangement::AudioClip>::get_children_vector ()
+      .at (0)
+      .id (),
+    audio_clip_ref.id ());
+}
+
+TEST_F (TrackLaneTest, NameGeneration)
+{
+  // Test name generation with different positions
+  midi_lane_->generate_name (1);
+  EXPECT_EQ (midi_lane_->name (), QString ("Lane 2"));
+
+  midi_lane_->generate_name (0);
+  EXPECT_EQ (midi_lane_->name (), QString ("Lane 1"));
+
+  midi_lane_->generate_name (5);
+  EXPECT_EQ (midi_lane_->name (), QString ("Lane 6"));
+
+  // Test with existing name
+  midi_lane_->setName ("Custom Name");
+  midi_lane_->generate_name (3);
+  EXPECT_EQ (midi_lane_->name (), QString ("Lane 4")); // Should override
+}
+
+TEST_F (TrackLaneTest, EmptyLaneSerialization)
+{
+  // Test serialization of empty lane
+  midi_lane_->setName ("Empty Lane");
+  midi_lane_->setHeight (TrackLane::DEFAULT_HEIGHT);
+  midi_lane_->setMuted (false);
+  midi_lane_->setSoloed (false);
+
+  nlohmann::json j = *midi_lane_;
+
+  TrackLane::TrackLaneDependencies deps{ .registry_ = *registry_ };
+  TrackLane                        deserialized_lane (deps);
+
+  from_json (j, deserialized_lane);
+
+  EXPECT_EQ (deserialized_lane.name (), QString ("Empty Lane"));
+  EXPECT_DOUBLE_EQ (deserialized_lane.height (), TrackLane::DEFAULT_HEIGHT);
+  EXPECT_FALSE (deserialized_lane.muted ());
+  EXPECT_FALSE (deserialized_lane.soloed ());
+  EXPECT_EQ (deserialized_lane.midiClips ()->rowCount (), 0);
+  EXPECT_EQ (deserialized_lane.audioClips ()->rowCount (), 0);
+}
+
+TEST_F (TrackLaneTest, PropertyChangeNotifications)
+{
+  int name_changes = 0;
+  int height_changes = 0;
+  int mute_changes = 0;
+  int solo_changes = 0;
+
+  QObject::connect (
+    midi_lane_.get (), &TrackLane::nameChanged, midi_lane_.get (),
+    [&] (const QString &) { name_changes++; });
+  QObject::connect (
+    midi_lane_.get (), &TrackLane::heightChanged, midi_lane_.get (),
+    [&] (double) { height_changes++; });
+  QObject::connect (
+    midi_lane_.get (), &TrackLane::muteChanged, midi_lane_.get (),
+    [&] (bool) { mute_changes++; });
+  QObject::connect (
+    midi_lane_.get (), &TrackLane::soloChanged, midi_lane_.get (),
+    [&] (bool) { solo_changes++; });
+
+  // Test that setting same values doesn't emit signals
+  midi_lane_->setName (midi_lane_->name ());
+  midi_lane_->setHeight (midi_lane_->height ());
+  midi_lane_->setMuted (midi_lane_->muted ());
+  midi_lane_->setSoloed (midi_lane_->soloed ());
+
+  EXPECT_EQ (name_changes, 0);
+  EXPECT_EQ (height_changes, 0);
+  EXPECT_EQ (mute_changes, 0);
+  EXPECT_EQ (solo_changes, 0);
+
+  // Test that setting different values emits signals
+  midi_lane_->setName ("New Name");
+  midi_lane_->setHeight (100.0);
+  midi_lane_->setMuted (true);
+  midi_lane_->setSoloed (true);
+
+  EXPECT_EQ (name_changes, 1);
+  EXPECT_EQ (height_changes, 1);
+  EXPECT_EQ (mute_changes, 1);
+  EXPECT_EQ (solo_changes, 1);
+}
+
+TEST_F (TrackLaneTest, ClipTypeSeparation)
+{
+  // Verify that MIDI and audio clips are managed separately
+  dsp::TempoMap        tempo_map{ units::sample_rate (44100) };
+  dsp::TempoMapWrapper tempo_map_wrapper{ tempo_map };
+
+  // Add MIDI clip to MIDI lane
+  auto midi_clip_ref = utils::create_object<arrangement::MidiClip> (
+    *registry_, tempo_map_wrapper, *registry_);
+  midi_lane_->arrangement::ArrangerObjectOwner<
+    arrangement::MidiClip>::add_object (midi_clip_ref);
+
+  // Add audio clip to audio lane
+  auto app_settings_2 = std::make_unique<utils::AppSettings> (
+    std::make_unique<test_helpers::InMemorySettingsBackend> ());
+  auto audio_clip_ref = utils::create_object<arrangement::AudioClip> (
+    *registry_, tempo_map_wrapper, *registry_);
+  audio_lane_->arrangement::ArrangerObjectOwner<
+    arrangement::AudioClip>::add_object (audio_clip_ref);
+
+  // Verify separation
+  EXPECT_EQ (midi_lane_->midiClips ()->rowCount (), 1);
+  EXPECT_EQ (midi_lane_->audioClips ()->rowCount (), 0);
+
+  EXPECT_EQ (audio_lane_->audioClips ()->rowCount (), 1);
+  EXPECT_EQ (audio_lane_->midiClips ()->rowCount (), 0);
+}
+
+} // namespace zrythm::structure::tracks

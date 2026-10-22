@@ -1,0 +1,1235 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <algorithm>
+#include <numbers>
+
+#include "dsp/processor_base.h"
+#include "plugins/juce_plugin.h"
+#include "plugins/plugin_configuration.h"
+#include "plugins/plugin_descriptor.h"
+#include "utils/object_registry.h"
+#include "utils/qt.h"
+#include "utils/serialization.h"
+
+#include <QTest>
+
+#include "helpers/scoped_juce_qapplication.h"
+
+#include "unit/dsp/graph_helpers.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <juce_audio_processors/juce_audio_processors.h>
+
+namespace zrythm::plugins
+{
+
+class MockAudioPluginInstance : public juce::AudioPluginInstance
+{
+public:
+  MOCK_METHOD (const juce::String, getName, (), (const override));
+  MOCK_METHOD (
+    void,
+    fillInPluginDescription,
+    (juce::PluginDescription &),
+    (const override));
+  MOCK_METHOD (void, prepareToPlay, (double, int), (override));
+  MOCK_METHOD (void, releaseResources, (), (override));
+  MOCK_METHOD (
+    void,
+    processBlock,
+    (juce::AudioBuffer<float> &, juce::MidiBuffer &),
+    (override));
+  MOCK_METHOD (double, getTailLengthSeconds, (), (const override));
+  MOCK_METHOD (bool, acceptsMidi, (), (const override));
+  MOCK_METHOD (bool, producesMidi, (), (const override));
+  MOCK_METHOD (int, getTotalNumInputChannels, (), (const override));
+  MOCK_METHOD (int, getTotalNumOutputChannels, (), (const override));
+  MOCK_METHOD (void, getStateInformation, (juce::MemoryBlock &), (override));
+  MOCK_METHOD (void, setStateInformation, (const void *, int), (override));
+  MOCK_METHOD (juce::AudioProcessorEditor *, createEditor, (), (override));
+  MOCK_METHOD (bool, hasEditor, (), (const override));
+  MOCK_METHOD (int, getNumPrograms, (), (override));
+  MOCK_METHOD (int, getCurrentProgram, (), (override));
+  MOCK_METHOD (void, setCurrentProgram, (int), (override));
+  MOCK_METHOD (const juce::String, getProgramName, (int), (override));
+  MOCK_METHOD (void, changeProgramName, (int, const juce::String &), (override));
+};
+
+class JucePluginTest
+    : public ::testing::Test,
+      public test_helpers::ScopedJuceQApplication
+{
+protected:
+  void SetUp () override
+  {
+    registry_ = std::make_unique<utils::ObjectRegistry> ();
+
+    sample_rate_ = units::sample_rate (48000);
+    buffer_size_ = units::samples (1024);
+
+    // Set up mock transport
+    mock_transport_ = std::make_unique<dsp::graph_test::MockTransport> ();
+    tempo_map_ = std::make_unique<dsp::TempoMap> (sample_rate_);
+  }
+
+  void TearDown () override
+  {
+    if (plugin_)
+      {
+        plugin_->release_resources ();
+      }
+  }
+
+  void createTestDescriptor ()
+  {
+    descriptor_ = std::make_unique<PluginDescriptor> ();
+    descriptor_->name_ = u8"Test JUCE Plugin";
+    descriptor_->protocol_ = Protocol::ProtocolType::VST3;
+  }
+
+  void createTestConfiguration ()
+  {
+    createTestDescriptor ();
+    config_ = std::make_unique<PluginConfiguration> ();
+    config_->descr_ = std::move (descriptor_);
+  }
+
+  void setupMockPlugin ()
+  {
+    mock_plugin_ = std::make_unique<MockAudioPluginInstance> ();
+
+    // Setup mock expectations
+    EXPECT_CALL (*mock_plugin_, getName ())
+      .WillRepeatedly (::testing::Return ("Test Plugin"));
+    EXPECT_CALL (*mock_plugin_, releaseResources ()).Times (1);
+
+    // Setup parameter expectations
+    mock_plugin_->addHostedParameter (
+      std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID{ juce::String ("cutoff-unique-id") },
+        juce::String ("Cutoff"), juce::NormalisableRange<float> (), 0.5f));
+
+    // Tell the plugin it has 2 ins / 2 outs
+    juce::AudioProcessor::BusesLayout layout;
+    layout.inputBuses.add (juce::AudioChannelSet::stereo ());
+    layout.outputBuses.add (juce::AudioChannelSet::stereo ());
+    mock_plugin_->setBusesLayout (layout);
+
+    // Allow MIDI inputs/outputs
+    EXPECT_CALL (*mock_plugin_, acceptsMidi ())
+      .WillRepeatedly (::testing::Return (true));
+    EXPECT_CALL (*mock_plugin_, producesMidi ())
+      .WillRepeatedly (::testing::Return (true));
+  }
+
+  void setupJucePlugin (bool with_successful_instantiation)
+  {
+    setupJucePlugin (
+      [with_successful_instantiation, this] (
+        const juce::PluginDescription &, double, int,
+        std::function<void (
+          std::unique_ptr<juce::AudioPluginInstance>, const juce::String &)>
+          callback) {
+        if (with_successful_instantiation)
+          {
+            // Simulate successful instantiation
+            callback (std::move (mock_plugin_), "");
+          }
+        else
+          {
+            // Simulate instantiation failure
+            callback (nullptr, "Plugin not found");
+          }
+      });
+  }
+
+  std::unique_ptr<utils::ObjectRegistry>   registry_;
+  std::unique_ptr<JucePlugin>              plugin_;
+  std::unique_ptr<PluginDescriptor>        descriptor_;
+  std::unique_ptr<PluginConfiguration>     config_;
+  std::unique_ptr<MockAudioPluginInstance> mock_plugin_;
+  units::sample_rate_t                     sample_rate_{};
+  units::sample_u32_t buffer_size_{ units::samples (1024) };
+  std::unique_ptr<dsp::graph_test::MockTransport> mock_transport_;
+  std::unique_ptr<dsp::TempoMap>                  tempo_map_;
+
+private:
+  void setupJucePlugin (JucePlugin::CreatePluginInstanceAsyncFunc func)
+  {
+    plugin_ = std::make_unique<JucePlugin> (
+      *registry_, func, [this] () { return sample_rate_; },
+      [this] () { return buffer_size_; });
+  }
+};
+
+TEST_F (JucePluginTest, AsyncInstantiationSuccess)
+{
+  createTestConfiguration ();
+
+  setupMockPlugin ();
+
+  // Setup async callback expectation
+  setupJucePlugin (true);
+
+  // Wait for instantiation to complete
+  bool instantiation_finished = false;
+  bool successful = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished, &successful] (bool instantiation_success) {
+      instantiation_finished = true;
+      successful = instantiation_success;
+    });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  EXPECT_TRUE (successful);
+
+  const auto &in_ports = plugin_->get_all_input_ports ();
+  EXPECT_EQ (in_ports.size (), 2);
+  EXPECT_TRUE (
+    qobject_cast<dsp::AudioPort *> (in_ports.at (0).get ()) != nullptr);
+  EXPECT_TRUE (
+    qobject_cast<dsp::MidiPort *> (in_ports.at (1).get ()) != nullptr);
+
+  const auto &out_ports = plugin_->get_all_output_ports ();
+  EXPECT_EQ (out_ports.size (), 2);
+  EXPECT_TRUE (
+    qobject_cast<dsp::AudioPort *> (out_ports.at (0).get ()) != nullptr);
+  EXPECT_TRUE (
+    qobject_cast<dsp::MidiPort *> (out_ports.at (1).get ()) != nullptr);
+}
+
+TEST_F (JucePluginTest, AsyncInstantiationFailure)
+{
+  createTestConfiguration ();
+
+  // Setup async callback expectation for failure
+  setupJucePlugin (false);
+
+  // Wait for instantiation to complete
+  bool    instantiation_finished = false;
+  bool    successful = true;
+  QString error_message;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished, &error_message,
+     &successful] (bool success, const QString &error) {
+      instantiation_finished = true;
+      error_message = error;
+      successful = success;
+    });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  EXPECT_FALSE (successful);
+  EXPECT_EQ (error_message, "Plugin not found");
+
+  // Prepare for processing
+  plugin_->prepare_for_processing (nullptr, sample_rate_, buffer_size_);
+
+  // Test processing without instantiation
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+
+  // This should not crash even if plugin is not instantiated
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+}
+
+// load_state() on an already-instantiated plugin must apply the state
+// immediately (A/B switching relies on this); stashing for instantiation
+// is only for plugins that haven't finished instantiating
+TEST_F (JucePluginTest, LoadStateAppliesImmediatelyWhenInstantiated)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+  setupJucePlugin (true);
+
+  // The mock's ownership moves to the plugin during instantiation
+  auto * mock_raw = mock_plugin_.get ();
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+  plugin_->set_configuration (*config_);
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  const juce::MemoryBlock state_data ("live state", 10);
+  EXPECT_CALL (*mock_raw, setStateInformation (::testing::_, 10))
+    .WillOnce ([] (const void * data, int size) {
+      EXPECT_EQ (
+        std::string (static_cast<const char *> (data), size), "live state");
+    });
+
+  plugin_->load_state (state_data.toBase64Encoding ().toStdString ());
+}
+
+TEST_F (JucePluginTest, ProcessingWithInstantiatedPlugin)
+{
+  createTestConfiguration ();
+
+  setupMockPlugin ();
+
+  // Setup async callback expectation
+  setupJucePlugin (true);
+
+  // Setup processing expectations
+  EXPECT_CALL (
+    *mock_plugin_,
+    prepareToPlay (
+      sample_rate_.in (units::sample_rate),
+      buffer_size_.in<int> (units::samples)))
+    .Times (1);
+  EXPECT_CALL (*mock_plugin_, processBlock (::testing::_, ::testing::_))
+    .Times (1);
+
+  // Wait for instantiation to complete
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  // Prepare for processing
+  plugin_->prepare_for_processing (nullptr, sample_rate_, buffer_size_);
+
+  // Process a block
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+}
+
+TEST_F (JucePluginTest, ParameterMapping)
+{
+  createTestConfiguration ();
+
+  setupMockPlugin ();
+
+  // Setup async callback expectation
+  setupJucePlugin (true);
+
+  // Wait for instantiation to complete
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  // Test parameter mapping
+  EXPECT_EQ (plugin_->get_parameters ().size (), 3);
+  EXPECT_EQ (
+    utils::to_std_string (
+      plugin_->get_parameters ()
+        .at (2)
+        .get_object_as<dsp::ProcessorParameter> ()
+        ->label ()),
+    "Cutoff");
+}
+
+TEST_F (JucePluginTest, StateSavingLoading)
+{
+  createTestConfiguration ();
+
+  setupMockPlugin ();
+
+  // Setup state expectations
+  juce::MemoryBlock test_state;
+  test_state.append ("test state data", 15);
+
+  EXPECT_CALL (*mock_plugin_, getStateInformation (::testing::_))
+    .WillOnce ([&test_state] (juce::MemoryBlock &block) { block = test_state; });
+
+  // Setup async callback expectation
+  setupJucePlugin (true);
+
+  // Wait for instantiation to complete
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  // Serialize to JSON - this should capture the JUCE plugin state via
+  // getStateInformation() and encode it as base64
+  nlohmann::json json;
+  to_json (json, *plugin_);
+
+  // Verify the state key exists and contains encoded data
+  ASSERT_TRUE (json.contains ("state"));
+  const auto &state_str = json["state"].get<std::string> ();
+  EXPECT_FALSE (state_str.empty ());
+
+  // Verify round-trip: deserialize the state into a new plugin and check
+  // that setStateInformation is called with the correct data
+  auto mock = std::make_unique<MockAudioPluginInstance> ();
+  EXPECT_CALL (*mock, getName ())
+    .WillRepeatedly (::testing::Return ("Test Plugin"));
+  EXPECT_CALL (*mock, releaseResources ()).Times (1);
+  EXPECT_CALL (*mock, setStateInformation (::testing::_, 15))
+    .WillOnce ([] (const void * data, int size) {
+      ASSERT_EQ (size, 15);
+      EXPECT_EQ (
+        std::string (static_cast<const char *> (data), size), "test state data");
+    });
+
+  auto deserialized_plugin = std::make_unique<JucePlugin> (
+    *registry_,
+    [&mock] (
+      const juce::PluginDescription &, double, int,
+      std::function<void (
+        std::unique_ptr<juce::AudioPluginInstance>, const juce::String &)>
+        callback) { callback (std::move (mock), ""); },
+    [this] () { return sample_rate_; }, [this] () { return buffer_size_; });
+
+  // Deserialize - this should decode the base64 state and call
+  // setStateInformation
+  from_json (json, *deserialized_plugin);
+}
+
+TEST_F (JucePluginTest, HasNativeUiFalseBeforeInstantiation)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+  setupJucePlugin (true);
+
+  EXPECT_FALSE (plugin_->hasNativeUi ());
+
+  // Complete instantiation so the mock's expectations are satisfied
+  plugin_->set_configuration (*config_);
+}
+
+TEST_F (JucePluginTest, HasNativeUiFalseEvenWithEditor)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+  setupJucePlugin (true);
+  plugin_->set_configuration (*config_);
+
+  // JUCE-hosted plugins use the generic UI only
+  EXPECT_FALSE (plugin_->hasNativeUi ());
+}
+
+TEST_F (JucePluginTest, MidiProcessing)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  // Setup async callback expectation
+  setupJucePlugin (true);
+
+  // Setup MIDI processing expectations
+  EXPECT_CALL (*mock_plugin_, processBlock (::testing::_, ::testing::_))
+    .WillOnce ([] (juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midi) {
+      // Simulate processing MIDI messages
+      juce::MidiMessage msg = juce::MidiMessage::noteOn (1, 60, 0.8f);
+      midi.addEvent (msg, 0);
+    });
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  plugin_->prepare_for_processing (nullptr, sample_rate_, buffer_size_);
+
+  // Process with MIDI input
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  const auto &midi_out =
+    plugin_->get_all_output_ports ().at (1).get_object_as<dsp::MidiPort> ();
+  ASSERT_EQ (midi_out->buffer_.size (), 1);
+  EXPECT_TRUE (
+    utils::midi::midi_is_note_on (midi_out->buffer_.front ().data ()));
+}
+
+// MIDI events the plugin emits with a sample position outside the
+// processed block must be dropped
+TEST_F (JucePluginTest, OutputMidiEventWithOutOfBlockPositionIsDropped)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  // Setup async callback expectation
+  setupJucePlugin (true);
+
+  // Drop notifications are posted to the main thread
+  QObject                            dispatcher_context;
+  utils::MainThreadClosureDispatcher dispatcher (
+    dispatcher_context, std::chrono::milliseconds{ 10 });
+  plugin_->set_main_thread_services (
+    dispatcher, PluginHostMainThreadCallbacks{});
+
+  EXPECT_CALL (*mock_plugin_, processBlock (::testing::_, ::testing::_))
+    .WillOnce ([] (juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midi) {
+      juce::MidiMessage msg = juce::MidiMessage::noteOn (1, 60, 0.8f);
+      midi.addEvent (msg, 100000);
+    });
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  plugin_->prepare_for_processing (nullptr, sample_rate_, buffer_size_);
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  const auto &midi_out =
+    plugin_->get_all_output_ports ().at (1).get_object_as<dsp::MidiPort> ();
+  EXPECT_TRUE (midi_out->buffer_.empty ()) << "Out-of-block event was forwarded";
+}
+
+TEST_F (JucePluginTest, BidirectionalParameterSync)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  // Add additional parameters for testing
+  mock_plugin_->addHostedParameter (
+    std::make_unique<juce::AudioParameterFloat> (
+      juce::ParameterID{ juce::String ("test-param-unique-id") },
+      juce::String ("Test Param"), juce::NormalisableRange<float> (0.0f, 1.0f),
+      0.5f));
+  // mock_plugin_ will be moved so keep its pointer for later use
+  auto * mock_plugin = mock_plugin_.get ();
+
+  setupJucePlugin (true);
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  // Test parameter synchronization from host to plugin
+  auto params = plugin_->get_parameters ();
+  EXPECT_EQ (params.size (), 4); // 3 pre-existing + 1 parameters
+
+  // Find the gain parameter
+  dsp::ProcessorParameter * zrythm_param = nullptr;
+  for (const auto &param : params)
+    {
+      auto * p = param.get_object_as<dsp::ProcessorParameter> ();
+      if (p->label () == "Test Param")
+        {
+          zrythm_param = p;
+          break;
+        }
+    }
+  ASSERT_NE (zrythm_param, nullptr);
+
+  plugin_->prepare_for_processing (nullptr, sample_rate_, buffer_size_);
+
+  // Change parameter value and verify synchronization
+  float new_value = 0.75f;
+  zrythm_param->setBaseValue (new_value);
+
+  // Process with MIDI input
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify the change is reflected in the plugin
+  auto * juce_param = mock_plugin->getHostedParameter (1);
+  EXPECT_EQ (
+    juce_param->getParameterID (), juce::String ("test-param-unique-id"));
+  EXPECT_FLOAT_EQ (juce_param->getValue (), 0.75f);
+
+  // Other way around...
+  juce_param->setValueNotifyingHost (0.25f);
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+  EXPECT_FLOAT_EQ (zrythm_param->baseValue (), 0.25f);
+}
+
+TEST_F (JucePluginTest, LatencyChangeNotifiesHost)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  // mock_plugin_ will be moved so keep its pointer for later use
+  auto * mock_plugin = mock_plugin_.get ();
+
+  setupJucePlugin (true);
+
+  bool                               latency_recalc_called = false;
+  QObject                            dispatcher_context;
+  utils::MainThreadClosureDispatcher dispatcher (
+    dispatcher_context, std::chrono::seconds{ 10 });
+  plugin_->set_main_thread_services (
+    dispatcher,
+    PluginHostMainThreadCallbacks{
+      .latency_recalc_ =
+        [&latency_recalc_called] { latency_recalc_called = true; },
+      .with_paused_processing_ = {} });
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+  ASSERT_FALSE (latency_recalc_called);
+
+  mock_plugin->updateHostDisplay (
+    juce::AudioProcessorListener::ChangeDetails{}.withLatencyChanged (true));
+
+  dispatcher.process_pending ();
+  EXPECT_TRUE (latency_recalc_called);
+}
+
+TEST_F (JucePluginTest, PluginOnlyParamChangesAreNotOverwrittenOnFirstCycle)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  mock_plugin_->addHostedParameter (
+    std::make_unique<juce::AudioParameterFloat> (
+      juce::ParameterID{ juce::String ("test-param-unique-id") },
+      juce::String ("Test Param"), juce::NormalisableRange<float> (0.0f, 1.0f),
+      0.5f));
+  auto * mock_plugin = mock_plugin_.get ();
+
+  setupJucePlugin (true);
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  // Plugin-side change the host was not notified about, leaving the host
+  // with a stale value (e.g. the plugin loaded a patch internally)
+  auto * juce_param = mock_plugin->getHostedParameter (1);
+  juce_param->setValue (0.9f);
+
+  plugin_->prepare_for_processing (nullptr, sample_rate_, buffer_size_);
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // The host's stale value must not be pushed over the plugin's state
+  EXPECT_FLOAT_EQ (juce_param->getValue (), 0.9f);
+}
+
+TEST_F (JucePluginTest, AudioProcessingEdgeCases)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  setupJucePlugin (true);
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  plugin_->prepare_for_processing (nullptr, sample_rate_, buffer_size_);
+
+  // Test with zero-length buffer
+  auto zero_time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (0));
+  plugin_->process_block (zero_time_nfo, *mock_transport_, *tempo_map_);
+
+  // Test with very large buffer
+  auto large_time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (8192));
+  plugin_->process_block (large_time_nfo, *mock_transport_, *tempo_map_);
+
+  // Test with non-zero local offset
+  dsp::graph::ProcessBlockInfo offset_time_nfo{
+    .transport_position_ = units::samples (0),
+    .buffer_offset_ = units::samples (256),
+    .nframes_ = units::samples (512)
+  };
+  plugin_->process_block (offset_time_nfo, *mock_transport_, *tempo_map_);
+}
+
+TEST_F (JucePluginTest, AdvancedParameterTypes)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  // Add various parameter types
+  mock_plugin_->addHostedParameter (
+    std::make_unique<juce::AudioParameterInt> (
+      juce::ParameterID{ juce::String ("int-param") },
+      juce::String ("IntParam"), 0, 100, 50));
+
+  mock_plugin_->addHostedParameter (
+    std::make_unique<juce::AudioParameterBool> (
+      juce::ParameterID{ juce::String ("bool-param") },
+      juce::String ("BoolParam"), false));
+
+  mock_plugin_->addHostedParameter (
+    std::make_unique<juce::AudioParameterChoice> (
+      juce::ParameterID{ juce::String ("choice-param") },
+      juce::String ("ChoiceParam"),
+      juce::StringArray{ "Option1", "Option2", "Option3" }, 0));
+
+  setupJucePlugin (true);
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  // Verify parameter types are correctly mapped
+  auto params = plugin_->get_parameters ();
+  EXPECT_GE (params.size (), 6);
+
+  // Find and test each parameter type
+  bool found_int = false;
+  bool found_bool = false;
+  bool found_choice = false;
+  for (const auto &param : params)
+    {
+      auto * p = param.get_object_as<dsp::ProcessorParameter> ();
+      auto   label = utils::to_std_string (p->label ());
+
+      if (label == "IntParam")
+        {
+          found_int = true;
+          // Test integer parameter range
+          EXPECT_FLOAT_EQ (p->range ().minf_, 0.0f);
+          // Currently no way to get this via JUCE host API...
+          // EXPECT_FLOAT_EQ (p->range ().maxf_, 100.0f);
+        }
+      else if (label == "BoolParam")
+        {
+          found_bool = true;
+          // Test boolean parameter (should be 0 or 1)
+          EXPECT_FLOAT_EQ (p->range ().minf_, 0.0f);
+          EXPECT_FLOAT_EQ (p->range ().maxf_, 1.0f);
+        }
+      else if (label == "ChoiceParam")
+        {
+          found_choice = true;
+          // Test choice parameter (should have discrete steps)
+          EXPECT_FLOAT_EQ (p->range ().minf_, 0.0f);
+          EXPECT_FLOAT_EQ (p->range ().maxf_, 2.0f); // 3 options = 0, 1, 2
+        }
+    }
+
+  EXPECT_TRUE (found_int);
+  EXPECT_TRUE (found_bool);
+  EXPECT_TRUE (found_choice);
+}
+
+TEST_F (JucePluginTest, SerializationPreservesState)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  // Setup async callback expectation
+  setupJucePlugin (true);
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  // Set some state
+  plugin_->setUiVisible (true);
+
+  // Set parameter values
+  auto * bypass = plugin_->bypassParameter ();
+  auto * gain = plugin_->gainParameter ();
+  bypass->setBaseValue (0.0f); // Not bypassed
+  gain->setBaseValue (0.75f);  // 75% gain
+
+  // Serialize
+  nlohmann::json json;
+  to_json (json, *plugin_);
+
+  // Create new plugin instance for deserialization
+  auto deserialized_plugin = std::make_unique<JucePlugin> (
+    *registry_,
+    [] (
+      const juce::PluginDescription &, double, int,
+      std::function<void (
+        std::unique_ptr<juce::AudioPluginInstance>, const juce::String &)>
+        callback) {
+      // Create a mock for deserialization
+      auto mock = std::make_unique<MockAudioPluginInstance> ();
+      EXPECT_CALL (*mock, getName ())
+        .WillRepeatedly (::testing::Return ("Test Plugin"));
+      EXPECT_CALL (*mock, releaseResources ()).Times (1);
+
+      callback (std::move (mock), "");
+    },
+    [this] () { return sample_rate_; }, [this] () { return buffer_size_; });
+
+  bool deserialized_plugin_instantiation_finished = false;
+  QObject::connect (
+    deserialized_plugin.get (), &JucePlugin::instantiationFinished,
+    deserialized_plugin.get (), [&deserialized_plugin_instantiation_finished] () {
+      deserialized_plugin_instantiation_finished = true;
+    });
+
+  // Deserialize
+  from_json (json, *deserialized_plugin);
+
+  // Wait for instantiation
+  ASSERT_TRUE (QTest::qWaitFor ([&] () {
+    return deserialized_plugin_instantiation_finished;
+  }));
+
+  // Verify state was preserved
+  EXPECT_TRUE (deserialized_plugin->uiVisible ());
+
+  // Verify ports were preserved
+  const auto &in_ports = deserialized_plugin->get_all_input_ports ();
+  EXPECT_EQ (in_ports.size (), 2);
+  EXPECT_TRUE (
+    qobject_cast<dsp::AudioPort *> (in_ports.at (0).get ()) != nullptr);
+  EXPECT_TRUE (
+    qobject_cast<dsp::MidiPort *> (in_ports.at (1).get ()) != nullptr);
+
+  const auto &out_ports = deserialized_plugin->get_all_output_ports ();
+  EXPECT_EQ (out_ports.size (), 2);
+
+  // Verify parameters were preserved
+  auto params = deserialized_plugin->get_parameters ();
+  EXPECT_GE (params.size (), 2);
+
+  // Find and verify parameter values
+  bool found_bypass = false;
+  bool found_gain = false;
+  for (const auto &param : params)
+    {
+      auto * p = param.get_object_as<dsp::ProcessorParameter> ();
+      if (p->label () == "Bypass")
+        {
+          found_bypass = true;
+          EXPECT_FLOAT_EQ (p->baseValue (), 0.0f);
+        }
+      else if (p->label () == "Gain")
+        {
+          found_gain = true;
+          EXPECT_FLOAT_EQ (p->baseValue (), 0.75f);
+        }
+    }
+  EXPECT_TRUE (found_bypass);
+  EXPECT_TRUE (found_gain);
+
+  // Verify UUIDs are preserved
+  EXPECT_EQ (
+    deserialized_plugin->bypassParameter ()->get_uuid (),
+    plugin_->bypassParameter ()->get_uuid ());
+  EXPECT_EQ (
+    deserialized_plugin->gainParameter ()->get_uuid (),
+    plugin_->gainParameter ()->get_uuid ());
+}
+
+TEST_F (JucePluginTest, JuceParameterStateSerialization)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  // Add various JUCE parameter types with specific values
+  mock_plugin_->addHostedParameter (
+    std::make_unique<juce::AudioParameterFloat> (
+      juce::ParameterID{ juce::String ("test-float") },
+      juce::String ("TestFloat"), juce::NormalisableRange<float> (0.0f, 1.0f),
+      0.3f));
+
+  mock_plugin_->addHostedParameter (
+    std::make_unique<juce::AudioParameterInt> (
+      juce::ParameterID{ juce::String ("test-int") }, juce::String ("TestInt"),
+      0, 100, 42));
+
+  mock_plugin_->addHostedParameter (
+    std::make_unique<juce::AudioParameterBool> (
+      juce::ParameterID{ juce::String ("test-bool") },
+      juce::String ("TestBool"), true));
+
+  mock_plugin_->addHostedParameter (
+    std::make_unique<juce::AudioParameterChoice> (
+      juce::ParameterID{ juce::String ("test-choice") },
+      juce::String ("TestChoice"),
+      juce::StringArray{ "Option1", "Option2", "Option3" }, 2));
+
+  // Setup state expectations for JUCE plugin state
+  juce::MemoryBlock test_state;
+  test_state.append ("juce plugin state data", 22);
+  EXPECT_CALL (*mock_plugin_, getStateInformation (::testing::_))
+    .WillOnce ([&test_state] (juce::MemoryBlock &block) { block = test_state; });
+
+  setupJucePlugin (true);
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  // Set parameter values
+  auto params = plugin_->get_parameters ();
+  for (const auto &param : params)
+    {
+      auto * p = param.get_object_as<dsp::ProcessorParameter> ();
+      if (p->label () == "TestFloat")
+        {
+          p->setBaseValue (0.7f);
+        }
+      else if (p->label () == "TestInt")
+        {
+          p->setBaseValue (0.75f); // Should map to 75
+        }
+      else if (p->label () == "TestBool")
+        {
+          p->setBaseValue (0.0f); // Should map to false
+        }
+      else if (p->label () == "TestChoice")
+        {
+          p->setBaseValue (1.0f); // Should map to Option2
+        }
+    }
+
+  // Serialize
+  nlohmann::json json;
+  to_json (json, *plugin_);
+
+  // Create a mock for deserialization
+  auto mock = std::make_unique<MockAudioPluginInstance> ();
+  EXPECT_CALL (*mock, getName ())
+    .WillRepeatedly (::testing::Return ("Test Plugin"));
+  EXPECT_CALL (*mock, releaseResources ()).Times (1);
+  EXPECT_CALL (*mock, setStateInformation (::testing::_, 22)).Times (1);
+
+  // Create new plugin instance for deserialization
+  auto deserialized_plugin = std::make_unique<JucePlugin> (
+    *registry_,
+    [&mock] (
+      const juce::PluginDescription &, double, int,
+      std::function<void (
+        std::unique_ptr<juce::AudioPluginInstance>, const juce::String &)>
+        callback) { callback (std::move (mock), ""); },
+    [this] () { return sample_rate_; }, [this] () { return buffer_size_; });
+
+  bool deserialized_plugin_instantiation_finished = false;
+  QObject::connect (
+    deserialized_plugin.get (), &JucePlugin::instantiationFinished,
+    deserialized_plugin.get (), [&deserialized_plugin_instantiation_finished] () {
+      deserialized_plugin_instantiation_finished = true;
+    });
+
+  // Deserialize
+  from_json (json, *deserialized_plugin);
+
+  // Verify parameter values were preserved
+  auto deserialized_params = deserialized_plugin->get_parameters ();
+  bool found_float = false, found_int = false, found_bool = false,
+       found_choice = false;
+
+  for (const auto &param : deserialized_params)
+    {
+      auto * p = param.get_object_as<dsp::ProcessorParameter> ();
+      auto   label = utils::to_std_string (p->label ());
+
+      if (label == "TestFloat")
+        {
+          found_float = true;
+          EXPECT_FLOAT_EQ (p->baseValue (), 0.7f);
+        }
+      else if (label == "TestInt")
+        {
+          found_int = true;
+          EXPECT_FLOAT_EQ (p->baseValue (), 0.75f);
+        }
+      else if (label == "TestBool")
+        {
+          found_bool = true;
+          EXPECT_FLOAT_EQ (p->baseValue (), 0.0f);
+        }
+      else if (label == "TestChoice")
+        {
+          found_choice = true;
+          EXPECT_FLOAT_EQ (p->baseValue (), 1.0f);
+        }
+    }
+
+  EXPECT_TRUE (found_float);
+  EXPECT_TRUE (found_int);
+  EXPECT_TRUE (found_bool);
+  EXPECT_TRUE (found_choice);
+
+  // Wait for instantiation so we can verify the JUCE state is restored
+  ASSERT_TRUE (QTest::qWaitFor ([&] () {
+    return deserialized_plugin_instantiation_finished;
+  }));
+}
+
+TEST_F (JucePluginTest, AudioSignalPassThrough)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  // Keep track of juce plugin processor to be used later
+  auto * mock_plugin = mock_plugin_.get ();
+
+  // Setup async callback expectation
+  setupJucePlugin (true);
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  plugin_->prepare_for_processing (nullptr, sample_rate_, buffer_size_);
+
+  // Create test audio signals
+  const size_t test_buffer_size = buffer_size_.in<size_t> (units::samples);
+  juce::AudioSampleBuffer stereo_input (2, test_buffer_size);
+
+  // Fill with test pattern (sine wave on left, cosine on right)
+  for (size_t i = 0; i < test_buffer_size; ++i)
+    {
+      float phase =
+        2.0f * std::numbers::pi_v<float>
+        * static_cast<float> (i) / static_cast<float> (test_buffer_size);
+      stereo_input.setSample (0, i, std::sin (phase));
+      stereo_input.setSample (1, i, std::cos (phase));
+    }
+
+  // Get audio ports
+  const auto &in_ports = plugin_->get_all_input_ports ();
+  const auto &out_ports = plugin_->get_all_output_ports ();
+
+  auto * stereo_in = in_ports.at (0).get_object_as<dsp::AudioPort> ();
+  auto * stereo_out = out_ports.at (0).get_object_as<dsp::AudioPort> ();
+
+  // Copy input signals to ports
+  stereo_in->buffers ()->copyFrom (0, 0, stereo_input, 0, 0, test_buffer_size);
+  stereo_in->buffers ()->copyFrom (1, 0, stereo_input, 1, 0, test_buffer_size);
+
+  // Setup mock to verify input and simulate pass-through
+  EXPECT_CALL (*mock_plugin, processBlock (::testing::_, ::testing::_))
+    .WillOnce ([&stereo_input, test_buffer_size] (
+                 juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midi) {
+      // Verify input signals are correctly passed
+      EXPECT_EQ (buffer.getNumChannels (), 2);
+      EXPECT_EQ (buffer.getNumSamples (), static_cast<int> (test_buffer_size));
+
+      // Check left channel
+      const float * left_channel = buffer.getReadPointer (0);
+      for (size_t i = 0; i < test_buffer_size; ++i)
+        {
+          EXPECT_NEAR (left_channel[i], stereo_input.getSample (0, i), 1e-6f);
+        }
+
+      // Check right channel
+      const float * right_channel = buffer.getReadPointer (1);
+      for (size_t i = 0; i < test_buffer_size; ++i)
+        {
+          EXPECT_NEAR (right_channel[i], stereo_input.getSample (1, i), 1e-6f);
+        }
+
+      // Simulate unity gain pass-through
+      float * inner_left_out = buffer.getWritePointer (0);
+      float * inner_right_out = buffer.getWritePointer (1);
+      for (size_t i = 0; i < test_buffer_size; ++i)
+        {
+          inner_left_out[i] = left_channel[i];
+          inner_right_out[i] = right_channel[i];
+        }
+    });
+
+  // Process the block
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (test_buffer_size));
+
+  plugin_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify output signals match input (unity gain pass-through)
+  for (size_t i = 0; i < test_buffer_size; ++i)
+    {
+      EXPECT_NEAR (
+        stereo_out->buffers ()->getSample (0, i), stereo_input.getSample (0, i),
+        1e-6f);
+      EXPECT_NEAR (
+        stereo_out->buffers ()->getSample (1, i), stereo_input.getSample (1, i),
+        1e-6f);
+    }
+}
+
+TEST_F (JucePluginTest, AudioSignalSplitCycles)
+{
+  createTestConfiguration ();
+  setupMockPlugin ();
+
+  // Keep track of juce plugin processor to be used later
+  auto * mock_plugin = mock_plugin_.get ();
+
+  // Setup async callback expectation
+  setupJucePlugin (true);
+
+  bool instantiation_finished = false;
+  QObject::connect (
+    plugin_.get (), &JucePlugin::instantiationFinished, plugin_.get (),
+    [&instantiation_finished] () { instantiation_finished = true; });
+
+  plugin_->set_configuration (*config_);
+
+  ASSERT_TRUE (QTest::qWaitFor ([&] () { return instantiation_finished; }));
+
+  plugin_->prepare_for_processing (nullptr, sample_rate_, buffer_size_);
+
+  // Create test audio signals for the full buffer
+  const size_t full_buffer_size = buffer_size_.in<size_t> (units::samples);
+  juce::AudioSampleBuffer stereo_input (2, full_buffer_size);
+
+  // Test split cycle processing with offset and smaller frame count
+  constexpr size_t split_offset = 256;
+  constexpr size_t split_frames = 512;
+
+  // Fill with test pattern (sine wave on left, cosine on right)
+  for (size_t i = split_offset; i < split_offset + split_frames; ++i)
+    {
+      float phase =
+        2.0f * std::numbers::pi_v<float>
+        * static_cast<float> (i) / static_cast<float> (full_buffer_size);
+      stereo_input.setSample (0, i, std::sin (phase));
+      stereo_input.setSample (1, i, std::cos (phase));
+    }
+
+  // Get audio ports
+  const auto &in_ports = plugin_->get_all_input_ports ();
+  const auto &out_ports = plugin_->get_all_output_ports ();
+
+  auto * stereo_in = in_ports.at (0).get_object_as<dsp::AudioPort> ();
+  auto * stereo_out = out_ports.at (0).get_object_as<dsp::AudioPort> ();
+
+  // Copy input signals to ports
+  stereo_in->buffers ()->copyFrom (0, 0, stereo_input, 0, 0, full_buffer_size);
+  stereo_in->buffers ()->copyFrom (1, 0, stereo_input, 1, 0, full_buffer_size);
+
+  // Setup mock to verify split cycle processing
+  EXPECT_CALL (*mock_plugin, processBlock (::testing::_, ::testing::_))
+    .WillOnce (
+      [&stereo_input] (juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midi) {
+        // Verify the buffer contains the correct subset of samples
+        EXPECT_EQ (buffer.getNumChannels (), 2);
+        EXPECT_EQ (buffer.getNumSamples (), static_cast<int> (split_frames));
+
+        // Check that the input signals are correctly offset
+        const float * left_channel = buffer.getReadPointer (0);
+        const float * right_channel = buffer.getReadPointer (1);
+
+        for (size_t i = 0; i < split_frames; ++i)
+          {
+            size_t input_index = split_offset + i;
+            EXPECT_NEAR (
+              left_channel[i], stereo_input.getSample (0, input_index), 1e-6f);
+            EXPECT_NEAR (
+              right_channel[i], stereo_input.getSample (1, input_index), 1e-6f);
+          }
+
+        // Simulate processing with unity gain
+        float * inner_left_out = buffer.getWritePointer (0);
+        float * inner_right_out = buffer.getWritePointer (1);
+        for (size_t i = 0; i < split_frames; ++i)
+          {
+            inner_left_out[i] = left_channel[i];
+            inner_right_out[i] = right_channel[i];
+          }
+      });
+
+  // Process with split cycle parameters
+  dsp::graph::ProcessBlockInfo split_time_nfo{
+    .transport_position_ = units::samples (0),
+    .buffer_offset_ = units::samples (split_offset),
+    .nframes_ = units::samples (split_frames)
+  };
+
+  plugin_->process_block (split_time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify output signals match input for the processed range
+  for (size_t i = 0; i < split_frames; ++i)
+    {
+      size_t output_index = split_offset + i;
+      EXPECT_NEAR (
+        stereo_out->buffers ()->getSample (0, output_index),
+        stereo_input.getSample (0, output_index), 1e-6f);
+      EXPECT_NEAR (
+        stereo_out->buffers ()->getSample (1, output_index),
+        stereo_input.getSample (1, output_index), 1e-6f);
+    }
+
+  // Verify that unprocessed clips remain unchanged (or zeroed, depending on
+  // implementation). The clips before and after the split should not be
+  // modified
+  for (size_t i = 0; i < split_offset; ++i)
+    {
+      EXPECT_NEAR (stereo_out->buffers ()->getSample (0, i), 0.f, 1e-6f);
+      EXPECT_NEAR (stereo_out->buffers ()->getSample (1, i), 0.f, 1e-6f);
+    }
+
+  for (size_t i = split_offset + split_frames; i < full_buffer_size; ++i)
+    {
+      // These should remain as they were (input values)
+      EXPECT_NEAR (stereo_out->buffers ()->getSample (0, i), 0.f, 1e-6f);
+      EXPECT_NEAR (stereo_out->buffers ()->getSample (1, i), 0.f, 1e-6f);
+    }
+}
+
+} // namespace zrythm::plugins

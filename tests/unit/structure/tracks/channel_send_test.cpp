@@ -1,0 +1,645 @@
+// SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "dsp/graph.h"
+#include "dsp/graph_builder.h"
+#include "dsp/midi_event.h"
+#include "dsp/parameter.h"
+#include "dsp/port.h"
+#include "dsp/processor_base.h"
+#include "structure/tracks/channel_send.h"
+#include "utils/object_registry.h"
+#include "utils/registry_utils.h"
+
+#include <QObject>
+
+#include "unit/dsp/graph_helpers.h"
+#include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
+
+namespace zrythm::structure::tracks
+{
+
+class ChannelSendTest : public ::testing::Test
+{
+protected:
+  void SetUp () override
+  {
+    registry_ = std::make_unique<utils::ObjectRegistry> ();
+
+    audio_send_ =
+      std::make_unique<ChannelSend> (*registry_, dsp::PortType::Audio, 0, true);
+
+    midi_send_ =
+      std::make_unique<ChannelSend> (*registry_, dsp::PortType::Midi, 1, false);
+
+    // Set up mock transport
+    mock_transport_ = std::make_unique<dsp::graph_test::MockTransport> ();
+    tempo_map_ = std::make_unique<dsp::TempoMap> (sample_rate_);
+  }
+
+  void TearDown () override
+  {
+    if (audio_send_)
+      {
+        audio_send_->release_resources ();
+      }
+    if (midi_send_)
+      {
+        midi_send_->release_resources ();
+      }
+  }
+
+  std::unique_ptr<utils::ObjectRegistry> registry_;
+  units::sample_rate_t         sample_rate_{ units::sample_rate (48000) };
+  units::sample_u32_t          max_block_length_{ units::samples (1024u) };
+  std::unique_ptr<ChannelSend> audio_send_;
+  std::unique_ptr<ChannelSend> midi_send_;
+  std::unique_ptr<dsp::graph_test::MockTransport> mock_transport_;
+  std::unique_ptr<dsp::TempoMap>                  tempo_map_;
+};
+
+TEST_F (ChannelSendTest, ConstructionAndBasicProperties)
+{
+  // Test audio send
+  EXPECT_EQ (audio_send_->is_audio (), true);
+  EXPECT_EQ (audio_send_->is_midi (), false);
+  EXPECT_EQ (audio_send_->is_prefader (), true);
+  EXPECT_NE (audio_send_->amountParam (), nullptr);
+  EXPECT_NE (audio_send_->enabledParam (), nullptr);
+
+  // Test MIDI send
+  EXPECT_EQ (midi_send_->is_audio (), false);
+  EXPECT_EQ (midi_send_->is_midi (), true);
+  EXPECT_EQ (midi_send_->is_prefader (), false);
+  EXPECT_NE (midi_send_->amountParam (), nullptr);
+  EXPECT_NE (midi_send_->enabledParam (), nullptr);
+}
+
+TEST_F (ChannelSendTest, PortConfiguration)
+{
+  // Test audio send ports
+  EXPECT_EQ (audio_send_->get_all_input_ports ().size (), 1);
+  EXPECT_EQ (audio_send_->get_all_output_ports ().size (), 1);
+
+  auto &stereo_in = audio_send_->get_stereo_in_port ();
+  auto &stereo_out = audio_send_->get_stereo_out_port ();
+
+  EXPECT_EQ (stereo_in.get_node_name (), u8"Pre-Fader Send 1/Audio Input");
+  EXPECT_EQ (stereo_out.get_node_name (), u8"Pre-Fader Send 1/Audio Output");
+
+  // Test MIDI send ports
+  EXPECT_EQ (midi_send_->get_all_input_ports ().size (), 1);
+  EXPECT_EQ (midi_send_->get_all_output_ports ().size (), 1);
+
+  auto &midi_in = midi_send_->get_midi_in_port ();
+  auto &midi_out = midi_send_->get_midi_out_port ();
+
+  EXPECT_EQ (midi_in.get_node_name (), u8"Post-Fader Send 2/MIDI input");
+  EXPECT_EQ (midi_out.get_node_name (), u8"Post-Fader Send 2/MIDI output");
+}
+
+TEST_F (ChannelSendTest, ParameterFunctionality)
+{
+  auto * amount_param = audio_send_->amountParam ();
+  EXPECT_NE (amount_param, nullptr);
+
+  // Test parameter range
+  EXPECT_NEAR (amount_param->range ().minf_, 0.0f, 0.001f);
+  EXPECT_NEAR (amount_param->range ().maxf_, 2.0f, 0.001f);
+  EXPECT_NEAR (amount_param->range ().deff_, 1.0f, 0.001f);
+
+  // Test parameter value setting
+  amount_param->setBaseValue (0.5f);
+  EXPECT_NEAR (amount_param->baseValue (), 0.5f, 0.001f);
+
+  // Test clamping
+  amount_param->setBaseValue (1.5f);
+  EXPECT_NEAR (amount_param->baseValue (), 1.f, 0.001f);
+}
+
+TEST_F (ChannelSendTest, EnabledParameter)
+{
+  auto * enabled_param = audio_send_->enabledParam ();
+  EXPECT_NE (enabled_param, nullptr);
+
+  // Test toggle parameter range
+  EXPECT_NEAR (enabled_param->range ().minf_, 0.0f, 0.001f);
+  EXPECT_NEAR (enabled_param->range ().maxf_, 1.0f, 0.001f);
+  EXPECT_NEAR (enabled_param->range ().deff_, 1.0f, 0.001f); // Default enabled
+
+  // Test enabled by default
+  EXPECT_NEAR (enabled_param->baseValue (), 1.0f, 0.001f);
+
+  // Test disabling
+  enabled_param->setBaseValue (0.0f);
+  EXPECT_NEAR (enabled_param->baseValue (), 0.0f, 0.001f);
+
+  // Test re-enabling
+  enabled_param->setBaseValue (1.0f);
+  EXPECT_NEAR (enabled_param->baseValue (), 1.0f, 0.001f);
+}
+
+TEST_F (ChannelSendTest, DestinationPort)
+{
+  // Initially no destination
+  EXPECT_FALSE (audio_send_->has_destination ());
+  EXPECT_FALSE (audio_send_->destination_port ().has_value ());
+
+  // Create a destination audio input port
+  auto dest_port_ref = utils::create_object<dsp::AudioPort> (
+    *registry_, u8"Destination Input", dsp::PortFlow::Input,
+    dsp::SpeakerArrangement::stereo ());
+
+  // Set destination
+  audio_send_->set_destination_port (dest_port_ref);
+  EXPECT_TRUE (audio_send_->has_destination ());
+  EXPECT_TRUE (audio_send_->destination_port ().has_value ());
+
+  // Clear destination
+  audio_send_->clear_destination_port ();
+  EXPECT_FALSE (audio_send_->has_destination ());
+  EXPECT_FALSE (audio_send_->destination_port ().has_value ());
+}
+
+TEST_F (ChannelSendTest, DestinationPortTypeValidation)
+{
+  // Create an audio input port
+  auto audio_input_ref = utils::create_object<dsp::AudioPort> (
+    *registry_, u8"Audio Input", dsp::PortFlow::Input,
+    dsp::SpeakerArrangement::stereo ());
+
+  // Create a MIDI input port
+  auto midi_input_ref = utils::create_object<dsp::MidiPort> (
+    *registry_, u8"MIDI Input", dsp::PortFlow::Input);
+
+  // Audio send should accept audio input
+  EXPECT_NO_THROW (audio_send_->set_destination_port (audio_input_ref));
+
+  // Audio send should reject MIDI input
+  EXPECT_THROW (
+    audio_send_->set_destination_port (midi_input_ref), std::invalid_argument);
+
+  // MIDI send should accept MIDI input
+  EXPECT_NO_THROW (midi_send_->set_destination_port (midi_input_ref));
+
+  // MIDI send should reject audio input
+  EXPECT_THROW (
+    midi_send_->set_destination_port (audio_input_ref), std::invalid_argument);
+}
+
+TEST_F (ChannelSendTest, DestinationPortFlowValidation)
+{
+  // Create an audio OUTPUT port (wrong flow)
+  auto audio_output_ref = utils::create_object<dsp::AudioPort> (
+    *registry_, u8"Audio Output", dsp::PortFlow::Output,
+    dsp::SpeakerArrangement::stereo ());
+
+  // Audio send should reject output ports
+  EXPECT_THROW (
+    audio_send_->set_destination_port (audio_output_ref), std::invalid_argument);
+}
+
+TEST_F (ChannelSendTest, PrepareAndReleaseResources)
+{
+  audio_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto &stereo_in = audio_send_->get_stereo_in_port ();
+  auto &stereo_out = audio_send_->get_stereo_out_port ();
+
+  EXPECT_GE (
+    units::samples (stereo_in.buffers ()->getNumSamples ()), max_block_length_);
+  EXPECT_GE (
+    units::samples (stereo_out.buffers ()->getNumSamples ()), max_block_length_);
+
+  audio_send_->release_resources ();
+
+  EXPECT_EQ (stereo_in.buffers (), nullptr);
+  EXPECT_EQ (stereo_out.buffers (), nullptr);
+}
+
+TEST_F (ChannelSendTest, AudioProcessing)
+{
+  audio_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto &stereo_in = audio_send_->get_stereo_in_port ();
+  auto &stereo_out = audio_send_->get_stereo_out_port ();
+
+  const auto fill_input_bufs = [&] () {
+    // Fill input buffers
+    for (int i = 0; i < 512; i++)
+      {
+        stereo_in.buffers ()->setSample (0, i, 1.0f);
+        stereo_in.buffers ()->setSample (1, i, 2.0f);
+      }
+  };
+
+  // Test passthrough (gain = 1.0)
+  audio_send_->amountParam ()->setBaseValue (
+    audio_send_->amountParam ()->range ().convertTo0To1 (1.0f));
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  fill_input_bufs ();
+  audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (stereo_out.buffers ()->getSample (0, i), 1.0f);
+      EXPECT_FLOAT_EQ (stereo_out.buffers ()->getSample (1, i), 2.0f);
+    }
+
+  // Test gain reduction (gain = 0.5)
+  audio_send_->amountParam ()->setBaseValue (
+    audio_send_->amountParam ()->range ().convertTo0To1 (0.5f));
+  fill_input_bufs ();
+  audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_NEAR (stereo_out.buffers ()->getSample (0, i), 0.5f, 1e-5);
+      EXPECT_NEAR (stereo_out.buffers ()->getSample (1, i), 1.0f, 1e-5);
+    }
+
+  // Test boost (gain = 2.0)
+  audio_send_->amountParam ()->setBaseValue (
+    audio_send_->amountParam ()->range ().convertTo0To1 (2.0f));
+  fill_input_bufs ();
+  audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_NEAR (stereo_out.buffers ()->getSample (0, i), 2.0f, 1e-5);
+      EXPECT_NEAR (stereo_out.buffers ()->getSample (1, i), 4.0f, 1e-5);
+    }
+}
+
+TEST_F (ChannelSendTest, AudioProcessingWhenDisabled)
+{
+  audio_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto &stereo_in = audio_send_->get_stereo_in_port ();
+  auto &stereo_out = audio_send_->get_stereo_out_port ();
+
+  // Set amount to 1.0 (unity gain)
+  audio_send_->amountParam ()->setBaseValue (
+    audio_send_->amountParam ()->range ().convertTo0To1 (1.0f));
+
+  // Disable the send
+  audio_send_->enabledParam ()->setBaseValue (0.0f);
+
+  // Fill input with non-zero data
+  for (int i = 0; i < 512; i++)
+    {
+      stereo_in.buffers ()->setSample (0, i, 1.0f);
+      stereo_in.buffers ()->setSample (1, i, 2.0f);
+    }
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Output should be silent when disabled
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_NEAR (stereo_out.buffers ()->getSample (0, i), 0.0f, 1e-6);
+      EXPECT_NEAR (stereo_out.buffers ()->getSample (1, i), 0.0f, 1e-6);
+    }
+}
+
+TEST_F (ChannelSendTest, MidiProcessing)
+{
+  midi_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto &midi_in = midi_send_->get_midi_in_port ();
+  auto &midi_out = midi_send_->get_midi_out_port ();
+
+  // Add MIDI events to input
+  const auto _ev1 =
+    dsp::midi_event::make_note_on (0, 60, 100, units::samples (0));
+  midi_in.buffer_.push_back (_ev1.time_, _ev1.data ());
+  const auto _ev2 =
+    dsp::midi_event::make_note_on (0, 64, 90, units::samples (10));
+  midi_in.buffer_.push_back (_ev2.time_, _ev2.data ());
+  const auto _ev3 = dsp::midi_event::make_note_off_with_default_velocity (
+    0, 60, units::samples (100));
+  midi_in.buffer_.push_back (_ev3.time_, _ev3.data ());
+
+  // Set amount parameter
+  midi_send_->amountParam ()->setBaseValue (0.8f);
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  midi_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify MIDI events are copied
+  EXPECT_EQ (midi_out.buffer_.size (), 3);
+}
+
+TEST_F (ChannelSendTest, MidiProcessingWhenDisabled)
+{
+  midi_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto &midi_in = midi_send_->get_midi_in_port ();
+  auto &midi_out = midi_send_->get_midi_out_port ();
+
+  // Disable the send
+  midi_send_->enabledParam ()->setBaseValue (0.0f);
+
+  // Add MIDI events to input
+  const auto _ev4 =
+    dsp::midi_event::make_note_on (0, 60, 100, units::samples (0));
+  midi_in.buffer_.push_back (_ev4.time_, _ev4.data ());
+  const auto _ev5 =
+    dsp::midi_event::make_note_on (0, 64, 90, units::samples (10));
+  midi_in.buffer_.push_back (_ev5.time_, _ev5.data ());
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  midi_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Output should be empty when disabled
+  EXPECT_EQ (midi_out.buffer_.size (), 0);
+}
+
+TEST_F (ChannelSendTest, JsonSerializationRoundtrip)
+{
+  audio_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Set some parameter values
+  audio_send_->amountParam ()->setBaseValue (0.75f);
+  audio_send_->enabledParam ()->setBaseValue (1.0f);
+
+  // Set a destination port
+  auto dest_port_ref = utils::create_object<dsp::AudioPort> (
+    *registry_, u8"Destination Input", dsp::PortFlow::Input,
+    dsp::SpeakerArrangement::stereo ());
+  audio_send_->set_destination_port (dest_port_ref);
+
+  // Serialize
+  nlohmann::json j = *audio_send_;
+
+  // Create new send from JSON
+  ChannelSend deserialized (*registry_, dsp::PortType::Audio, 2, false);
+
+  from_json (j, deserialized);
+
+  // Reinitialize after deserialization
+  deserialized.prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Verify ports & params
+  EXPECT_EQ (
+    audio_send_->get_stereo_in_port ().get_uuid (),
+    deserialized.get_stereo_in_port ().get_uuid ());
+  EXPECT_EQ (
+    audio_send_->amountParam ()->get_uuid (),
+    deserialized.amountParam ()->get_uuid ());
+
+  // Verify properties
+  EXPECT_EQ (deserialized.is_audio (), true);
+  EXPECT_EQ (deserialized.is_midi (), false);
+  EXPECT_EQ (deserialized.is_prefader (), true);
+  EXPECT_NEAR (deserialized.amountParam ()->baseValue (), 0.75f, 0.001f);
+
+  // Verify destination port was serialized
+  EXPECT_TRUE (deserialized.has_destination ());
+  EXPECT_TRUE (deserialized.destination_port ().has_value ());
+  EXPECT_EQ (deserialized.destination_port ()->id (), dest_port_ref.id ());
+}
+
+TEST_F (ChannelSendTest, JsonSerializationMidiRoundtrip)
+{
+  midi_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Set some parameter values
+  midi_send_->amountParam ()->setBaseValue (0.7f);
+  midi_send_->enabledParam ()->setBaseValue (0.0f); // Disabled
+
+  // Serialize
+  nlohmann::json j = *midi_send_;
+
+  // Create new send from JSON
+  ChannelSend deserialized (*registry_, dsp::PortType::Midi, 3, true);
+
+  from_json (j, deserialized);
+
+  // Reinitialize after deserialization
+  deserialized.prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Verify properties
+  EXPECT_EQ (
+    midi_send_->get_midi_out_port ().get_uuid (),
+    deserialized.get_midi_out_port ().get_uuid ());
+  EXPECT_EQ (deserialized.is_audio (), false);
+  EXPECT_EQ (deserialized.is_midi (), true);
+  EXPECT_EQ (deserialized.is_prefader (), false);
+  EXPECT_NEAR (deserialized.amountParam ()->baseValue (), 0.7f, 0.001f);
+  // Enabled should be false
+  EXPECT_NEAR (deserialized.enabledParam ()->baseValue (), 0.0f, 0.001f);
+}
+
+TEST_F (ChannelSendTest, JsonSerializationWithoutDestination)
+{
+  audio_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Don't set a destination port
+
+  // Serialize
+  nlohmann::json j = *audio_send_;
+
+  // Create new send from JSON
+  ChannelSend deserialized (*registry_, dsp::PortType::Audio, 2, false);
+
+  from_json (j, deserialized);
+
+  // Verify no destination
+  EXPECT_FALSE (deserialized.has_destination ());
+  EXPECT_FALSE (deserialized.destination_port ().has_value ());
+}
+
+TEST_F (ChannelSendTest, DifferentSlotNumbers)
+{
+  // Test different slot numbers create different parameter IDs
+  ChannelSend send1 (*registry_, dsp::PortType::Audio, 0, true);
+
+  ChannelSend send2 (*registry_, dsp::PortType::Audio, 1, true);
+
+  ChannelSend send3 (*registry_, dsp::PortType::Audio, 2, true);
+
+  EXPECT_NE (
+    send1.amountParam ()->get_unique_id (),
+    send2.amountParam ()->get_unique_id ());
+  EXPECT_NE (
+    send2.amountParam ()->get_unique_id (),
+    send3.amountParam ()->get_unique_id ());
+  EXPECT_NE (
+    send1.amountParam ()->get_unique_id (),
+    send3.amountParam ()->get_unique_id ());
+
+  // Also check enabled params are different
+  EXPECT_NE (
+    send1.enabledParam ()->get_unique_id (),
+    send2.enabledParam ()->get_unique_id ());
+  EXPECT_NE (
+    send2.enabledParam ()->get_unique_id (),
+    send3.enabledParam ()->get_unique_id ());
+}
+
+TEST_F (ChannelSendTest, EdgeCases)
+{
+  // Test with zero frames
+  audio_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (0));
+  EXPECT_NO_THROW (
+    audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_));
+
+  // Test with maximum amount
+  audio_send_->amountParam ()->setBaseValue (1.0f);
+  EXPECT_NO_THROW (
+    audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_));
+
+  // Test with zero amount (silence)
+  audio_send_->amountParam ()->setBaseValue (0.0f);
+
+  auto &stereo_in = audio_send_->get_stereo_in_port ();
+  auto &stereo_out = audio_send_->get_stereo_out_port ();
+
+  for (int i = 0; i < 10; i++)
+    {
+      stereo_in.buffers ()->setSample (0, i, 1.0f);
+      stereo_in.buffers ()->setSample (1, i, 1.0f);
+    }
+
+  time_nfo.nframes_ = units::samples (10);
+  audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  for (int i = 0; i < 10; i++)
+    {
+      EXPECT_NEAR (stereo_out.buffers ()->getSample (0, i), 0.0f, 1e-6);
+      EXPECT_NEAR (stereo_out.buffers ()->getSample (1, i), 0.0f, 1e-6);
+    }
+}
+
+TEST_F (ChannelSendTest, BufferClearingBetweenProcessCalls)
+{
+  audio_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto &stereo_in = audio_send_->get_stereo_in_port ();
+  auto &stereo_out = audio_send_->get_stereo_out_port ();
+
+  // Set amount to 1.0 (unity gain)
+  audio_send_->amountParam ()->setBaseValue (
+    audio_send_->amountParam ()->range ().convertTo0To1 (1.0f));
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+
+  const auto fill_input_bufs = [&] (float left_val, float right_val) {
+    // Fill with test data
+    for (int i = 0; i < 512; i++)
+      {
+        stereo_in.buffers ()->setSample (0, i, left_val);
+        stereo_in.buffers ()->setSample (1, i, right_val);
+      }
+  };
+
+  // First process call
+  fill_input_bufs (1.f, 2.f);
+  audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify output contains expected values
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (stereo_out.buffers ()->getSample (0, i), 1.0f);
+      EXPECT_FLOAT_EQ (stereo_out.buffers ()->getSample (1, i), 2.0f);
+    }
+
+  // Second process call with same input data
+  fill_input_bufs (1.f, 2.f);
+  audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify output still contains expected values (no accumulation)
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (stereo_out.buffers ()->getSample (0, i), 1.0f);
+      EXPECT_FLOAT_EQ (stereo_out.buffers ()->getSample (1, i), 2.0f);
+    }
+
+  // Third process call with different input data
+  fill_input_bufs (0.5f, 1.5f);
+  audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify output contains new expected values
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (stereo_out.buffers ()->getSample (0, i), 0.5f);
+      EXPECT_FLOAT_EQ (stereo_out.buffers ()->getSample (1, i), 1.5f);
+    }
+
+  // Fourth process call with zero input
+  fill_input_bufs (0.f, 0.f);
+  audio_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify output is zero (no residual from previous calls)
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (stereo_out.buffers ()->getSample (0, i), 0.0f);
+      EXPECT_FLOAT_EQ (stereo_out.buffers ()->getSample (1, i), 0.0f);
+    }
+}
+
+TEST_F (ChannelSendTest, MidiBufferClearingBetweenProcessCalls)
+{
+  midi_send_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto &midi_in = midi_send_->get_midi_in_port ();
+  auto &midi_out = midi_send_->get_midi_out_port ();
+
+  // Set amount parameter
+  midi_send_->amountParam ()->setBaseValue (0.8f);
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+
+  // Add MIDI events to input
+  const auto add_events = [&] () {
+    const auto _ev1 =
+      dsp::midi_event::make_note_on (0, 60, 100, units::samples (0));
+    midi_in.buffer_.push_back (_ev1.time_, _ev1.data ());
+    const auto _ev2 =
+      dsp::midi_event::make_note_on (0, 64, 90, units::samples (10));
+    midi_in.buffer_.push_back (_ev2.time_, _ev2.data ());
+    const auto _ev3 = dsp::midi_event::make_note_off_with_default_velocity (
+      0, 60, units::samples (100));
+    midi_in.buffer_.push_back (_ev3.time_, _ev3.data ());
+  };
+
+  // First process call
+  add_events ();
+  midi_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify MIDI events are copied
+  EXPECT_EQ (midi_out.buffer_.size (), 3);
+
+  // Clear output events
+  midi_out.buffer_.clear ();
+
+  // Second process call with same input
+  add_events ();
+  midi_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify MIDI events are copied again (no accumulation)
+  EXPECT_EQ (midi_out.buffer_.size (), 3);
+
+  // Third process call with no new MIDI events
+  midi_in.buffer_.clear ();
+  midi_out.buffer_.clear ();
+
+  midi_send_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify no events are output when input is empty
+  EXPECT_EQ (midi_out.buffer_.size (), 0);
+}
+
+} // namespace zrythm::structure::tracks

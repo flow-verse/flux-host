@@ -1,0 +1,325 @@
+// SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <filesystem>
+
+#include "dsp/file_audio_source.h"
+#include "dsp/panning.h"
+#include "utils/audio.h"
+#include "utils/exceptions.h"
+#include "utils/io_utils.h"
+#include "utils/serialization.h"
+#include "utils/utf8_string.h"
+
+#include <QSignalSpy>
+
+#include "helpers/scoped_qcoreapplication.h"
+
+#include <gtest/gtest.h>
+
+namespace zrythm::dsp
+{
+class FileAudioSourceTest : public ::testing::Test
+{
+protected:
+  void SetUp () override
+  {
+    // Create temporary test file using thread-safe temporary directory
+    temp_dir_obj = zrythm::utils::io::make_tmp_dir ();
+    temp_dir =
+      utils::Utf8String::from_qstring (temp_dir_obj->path ()).to_path ();
+    test_wav = temp_dir / "test.wav";
+
+    // Create minimal WAV file
+    juce::WavAudioFormat                format;
+    juce::File                          file (test_wav.string ());
+    std::unique_ptr<juce::OutputStream> out_stream =
+      std::make_unique<juce::FileOutputStream> (file);
+    if (dynamic_cast<juce::FileOutputStream &> (*out_stream).openedOk ())
+      {
+        out_stream->setPosition (0);
+        dynamic_cast<juce::FileOutputStream &> (*out_stream).truncate ();
+        juce::AudioFormatWriterOptions options;
+        options =
+          options.withSampleRate (44100)
+            .withNumChannels (2)
+            .withBitsPerSample (16)
+            .withQualityOptionIndex (0);
+        auto writer = format.createWriterFor (out_stream, options);
+        if (writer)
+          {
+            juce::AudioBuffer<float> buffer (2, 44100);
+            buffer.clear ();
+            writer->writeFromAudioSampleBuffer (
+              buffer, 0, buffer.getNumSamples ());
+          }
+      }
+
+    test_mono_wav = temp_dir / "test_mono.wav";
+    {
+      juce::File                          mono_file (test_mono_wav.string ());
+      std::unique_ptr<juce::OutputStream> mono_out =
+        std::make_unique<juce::FileOutputStream> (mono_file);
+      if (dynamic_cast<juce::FileOutputStream &> (*mono_out).openedOk ())
+        {
+          mono_out->setPosition (0);
+          dynamic_cast<juce::FileOutputStream &> (*mono_out).truncate ();
+          juce::AudioFormatWriterOptions options;
+          options =
+            options.withSampleRate (44100)
+              .withNumChannels (1)
+              .withBitsPerSample (16)
+              .withQualityOptionIndex (0);
+          auto writer = format.createWriterFor (mono_out, options);
+          if (writer)
+            {
+              juce::AudioBuffer<float> buffer (1, 44100);
+              float *                  ch = buffer.getWritePointer (0);
+              for (int i = 0; i < 44100; ++i)
+                {
+                  ch[i] = 1.0f;
+                }
+              writer->writeFromAudioSampleBuffer (
+                buffer, 0, buffer.getNumSamples ());
+            }
+        }
+    }
+
+    project_sample_rate = units::sample_rate (44100);
+    current_bpm = units::bpm (120.0);
+  }
+
+  void TearDown () override
+  {
+    // QTemporaryDir auto-removes when destroyed, no manual cleanup needed
+  }
+
+  std::unique_ptr<QTemporaryDir> temp_dir_obj;
+  std::filesystem::path          temp_dir;
+  std::filesystem::path          test_wav;
+  std::filesystem::path          test_mono_wav;
+  units::sample_rate_t           project_sample_rate;
+  units::bpm_t                   current_bpm;
+};
+
+// Test constructors
+TEST_F (FileAudioSourceTest, CreateFromFile)
+{
+  ASSERT_NO_THROW ({
+    FileAudioSource src (test_wav, project_sample_rate, nullptr);
+    EXPECT_EQ (src.get_num_channels (), 2);
+    EXPECT_EQ (src.get_num_frames (), 44100);
+    EXPECT_EQ (src.get_bit_depth (), FileAudioSource::BitDepth::BIT_DEPTH_16);
+    EXPECT_EQ (src.get_samplerate (), project_sample_rate);
+  });
+}
+
+TEST_F (FileAudioSourceTest, CreateFromBuffer)
+{
+  utils::audio::AudioBuffer buf (2, 100);
+  buf.clear ();
+
+  FileAudioSource src (
+    buf, FileAudioSource::BitDepth::BIT_DEPTH_32, project_sample_rate,
+    current_bpm, u8"buffer_test", nullptr);
+
+  EXPECT_EQ (src.get_num_channels (), 2);
+  EXPECT_EQ (src.get_num_frames (), 100);
+  EXPECT_EQ (src.get_bit_depth (), FileAudioSource::BitDepth::BIT_DEPTH_32);
+  EXPECT_EQ (src.get_name (), "buffer_test");
+}
+
+TEST_F (FileAudioSourceTest, MonoBufferConvertedToStereo)
+{
+  utils::audio::AudioBuffer mono_buf (1, 100);
+  float *                   left = mono_buf.getWritePointer (0);
+  for (int i = 0; i < 100; ++i)
+    {
+      left[i] = 1.0f;
+    }
+
+  FileAudioSource src (
+    mono_buf, FileAudioSource::BitDepth::BIT_DEPTH_32, project_sample_rate,
+    current_bpm, u8"mono_test", nullptr);
+
+  EXPECT_EQ (src.get_num_channels (), 2);
+  EXPECT_EQ (src.get_num_frames (), 100);
+
+  const auto [expected_left_gain, expected_right_gain] =
+    calculate_panning (PanLaw::Minus3dB, PanAlgorithm::SquareRoot, 0.5f);
+  const auto &result = src.get_samples ();
+  for (int i = 0; i < 100; ++i)
+    {
+      EXPECT_NEAR (result.getReadPointer (0)[i], expected_left_gain, 0.0001f);
+      EXPECT_NEAR (result.getReadPointer (1)[i], expected_right_gain, 0.0001f);
+    }
+}
+
+TEST_F (FileAudioSourceTest, MonoFileConvertedToStereo)
+{
+  FileAudioSource src (test_mono_wav, project_sample_rate, nullptr);
+
+  EXPECT_EQ (src.get_num_channels (), 2);
+  EXPECT_EQ (src.get_num_frames (), 44100);
+
+  const auto [expected_left_gain, expected_right_gain] =
+    calculate_panning (PanLaw::Minus3dB, PanAlgorithm::SquareRoot, 0.5f);
+  const auto &result = src.get_samples ();
+  EXPECT_NEAR (result.getReadPointer (0)[0], expected_left_gain, 0.0001f);
+  EXPECT_NEAR (result.getReadPointer (1)[0], expected_right_gain, 0.0001f);
+}
+
+TEST_F (FileAudioSourceTest, CreateFromInterleaved)
+{
+  const int channels = 2;
+  const int nframes = 10;
+  float     arr[20] = { 0 }; // 2ch * 10frames
+
+  FileAudioSource src (
+    arr, units::samples (nframes), channels,
+    FileAudioSource::BitDepth::BIT_DEPTH_32, project_sample_rate, current_bpm,
+    u8"interleaved_test", nullptr);
+
+  EXPECT_EQ (src.get_num_channels (), channels);
+  EXPECT_EQ (src.get_num_frames (), nframes);
+}
+
+// Test core functionality
+TEST_F (FileAudioSourceTest, ExpandWithFrames)
+{
+  utils::audio::AudioBuffer initial (2, 100);
+  initial.clear ();
+  FileAudioSource src (
+    initial, FileAudioSource::BitDepth::BIT_DEPTH_32, project_sample_rate,
+    current_bpm, u8"expand_test", nullptr);
+
+  utils::audio::AudioBuffer additional (2, 50);
+  additional.clear ();
+  src.expand_with_frames (additional);
+
+  EXPECT_EQ (src.get_num_frames (), 150);
+}
+
+TEST_F (FileAudioSourceTest, ReplaceFrames)
+{
+  utils::audio::AudioBuffer initial (2, 100);
+  initial.clear ();
+  FileAudioSource src (
+    initial, FileAudioSource::BitDepth::BIT_DEPTH_32, project_sample_rate,
+    current_bpm, u8"replace_test", nullptr);
+
+  utils::audio::AudioBuffer replacement (2, 50);
+  replacement.clear ();
+  src.replace_frames (replacement, units::samples (25));
+
+  // Verify frame count remains the same
+  EXPECT_EQ (src.get_num_frames (), 100);
+}
+
+TEST_F (FileAudioSourceTest, ClearFrames)
+{
+  utils::audio::AudioBuffer buf (2, 100);
+  FileAudioSource           src (
+    buf, FileAudioSource::BitDepth::BIT_DEPTH_32, project_sample_rate,
+    current_bpm, u8"clear_test", nullptr);
+
+  src.clear_frames ();
+  EXPECT_EQ (src.get_num_frames (), 0);
+}
+
+// Test property accessors
+TEST_F (FileAudioSourceTest, PropertyAccess)
+{
+  FileAudioSource src (test_wav, project_sample_rate, nullptr);
+
+  src.set_name (u8"new_name");
+  EXPECT_EQ (src.get_name (), "new_name");
+}
+
+// Test edge cases
+TEST_F (FileAudioSourceTest, ExpandWithFramesMultipleExpansionsPreserveData)
+{
+  constexpr int             chunk_size = 100;
+  utils::audio::AudioBuffer initial (2, chunk_size);
+  for (int ch = 0; ch < 2; ++ch)
+    for (int i = 0; i < chunk_size; ++i)
+      initial.setSample (ch, i, static_cast<float> (i));
+  FileAudioSource src (
+    initial, FileAudioSource::BitDepth::BIT_DEPTH_32, project_sample_rate,
+    current_bpm, u8"multi_expand_test", nullptr);
+
+  constexpr int num_expansions = 20;
+  for (int exp = 0; exp < num_expansions; ++exp)
+    {
+      utils::audio::AudioBuffer chunk (2, chunk_size);
+      const auto base = static_cast<float> ((exp + 1) * chunk_size);
+      for (int ch = 0; ch < 2; ++ch)
+        for (int i = 0; i < chunk_size; ++i)
+          chunk.setSample (ch, i, base + static_cast<float> (i));
+      src.expand_with_frames (chunk);
+    }
+
+  const int expected_total = chunk_size + num_expansions * chunk_size;
+  EXPECT_EQ (src.get_num_frames (), expected_total);
+
+  const auto &samples = src.get_samples ();
+  for (int ch = 0; ch < 2; ++ch)
+    for (int i = 0; i < expected_total; ++i)
+      EXPECT_FLOAT_EQ (samples.getSample (ch, i), static_cast<float> (i))
+        << "Mismatch at ch=" << ch << " sample=" << i;
+}
+
+TEST_F (FileAudioSourceTest, InvalidFile)
+{
+  ASSERT_THROW (
+    { FileAudioSource src (u8"nonexistent.wav", project_sample_rate, nullptr); },
+    ZrythmException);
+}
+
+TEST_F (FileAudioSourceTest, EmptyBuffer)
+{
+  utils::audio::AudioBuffer emptyBuf (0, 0);
+  ASSERT_THROW (
+    {
+      FileAudioSource src (
+        emptyBuf, FileAudioSource::BitDepth::BIT_DEPTH_32, project_sample_rate,
+        current_bpm, u8"empty", nullptr);
+    },
+    std::exception);
+}
+
+// Test serialization/deserialization
+TEST_F (FileAudioSourceTest, Serialization)
+{
+  FileAudioSource src (test_wav, project_sample_rate, nullptr);
+  src.set_name (u8"serial_test");
+
+  // Serialize to JSON
+  nlohmann::json j;
+  j = src;
+
+  // Deserialize
+  FileAudioSource deserialized (nullptr);
+  j.get_to (deserialized);
+
+  // Verify properties
+  EXPECT_EQ (deserialized.get_name ().str (), "serial_test");
+}
+
+// init_from_file() modifies the sample buffer and must emit samplesChanged
+TEST_F (FileAudioSourceTest, InitFromFileEmitsSamplesChanged)
+{
+  test_helpers::ScopedQCoreApplication app;
+
+  FileAudioSource src (test_wav, project_sample_rate, nullptr);
+  ASSERT_GT (src.get_num_frames (), 0);
+
+  QSignalSpy spy (&src, &FileAudioSource::samplesChanged);
+  ASSERT_TRUE (spy.isValid ());
+
+  src.init_from_file (test_wav, project_sample_rate, std::nullopt);
+
+  EXPECT_GT (spy.count (), 0);
+}
+
+} // namespace zrythm::dsp

@@ -1,0 +1,623 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "dsp/graph.h"
+#include "dsp/graph_builder.h"
+#include "dsp/port.h"
+#include "dsp/processor_base.h"
+#include "utils/object_registry.h"
+#include "utils/registry_utils.h"
+
+#include <QObject>
+
+#include "unit/dsp/graph_helpers.h"
+#include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
+
+namespace zrythm::dsp
+{
+
+class TestProcessor : public ProcessorBase
+{
+public:
+  TestProcessor (utils::IObjectRegistry &registry)
+      : ProcessorBase (registry, u8"TestProcessor"),
+        input_port_ (
+          utils::create_object<dsp::AudioPort> (
+            registry,
+            u8"Input",
+            PortFlow::Input,
+            SpeakerArrangement::mono ())),
+        output_port_ (
+          utils::create_object<dsp::AudioPort> (
+            registry,
+            u8"Output",
+            PortFlow::Output,
+            SpeakerArrangement::mono ()))
+  {
+    add_input_port (input_port_);
+    add_output_port (output_port_);
+  }
+
+  MOCK_METHOD (
+    void,
+    custom_process_block,
+    (dsp::graph::ProcessBlockInfo, const dsp::ITransport &, const dsp::TempoMap &),
+    (noexcept, override));
+
+private:
+  PortUuidReference input_port_;
+  PortUuidReference output_port_;
+};
+
+class ProcessorBaseTest : public ::testing::Test
+{
+protected:
+  void SetUp () override
+  {
+    registry_ = std::make_unique<utils::ObjectRegistry> ();
+
+    processor_ = std::make_unique<TestProcessor> (*registry_);
+
+    // Set up mock transport
+    mock_transport_ = std::make_unique<graph_test::MockTransport> ();
+    tempo_map_ = std::make_unique<dsp::TempoMap> (sample_rate_);
+  }
+
+  void expect_passthrough_at_half_volume ()
+  {
+    EXPECT_CALL (
+      *processor_,
+      custom_process_block (::testing::_, ::testing::_, ::testing::_))
+      .WillRepeatedly (
+        [&] (dsp::graph::ProcessBlockInfo time_nfo, auto &, auto &) {
+          // Simple passthrough
+          auto &in =
+            processor_->get_all_input_ports ()
+              .front ()
+              .get_object_as<dsp::AudioPort> ()
+              ->buffers ();
+          auto &out =
+            processor_->get_all_output_ports ()
+              .front ()
+              .get_object_as<dsp::AudioPort> ()
+              ->buffers ();
+
+          for (
+            const auto i : std::views::iota (
+              size_t{ 0 }, time_nfo.nframes_.in<size_t> (units::samples)))
+            {
+              out->setSample (
+                0, static_cast<int> (i),
+                in->getSample (0, static_cast<int> (i)) * 0.5f); // Process at
+                                                                 // half volume
+            }
+        });
+  }
+
+  void TearDown () override
+  {
+    if (processor_)
+      {
+        processor_->release_resources ();
+      }
+  }
+
+  std::unique_ptr<utils::ObjectRegistry> registry_;
+  static constexpr auto          sample_rate_{ units::sample_rate (48000) };
+  static constexpr auto          max_block_length_{ units::samples (1024) };
+  std::unique_ptr<TestProcessor> processor_;
+  std::unique_ptr<graph_test::MockTransport> mock_transport_;
+  std::unique_ptr<dsp::TempoMap>             tempo_map_;
+};
+
+TEST_F (ProcessorBaseTest, ConstructionAndBasicProperties)
+{
+  EXPECT_EQ (processor_->get_node_name (), u8"TestProcessor");
+  EXPECT_EQ (processor_->get_all_input_ports ().size (), 1);
+  EXPECT_EQ (processor_->get_all_output_ports ().size (), 1);
+  EXPECT_EQ (processor_->get_parameters ().size (), 0);
+}
+
+TEST_F (ProcessorBaseTest, PrepareAndReleaseResources)
+{
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Verify ports are prepared
+  auto input_port =
+    processor_->get_all_input_ports ()[0].get_object_as<dsp::AudioPort> ();
+  EXPECT_GE (
+    input_port->buffers ()->getNumSamples (),
+    max_block_length_.in<int> (units::samples));
+
+  processor_->release_resources ();
+  EXPECT_EQ (input_port->buffers ().get (), nullptr);
+}
+
+TEST_F (ProcessorBaseTest, Processing)
+{
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto input_port =
+    processor_->get_all_input_ports ()[0].get_object_as<dsp::AudioPort> ();
+  auto output_port =
+    processor_->get_all_output_ports ()[0].get_object_as<dsp::AudioPort> ();
+
+  // Fill input buffer
+  for (int i = 0; i < 512; i++)
+    {
+      input_port->buffers ()->setSample (0, i, static_cast<float> (i) * 0.01f);
+    }
+
+  // Set expectations
+  expect_passthrough_at_half_volume ();
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify processing (half volume)
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (
+        output_port->buffers ()->getSample (0, i),
+        static_cast<float> (i) * 0.005f);
+    }
+}
+
+TEST_F (ProcessorBaseTest, InputBufferClearedBetweenProcessCalls)
+{
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto input_port =
+    processor_->get_all_input_ports ()[0].get_object_as<dsp::AudioPort> ();
+  auto output_port =
+    processor_->get_all_output_ports ()[0].get_object_as<dsp::AudioPort> ();
+
+  // Fill input buffer with test data
+  for (int i = 0; i < 512; i++)
+    {
+      input_port->buffers ()->setSample (0, i, 1.0f);
+    }
+
+  // Set expectations
+  expect_passthrough_at_half_volume ();
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (512));
+
+  // First process call
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify first processing (should be 0.5 due to half volume)
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (output_port->buffers ()->getSample (0, i), 0.5f);
+    }
+
+  // Check that input buffer is cleared after first process call
+  // This is the key test - input should be zeroed after processing
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (input_port->buffers ()->getSample (0, i), 0.0f)
+        << "Input buffer not cleared at index " << i
+        << " after first process_block() call";
+    }
+
+  // Reset output buffer to verify second processing
+  for (int i = 0; i < 512; i++)
+    {
+      output_port->buffers ()->setSample (0, i, 0.0f);
+    }
+
+  // Second process call - should produce zeros since input was cleared
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify second processing produces zeros (no accumulation)
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (output_port->buffers ()->getSample (0, i), 0.0f)
+        << "Output not zero at index " << i
+        << " during second process_block() call - indicates buffer accumulation";
+    }
+
+  // Test with new input data to ensure it still processes correctly
+  for (int i = 0; i < 512; i++)
+    {
+      input_port->buffers ()->setSample (0, i, 0.8f);
+    }
+
+  // Third process call
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Verify third processing (should be 0.4 due to half volume)
+  for (int i = 0; i < 512; i++)
+    {
+      EXPECT_FLOAT_EQ (output_port->buffers ()->getSample (0, i), 0.4f);
+    }
+}
+
+TEST_F (ProcessorBaseTest, JsonSerializationRoundtrip)
+{
+  processor_->add_parameter (
+    utils::create_object<dsp::ProcessorParameter> (
+      *registry_, *registry_, dsp::ProcessorParameter::UniqueId (u8"unique-id"),
+      dsp::ParameterRange::make_toggle (true), u8"my-toggle"));
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Serialize
+  nlohmann::json j = *processor_;
+
+  // Create new processor from JSON
+  TestProcessor deserialized (*registry_);
+  from_json (j, deserialized);
+
+  // Reinitialize after deserialization
+  deserialized.prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Verify ports && params
+  EXPECT_EQ (
+    processor_->get_parameters ().front ().id (),
+    deserialized.get_parameters ().front ().id ());
+  EXPECT_EQ (
+    processor_->get_all_input_ports ()[0].id (),
+    deserialized.get_all_input_ports ()[0].id ());
+  EXPECT_EQ (
+    processor_->get_all_output_ports ()[0].id (),
+    deserialized.get_all_output_ports ()[0].id ());
+}
+
+TEST_F (ProcessorBaseTest, GraphBuilderIntegration)
+{
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  graph::Graph graph;
+
+  // Add processor to graph
+  ProcessorGraphBuilder::add_nodes (graph, *processor_);
+  ProcessorGraphBuilder::add_connections (graph, *processor_);
+  graph.finalize_nodes ();
+
+  // Verify graph structure
+  EXPECT_EQ (graph.get_nodes ().graph_nodes_.size (), 3);
+  EXPECT_TRUE (graph.is_valid ());
+}
+
+TEST_F (ProcessorBaseTest, ChangeTrackerReportsNothingOnFirstCycleWhenUntouched)
+{
+  auto param_ref = utils::create_object<dsp::ProcessorParameter> (
+    *registry_, *registry_, dsp::ProcessorParameter::UniqueId (u8"test-param"),
+    dsp::ParameterRange{ dsp::ParameterRange::Type::Linear, 0.f, 1.f, 0.f, 0.5f },
+    u8"TestParam");
+  processor_->add_parameter (param_ref);
+
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Untouched params are not reported on the first cycle - their values
+  // originate from the processor itself, so there is nothing to send back
+  std::vector<ProcessorBase::ParameterChangeTracker::Change> captured;
+  EXPECT_CALL (
+    *processor_, custom_process_block (::testing::_, ::testing::_, ::testing::_))
+    .WillOnce ([&] (auto, auto &, auto &) {
+      const auto &ct = processor_->change_tracker ();
+      captured = ct.changes ();
+    });
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (256));
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  EXPECT_EQ (captured.size (), 0u);
+}
+
+TEST_F (ProcessorBaseTest, ChangeTrackerSkipsUnchangedParams)
+{
+  auto param_ref = utils::create_object<dsp::ProcessorParameter> (
+    *registry_, *registry_, dsp::ProcessorParameter::UniqueId (u8"test-param"),
+    dsp::ParameterRange{ dsp::ParameterRange::Type::Linear, 0.f, 1.f, 0.f, 0.5f },
+    u8"TestParam");
+  processor_->add_parameter (param_ref);
+
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (256));
+
+  // First cycle: no change
+  EXPECT_CALL (
+    *processor_, custom_process_block (::testing::_, ::testing::_, ::testing::_))
+    .WillOnce ([&] (auto, auto &, auto &) {
+      EXPECT_EQ (processor_->change_tracker ().changes ().size (), 0u);
+    });
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Second cycle: still no change
+  EXPECT_CALL (
+    *processor_, custom_process_block (::testing::_, ::testing::_, ::testing::_))
+    .WillOnce ([&] (auto, auto &, auto &) {
+      EXPECT_EQ (processor_->change_tracker ().changes ().size (), 0u);
+    });
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+}
+
+TEST_F (ProcessorBaseTest, ChangeTrackerDetectsParamEdit)
+{
+  auto param_ref = utils::create_object<dsp::ProcessorParameter> (
+    *registry_, *registry_, dsp::ProcessorParameter::UniqueId (u8"test-param"),
+    dsp::ParameterRange{ dsp::ParameterRange::Type::Linear, 0.f, 1.f, 0.f, 0.5f },
+    u8"TestParam");
+  processor_->add_parameter (param_ref);
+  auto * param = param_ref.get_object_as<dsp::ProcessorParameter> ();
+
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (256));
+
+  // First cycle: no change
+  EXPECT_CALL (
+    *processor_, custom_process_block (::testing::_, ::testing::_, ::testing::_))
+    .WillOnce ([&] (auto, auto &, auto &) {
+      EXPECT_EQ (processor_->change_tracker ().changes ().size (), 0u);
+    });
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Edit param
+  param->setBaseValue (0.8f);
+
+  // Next cycle should detect the change
+  std::vector<ProcessorBase::ParameterChangeTracker::Change> captured;
+  EXPECT_CALL (
+    *processor_, custom_process_block (::testing::_, ::testing::_, ::testing::_))
+    .WillOnce ([&] (auto, auto &, auto &) {
+      const auto &ct = processor_->change_tracker ();
+      captured = ct.changes ();
+    });
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  ASSERT_EQ (captured.size (), 1u);
+  EXPECT_FLOAT_EQ (captured[0].base_value, 0.8f);
+  EXPECT_FLOAT_EQ (captured[0].modulated_value, 0.8f);
+}
+
+TEST_F (ProcessorBaseTest, ChangeTrackerDetectsEditBetweenPrepareAndFirstProcess)
+{
+  auto param_ref = utils::create_object<dsp::ProcessorParameter> (
+    *registry_, *registry_, dsp::ProcessorParameter::UniqueId (u8"test-param"),
+    dsp::ParameterRange{ dsp::ParameterRange::Type::Linear, 0.f, 1.f, 0.f, 0.5f },
+    u8"TestParam");
+  processor_->add_parameter (param_ref);
+  auto * param = param_ref.get_object_as<dsp::ProcessorParameter> ();
+
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Edit after prepare but before the first process cycle
+  param->setBaseValue (0.8f);
+
+  std::vector<ProcessorBase::ParameterChangeTracker::Change> captured;
+  EXPECT_CALL (
+    *processor_, custom_process_block (::testing::_, ::testing::_, ::testing::_))
+    .WillOnce ([&] (auto, auto &, auto &) {
+      const auto &ct = processor_->change_tracker ();
+      captured = ct.changes ();
+    });
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (256));
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  ASSERT_EQ (captured.size (), 1u);
+  EXPECT_FLOAT_EQ (captured[0].base_value, 0.8f);
+  EXPECT_FLOAT_EQ (captured[0].modulated_value, 0.8f);
+}
+
+TEST_F (ProcessorBaseTest, ChangeTrackerPreservesPendingEditsAcrossReprepare)
+{
+  auto param_ref = utils::create_object<dsp::ProcessorParameter> (
+    *registry_, *registry_, dsp::ProcessorParameter::UniqueId (u8"test-param"),
+    dsp::ParameterRange{ dsp::ParameterRange::Type::Linear, 0.f, 1.f, 0.f, 0.5f },
+    u8"TestParam");
+  processor_->add_parameter (param_ref);
+  auto * param = param_ref.get_object_as<dsp::ProcessorParameter> ();
+
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // Edit, then get re-prepared before the edit could be processed
+  param->setBaseValue (0.8f);
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  // The pending edit must still be detected
+  std::vector<ProcessorBase::ParameterChangeTracker::Change> captured;
+  EXPECT_CALL (
+    *processor_, custom_process_block (::testing::_, ::testing::_, ::testing::_))
+    .WillOnce ([&] (auto, auto &, auto &) {
+      const auto &ct = processor_->change_tracker ();
+      captured = ct.changes ();
+    });
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (256));
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  ASSERT_EQ (captured.size (), 1u);
+  EXPECT_FLOAT_EQ (captured[0].base_value, 0.8f);
+  EXPECT_FLOAT_EQ (captured[0].modulated_value, 0.8f);
+}
+
+TEST_F (ProcessorBaseTest, ChangeTrackerRecordsMultipleParams)
+{
+  auto param1_ref = utils::create_object<dsp::ProcessorParameter> (
+    *registry_, *registry_, dsp::ProcessorParameter::UniqueId (u8"param-a"),
+    dsp::ParameterRange{ dsp::ParameterRange::Type::Linear, 0.f, 1.f, 0.f, 0.0f },
+    u8"ParamA");
+  auto param2_ref = utils::create_object<dsp::ProcessorParameter> (
+    *registry_, *registry_, dsp::ProcessorParameter::UniqueId (u8"param-b"),
+    dsp::ParameterRange{ dsp::ParameterRange::Type::Linear, 0.f, 1.f, 0.f, 0.0f },
+    u8"ParamB");
+  processor_->add_parameter (param1_ref);
+  processor_->add_parameter (param2_ref);
+  auto * param1 = param1_ref.get_object_as<dsp::ProcessorParameter> ();
+
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto time_nfo = dsp::graph::ProcessBlockInfo::from_position_and_nframes (
+    units::samples (0), units::samples (256));
+
+  // First cycle: no changes
+  EXPECT_CALL (
+    *processor_, custom_process_block (::testing::_, ::testing::_, ::testing::_))
+    .WillOnce ([&] (auto, auto &, auto &) {
+      EXPECT_EQ (processor_->change_tracker ().changes ().size (), 0u);
+    });
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+
+  // Edit only param1
+  param1->setBaseValue (0.5f);
+
+  // Next cycle: only param1 changes
+  EXPECT_CALL (
+    *processor_, custom_process_block (::testing::_, ::testing::_, ::testing::_))
+    .WillOnce ([&] (auto, auto &, auto &) {
+      const auto &ct = processor_->change_tracker ();
+      ASSERT_EQ (ct.changes ().size (), 1u);
+      EXPECT_EQ (ct.changes ()[0].index, 0u);
+    });
+  processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+}
+
+TEST_F (ProcessorBaseTest, EdgeCases)
+{
+  processor_->prepare_for_processing (nullptr, sample_rate_, max_block_length_);
+
+  auto * input_port =
+    processor_->get_all_input_ports ()[0].get_object_as<dsp::AudioPort> ();
+
+  // Fill input buffer with test data
+  for (
+    const auto i : std::views::iota (
+      size_t{ 0 }, max_block_length_.in<size_t> (units::samples)))
+    {
+      input_port->buffers ()->setSample (0, static_cast<int> (i), 1.0f);
+    }
+
+  // Test Case 1: nframes exceeds max_block_length_
+  {
+    dsp::graph::ProcessBlockInfo time_nfo{
+      .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (0),
+      .nframes_ = max_block_length_ + units::samples (100) // Exceeds
+                                                           // max_block_length_
+    };
+
+    EXPECT_CALL (
+      *processor_,
+      custom_process_block (::testing::_, ::testing::_, ::testing::_))
+      .WillOnce (
+        [&] (dsp::graph::ProcessBlockInfo corrected_time_nfo, auto &, auto &) {
+          // Verify correction was applied
+          EXPECT_EQ (corrected_time_nfo.nframes_, max_block_length_);
+          EXPECT_EQ (corrected_time_nfo.buffer_offset_, units::samples (0));
+          EXPECT_EQ (corrected_time_nfo.transport_position_, units::samples (0));
+        });
+
+    processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+  }
+
+  // Test Case 2: local_offset + nframes exceeds max_block_length_
+  {
+    dsp::graph::ProcessBlockInfo time_nfo{
+      .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (500),
+      .nframes_ = units::samples (600) // 500 + 600 = 1100 > max_block_length_
+                                       // (1024)
+    };
+
+    EXPECT_CALL (
+      *processor_,
+      custom_process_block (::testing::_, ::testing::_, ::testing::_))
+      .WillOnce (
+        [&] (dsp::graph::ProcessBlockInfo corrected_time_nfo, auto &, auto &) {
+          // Verify correction was applied
+          EXPECT_EQ (
+            corrected_time_nfo.nframes_,
+            max_block_length_ - units::samples (500));
+          EXPECT_EQ (corrected_time_nfo.buffer_offset_, units::samples (500));
+          EXPECT_EQ (corrected_time_nfo.transport_position_, units::samples (0));
+        });
+
+    processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+  }
+
+  // Test Case 3: local_offset >= max_block_length_ (should result in 0 frames)
+  {
+    dsp::graph::ProcessBlockInfo time_nfo{
+      .transport_position_ = units::samples (0),
+      .buffer_offset_ =
+        max_block_length_ + units::samples (50), // Exceeds max_block_length_
+      .nframes_ = units::samples (100)
+    };
+
+    EXPECT_CALL (
+      *processor_,
+      custom_process_block (::testing::_, ::testing::_, ::testing::_))
+      .WillOnce (
+        [&] (dsp::graph::ProcessBlockInfo corrected_time_nfo, auto &, auto &) {
+          // Verify correction was applied - should process 0 frames
+          EXPECT_EQ (corrected_time_nfo.nframes_, units::samples (0));
+          EXPECT_LT (corrected_time_nfo.buffer_offset_, max_block_length_);
+          EXPECT_LT (corrected_time_nfo.transport_position_, max_block_length_);
+        });
+
+    processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+  }
+
+  // Test Case 4: Edge case where local_offset + nframes equals
+  // max_block_length_ (no correction needed)
+  {
+    dsp::graph::ProcessBlockInfo time_nfo{
+      .transport_position_ = units::samples (0),
+      .buffer_offset_ = units::samples (0),
+      .nframes_ = max_block_length_ // Exactly matches max_block_length_
+    };
+
+    EXPECT_CALL (
+      *processor_,
+      custom_process_block (::testing::_, ::testing::_, ::testing::_))
+      .WillOnce (
+        [&] (dsp::graph::ProcessBlockInfo corrected_time_nfo, auto &, auto &) {
+          // Verify no correction was applied
+          EXPECT_EQ (corrected_time_nfo.nframes_, max_block_length_);
+          EXPECT_EQ (corrected_time_nfo.buffer_offset_, units::samples (0));
+          EXPECT_EQ (corrected_time_nfo.transport_position_, units::samples (0));
+        });
+
+    processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+  }
+
+  // Test Case 5: Small offset with nframes exceeding max_block_length_
+  {
+    dsp::graph::ProcessBlockInfo time_nfo{
+      .transport_position_ = units::samples (1000),
+      .buffer_offset_ = units::samples (100),
+      .nframes_ = max_block_length_ // 100 + 1024 > max_block_length_ (1024)
+    };
+
+    EXPECT_CALL (
+      *processor_,
+      custom_process_block (::testing::_, ::testing::_, ::testing::_))
+      .WillOnce (
+        [&] (dsp::graph::ProcessBlockInfo corrected_time_nfo, auto &, auto &) {
+          // Verify correction was applied
+          EXPECT_EQ (
+            corrected_time_nfo.nframes_,
+            max_block_length_ - units::samples (100));
+          EXPECT_EQ (corrected_time_nfo.buffer_offset_, units::samples (100));
+          EXPECT_EQ (
+            corrected_time_nfo.transport_position_, units::samples (1000));
+        });
+
+    processor_->process_block (time_nfo, *mock_transport_, *tempo_map_);
+  }
+}
+
+} // namespace zrythm::dsp

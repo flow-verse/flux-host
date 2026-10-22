@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+add_executable(zrythm_structure_scenes_unit_tests
+  clip_launcher_test.cpp
+  clip_playback_service_test.cpp
+  clip_slot_test.cpp
+  scene_test.cpp
+)
+
+set_target_properties(zrythm_structure_scenes_unit_tests PROPERTIES
+  AUTOMOC ON
+  UNITY_BUILD ${ZRYTHM_UNITY_BUILD}
+)
+
+target_link_libraries(zrythm_structure_scenes_unit_tests PRIVATE
+  GTest::gmock_main
+  zrythm_structure_scenes_lib
+  zrythm_test_helpers_lib
+)
+
+target_precompile_headers(zrythm_structure_scenes_unit_tests REUSE_FROM zrythm_structure_tracks_unit_tests)
+
+zrythm_discover_tests(zrythm_structure_scenes_unit_tests)

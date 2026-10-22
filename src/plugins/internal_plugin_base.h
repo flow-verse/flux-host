@@ -1,0 +1,57 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include "plugins/plugin.h"
+
+namespace zrythm::plugins
+{
+
+/**
+ * @brief A base class for internal plugins.
+ *
+ * This plugin on its own simply passes audio through without any processing.
+ */
+class InternalPluginBase : public Plugin
+{
+  Q_OBJECT
+  QML_ELEMENT
+  QML_UNCREATABLE ("")
+
+public:
+  /**
+   * @brief Constructor for InternalPluginBase.
+   *
+   * @param dependencies Processor dependencies
+   * @param parent Parent QObject
+   */
+  InternalPluginBase (
+    utils::IObjectRegistry &registry,
+    QObject *               parent = nullptr);
+
+  ~InternalPluginBase () override;
+
+protected:
+  void prepare_plugin_for_processing (
+    units::sample_rate_t sample_rate,
+    units::sample_u32_t  max_block_length) override;
+
+  void process_impl (
+    dsp::graph::ProcessBlockInfo time_info,
+    const dsp::ITransport &,
+    const dsp::TempoMap &) noexcept override;
+
+  std::string save_state_impl () const override { return {}; }
+  bool        load_state_impl (const std::string &) override { return true; }
+
+protected Q_SLOTS:
+  /**
+   * @brief Handle configuration changes.
+   */
+  virtual void on_configuration_changed (
+    PluginConfiguration * configuration,
+    bool                  generateNewPluginPortsAndParams);
+};
+
+} // namespace zrythm::plugins

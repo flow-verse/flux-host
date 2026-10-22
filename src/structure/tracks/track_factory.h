@@ -1,0 +1,122 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include "structure/tracks/track_all.h"
+#include "utils/registry_utils.h"
+
+namespace zrythm::structure::tracks
+{
+
+/**
+ * @brief Factory for tracks.
+ */
+class TrackFactory
+{
+public:
+  using DependenciesProvider = std::function<FinalTrackDependencies ()>;
+
+  TrackFactory (DependenciesProvider dependencies_provider)
+      : dependencies_provider_ (std::move (dependencies_provider))
+  {
+  }
+
+  template <typename TrackT> class Builder
+  {
+    friend class TrackFactory;
+
+  private:
+    explicit Builder (FinalTrackDependencies track_deps)
+        : track_deps_ (std::move (track_deps))
+    {
+    }
+
+  public:
+    std::unique_ptr<TrackT> build_for_deserialization () const
+    {
+      return std::make_unique<TrackT> (track_deps_);
+    }
+
+    auto build ()
+    {
+      auto obj_ref =
+        utils::create_object<TrackT> (track_deps_.registry_, track_deps_);
+      auto * track = obj_ref.template get_object_as<TrackT> ();
+      track->set_default_name ();
+      return obj_ref;
+    }
+
+  private:
+    FinalTrackDependencies track_deps_;
+  };
+
+  template <typename TrackT> auto get_builder () const
+  {
+    auto builder = Builder<TrackT> (dependencies_provider_ ());
+    return builder;
+  }
+
+  template <FinalTrackSubclass TrackT>
+  TrackUuidReference create_empty_track () const
+  {
+    auto obj_ref = get_builder<TrackT> ().build ();
+    return obj_ref;
+  }
+
+  TrackUuidReference create_empty_track (Track::Type type) const
+  {
+    switch (type)
+      {
+      case Track::Type::Audio:
+        return create_empty_track<AudioTrack> ();
+      case Track::Type::Midi:
+        return create_empty_track<MidiTrack> ();
+      case Track::Type::MidiGroup:
+        return create_empty_track<MidiGroupTrack> ();
+      case Track::Type::Folder:
+        return create_empty_track<FolderTrack> ();
+      case Track::Type::Instrument:
+        return create_empty_track<InstrumentTrack> ();
+      case Track::Type::Master:
+        return create_empty_track<MasterTrack> ();
+      case Track::Type::Chord:
+        return create_empty_track<ChordTrack> ();
+      case Track::Type::Marker:
+        return create_empty_track<MarkerTrack> ();
+      case Track::Type::Modulator:
+        return create_empty_track<ModulatorTrack> ();
+      case Track::Type::AudioBus:
+        return create_empty_track<AudioBusTrack> ();
+      case Track::Type::MidiBus:
+        return create_empty_track<MidiBusTrack> ();
+      case Track::Type::AudioGroup:
+        return create_empty_track<AudioGroupTrack> ();
+      }
+
+    throw std::invalid_argument ("invalid track type");
+  }
+
+  template <typename TrackT>
+  auto clone_new_object_identity (const TrackT &other) const
+  {
+    auto track_dependencies = dependencies_provider_ ();
+    return utils::clone_object (other, track_dependencies.registry_);
+  }
+
+  template <typename TrackT>
+  auto clone_object_snapshot (const TrackT &other, QObject &owner) const
+  {
+    auto     track_dependencies = dependencies_provider_ ();
+    TrackT * new_obj{};
+
+    new_obj = other.clone_qobject (
+      &owner, utils::ObjectCloneType::Snapshot, track_dependencies.registry_);
+    return new_obj;
+  }
+
+private:
+  DependenciesProvider dependencies_provider_;
+};
+
+} // namespace zrythm::structure::tracks

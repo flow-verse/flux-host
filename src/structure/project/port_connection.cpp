@@ -1,0 +1,66 @@
+// SPDX-FileCopyrightText: © 2021-2022, 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include "structure/project/port_connection.h"
+#include "utils/serialization.h"
+
+namespace zrythm::structure::project
+{
+
+PortConnection::PortConnection (QObject * parent) : QObject (parent) { }
+
+PortConnection::PortConnection (
+  const dsp::PortUuid &src,
+  const dsp::PortUuid &dest,
+  float                multiplier,
+  bool                 locked,
+  bool                 enabled,
+  QObject *            parent)
+    : QObject (parent), src_id_ (src), dest_id_ (dest),
+      multiplier_ (multiplier), locked_ (locked), enabled_ (enabled)
+{
+  assert (!src.is_null ());
+  assert (!dest.is_null ());
+}
+
+void
+init_from (
+  PortConnection        &obj,
+  const PortConnection  &other,
+  utils::ObjectCloneType clone_type)
+{
+  obj.src_id_ = other.src_id_;
+  obj.dest_id_ = other.dest_id_;
+  obj.multiplier_ = other.multiplier_;
+  obj.locked_ = other.locked_;
+  obj.enabled_ = other.enabled_;
+  obj.bipolar_ = other.bipolar_;
+  obj.audio_bus_channel_routing_ = other.audio_bus_channel_routing_;
+}
+
+void
+to_json (nlohmann::json &j, const PortConnection &port_connection)
+{
+  j[PortConnection::kSourceIdKey] = port_connection.src_id_;
+  j[PortConnection::kDestIdKey] = port_connection.dest_id_;
+  j[PortConnection::kMultiplierKey] = port_connection.multiplier_;
+  j[PortConnection::kLockedKey] = port_connection.locked_;
+  j[PortConnection::kEnabledKey] = port_connection.enabled_;
+  j[PortConnection::kBipolarKey] = port_connection.bipolar_;
+  j[PortConnection::kAudioBusChannelRoutingKey] =
+    port_connection.audio_bus_channel_routing_;
+}
+
+void
+from_json (const nlohmann::json &j, PortConnection &port_connection)
+{
+  j.at (PortConnection::kSourceIdKey).get_to (port_connection.src_id_);
+  j.at (PortConnection::kDestIdKey).get_to (port_connection.dest_id_);
+  j.at (PortConnection::kMultiplierKey).get_to (port_connection.multiplier_);
+  j.at (PortConnection::kLockedKey).get_to (port_connection.locked_);
+  j.at (PortConnection::kEnabledKey).get_to (port_connection.enabled_);
+  j.at (PortConnection::kBipolarKey).get_to (port_connection.bipolar_);
+  j.at (PortConnection::kAudioBusChannelRoutingKey)
+    .get_to (port_connection.audio_bus_channel_routing_);
+}
+}

@@ -1,0 +1,392 @@
+// SPDX-FileCopyrightText: © 2019-2022, 2024-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <cmath>
+#include <utility>
+
+#include "dsp/snap_grid.h"
+#include "utils/algorithms.h"
+#include "utils/enum_utils.h"
+
+#include <nlohmann/json.hpp>
+
+namespace zrythm::dsp
+{
+
+SnapGrid::SnapGrid (
+  const TempoMap          &tempo_map,
+  dsp::notes::NoteLength   default_note_length,
+  LastObjectLengthProvider last_object_length_provider,
+  QObject *                parent)
+    : QObject (parent), default_note_length_ (default_note_length),
+      tempo_map_ (tempo_map),
+      last_object_length_provider_ (std::move (last_object_length_provider))
+{
+}
+
+double
+SnapGrid::snapTicks (int64_t ticks) const
+{
+  auto time_sig = tempo_map_.time_signature_at_tick (units::ticks (ticks));
+  auto ticks_per_bar = time_sig.ticks_per_bar ().in (units::ticks);
+  auto ticks_per_beat = ticks_per_bar / time_sig.time_signature.numerator;
+
+  const auto length = get_effective_note_length ();
+  return get_ticks_from_length_and_type (
+    length, snap_note_type_, ticks_per_bar, ticks_per_beat);
+}
+
+double
+SnapGrid::defaultTicks (int64_t ticks) const
+{
+  if (length_type_ == NoteLengthType::Link)
+    {
+      return snapTicks (ticks);
+    }
+  if (length_type_ == NoteLengthType::LastObject)
+    {
+      return last_object_length_provider_ ();
+    }
+
+  auto time_sig = tempo_map_.time_signature_at_tick (units::ticks (ticks));
+  const auto ticks_per_bar =
+    (time_sig.time_signature.numerator * TempoMap::get_ppq () * 4)
+    / time_sig.time_signature.denominator;
+  const auto ticks_per_beat = ticks_per_bar / time_sig.time_signature.numerator;
+
+  return get_ticks_from_length_and_type (
+    default_note_length_, dsp::notes::NoteType::Normal,
+    ticks_per_bar.in (units::ticks), ticks_per_beat.in (units::ticks));
+}
+
+static auto
+get_note_type_short_str (dsp::notes::NoteType type)
+{
+  static constexpr std::array<std::string_view, 3> note_type_short_strings = {
+    "",
+    ".",
+    "t",
+  };
+  return note_type_short_strings.at (ENUM_VALUE_TO_INT (type));
+}
+
+QString
+SnapGrid::stringize_length_and_type (
+  dsp::notes::NoteLength note_length,
+  dsp::notes::NoteType   note_type)
+{
+  const auto c = get_note_type_short_str (note_type);
+  const auto first_part = dsp::notes::note_length_to_str (note_length);
+
+  return QString::fromStdString (fmt::format ("{}{}", first_part, c));
+}
+
+QString
+SnapGrid::snapString () const
+{
+  if (snap_adaptive_)
+    {
+      return tr ("Adaptive");
+    }
+
+  return stringize_length_and_type (snap_note_length_, snap_note_type_);
+}
+
+bool
+SnapGrid::get_prev_or_next_snap_point (
+  double  pivot_ticks,
+  double &out_ticks,
+  bool    get_prev_point) const
+{
+  out_ticks = pivot_ticks;
+  if (pivot_ticks < 0)
+    {
+      /* negative not supported, set to same position */
+      return false;
+    }
+
+  bool snapped = false;
+
+  // Grid snapping
+  if (snap_to_grid_)
+    {
+      const auto pivot_ticks_rounded =
+        units::ticks (static_cast<int64_t> (std::round (pivot_ticks)));
+      const auto time_signature_at_pivot_ticks =
+        tempo_map_.time_signature_at_tick (pivot_ticks_rounded);
+
+      const double snap_ticks = snapTicks (static_cast<int64_t> (out_ticks));
+      const double ticks_from_prev = std::fmod (pivot_ticks, snap_ticks);
+      if (get_prev_point)
+        {
+          out_ticks = pivot_ticks - ticks_from_prev;
+        }
+      else
+        {
+          out_ticks = pivot_ticks + (snap_ticks - ticks_from_prev);
+        }
+
+      const auto out_ticks_rounded =
+        units::ticks (static_cast<int64_t> (std::round (out_ticks)));
+      const auto time_signature_after =
+        tempo_map_.time_signature_at_tick (out_ticks_rounded);
+      if (
+        time_signature_after.is_different_time_signature (
+          time_signature_at_pivot_ticks))
+        {
+          // Always snap at boundary of time signature changes
+          out_ticks = std::round (time_signature_after.tick.in (units::ticks));
+        }
+      snapped = true;
+    }
+
+  // Event snapping
+  if (snap_to_events_ && event_callback_.has_value ())
+    {
+      const auto snap_ticks = snapTicks (static_cast<int64_t> (pivot_ticks));
+      const auto allowable_event_range =
+        std::make_pair (pivot_ticks - snap_ticks, pivot_ticks + snap_ticks);
+      auto event_points = get_event_snap_points (
+        allowable_event_range.first, allowable_event_range.second);
+
+      // callback should only return points in the range but this is not a hard
+      // requirement. enforce the range here
+      std::erase_if (event_points, [allowable_event_range] (const auto &point) {
+        return point < allowable_event_range.first
+               || point >= allowable_event_range.second;
+      });
+
+      auto it = utils::algorithms::find_closest (event_points, pivot_ticks);
+      if (it != event_points.end ())
+        {
+          // out_ticks could already be snapped to the grid from above - only
+          // snap further if this point is closer
+          if (
+            !snapped
+            || std::abs (*it - pivot_ticks) < std::abs (out_ticks - pivot_ticks))
+            {
+              out_ticks = *it;
+            }
+          snapped = true;
+        }
+    }
+
+  /* if no point to snap to, set to same position */
+  if (!snapped)
+    {
+      out_ticks = pivot_ticks;
+    }
+
+  return snapped;
+}
+
+std::vector<double>
+SnapGrid::get_event_snap_points (double start_ticks, double end_ticks) const
+{
+  if (event_callback_.has_value () && snap_to_events_)
+    {
+      return event_callback_.value () (start_ticks, end_ticks);
+    }
+  return {};
+}
+
+double
+SnapGrid::nextSnapPoint (double ticks) const
+{
+  double result{};
+  get_prev_or_next_snap_point (ticks, result, false);
+  return result;
+}
+
+double
+SnapGrid::prevSnapPoint (double ticks) const
+{
+  double result{};
+  get_prev_or_next_snap_point (ticks, result, true);
+  return result;
+}
+
+double
+SnapGrid::closestSnapPoint (double ticks) const
+{
+  double prev = prevSnapPoint (ticks);
+  double next = nextSnapPoint (ticks);
+
+  return (std::abs (ticks - prev) <= std::abs (ticks - next)) ? prev : next;
+}
+
+units::precise_tick_t
+SnapGrid::snap (
+  units::precise_tick_t                ticks,
+  std::optional<units::precise_tick_t> start_ticks) const
+{
+  /* this should only be called if snap is on. the check should be done before
+   * calling */
+  assert (snap_to_grid_ || snap_to_events_);
+
+  /* position must be positive - only global positions allowed */
+  if (ticks < units::ticks (0))
+    return units::ticks (0);
+
+  if (snap_to_grid_keep_offset_)
+    {
+      assert (start_ticks.has_value ());
+
+      /* get previous snap point from start position */
+      const auto prev_sp_from_start =
+        units::ticks (prevSnapPoint (start_ticks.value ().in (units::ticks)));
+
+      /* get diff from previous snap point */
+      const auto ticks_delta = start_ticks.value () - prev_sp_from_start;
+
+      /* subtract offset and find closest snap point */
+      // double temp_ticks = ticks - ticks_delta;
+      const auto closest_sp =
+        units::ticks (closestSnapPoint (ticks.in (units::ticks)));
+
+      /* re-add offset */
+      return closest_sp + ticks_delta;
+    }
+
+  return units::ticks (closestSnapPoint (ticks.in (units::ticks)));
+}
+
+void
+SnapGrid::setSnapAdaptive (bool adaptive)
+{
+  if (snap_adaptive_ != adaptive)
+    {
+      snap_adaptive_ = adaptive;
+      Q_EMIT snapAdaptiveChanged ();
+      Q_EMIT snapChanged ();
+    }
+}
+
+void
+SnapGrid::setSnapToGrid (bool snap)
+{
+  if (snap_to_grid_ != snap)
+    {
+      snap_to_grid_ = snap;
+      Q_EMIT snapToGridChanged ();
+      Q_EMIT snapChanged ();
+    }
+}
+
+void
+SnapGrid::setSnapToEvents (bool snap)
+{
+  if (snap_to_events_ != snap)
+    {
+      snap_to_events_ = snap;
+      Q_EMIT snapToEventsChanged ();
+      Q_EMIT snapChanged ();
+    }
+}
+
+void
+SnapGrid::setKeepOffset (bool keep)
+{
+  if (snap_to_grid_keep_offset_ != keep)
+    {
+      snap_to_grid_keep_offset_ = keep;
+      Q_EMIT keepOffsetChanged ();
+      Q_EMIT snapChanged ();
+    }
+}
+
+void
+SnapGrid::setSixteenthsVisible (bool visible)
+{
+  if (sixteenths_visible_ != visible)
+    {
+      sixteenths_visible_ = visible;
+      Q_EMIT sixteenthsVisibleChanged ();
+      Q_EMIT snapChanged ();
+    }
+}
+
+void
+SnapGrid::setBeatsVisible (bool visible)
+{
+  if (beats_visible_ != visible)
+    {
+      beats_visible_ = visible;
+      Q_EMIT beatsVisibleChanged ();
+      Q_EMIT snapChanged ();
+    }
+}
+
+void
+SnapGrid::setSnapNoteLength (dsp::notes::NoteLength length)
+{
+  if (length == snap_note_length_)
+    return;
+
+  snap_note_length_ = length;
+  Q_EMIT snapNoteLengthChanged ();
+  Q_EMIT snapChanged ();
+}
+
+void
+SnapGrid::setSnapNoteType (dsp::notes::NoteType type)
+{
+  if (type == snap_note_type_)
+    return;
+
+  snap_note_type_ = type;
+  Q_EMIT snapNoteTypeChanged ();
+  Q_EMIT snapChanged ();
+}
+
+void
+SnapGrid::setLengthType (NoteLengthType type)
+{
+  if (type == length_type_)
+    return;
+
+  length_type_ = type;
+  Q_EMIT lengthTypeChanged ();
+  Q_EMIT snapChanged ();
+}
+
+void
+SnapGrid::set_event_callback (SnapEventCallback callback)
+{
+  event_callback_ = callback;
+}
+
+void
+SnapGrid::clear_callbacks ()
+{
+  event_callback_.reset ();
+  last_object_length_provider_ = [] () { return 0.0; };
+}
+
+void
+to_json (nlohmann::json &j, const SnapGrid &p)
+{
+  j = nlohmann::json{
+    { SnapGrid::kSnapNoteLengthKey, p.snap_note_length_         },
+    { SnapGrid::kSnapNoteTypeKey,   p.snap_note_type_           },
+    { SnapGrid::kSnapAdaptiveKey,   p.snap_adaptive_            },
+    { SnapGrid::kLengthTypeKey,     p.length_type_              },
+    { SnapGrid::kSnapToGridKey,     p.snap_to_grid_             },
+    { SnapGrid::kKeepOffsetKey,     p.snap_to_grid_keep_offset_ },
+    { SnapGrid::kSnapToEventsKey,   p.snap_to_events_           }
+  };
+}
+
+void
+from_json (const nlohmann::json &j, SnapGrid &p)
+{
+  j.at (SnapGrid::kSnapNoteLengthKey).get_to (p.snap_note_length_);
+  j.at (SnapGrid::kSnapNoteTypeKey).get_to (p.snap_note_type_);
+  j.at (SnapGrid::kSnapAdaptiveKey).get_to (p.snap_adaptive_);
+  j.at (SnapGrid::kLengthTypeKey).get_to (p.length_type_);
+  j.at (SnapGrid::kSnapToGridKey).get_to (p.snap_to_grid_);
+  j.at (SnapGrid::kKeepOffsetKey).get_to (p.snap_to_grid_keep_offset_);
+  j.at (SnapGrid::kSnapToEventsKey).get_to (p.snap_to_events_);
+}
+
+} // namespace zrythm::dsp

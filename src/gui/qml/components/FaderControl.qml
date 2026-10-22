@@ -1,0 +1,200 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+import QtQuick
+import QtQuick.Controls
+import ZrythmStyle
+import Zrythm
+
+Item {
+  id: root
+
+  readonly property int bgRadius: ZrythmTheme.toolButtonRadius
+  property real currentAutomatedValue: faderValue
+  property real currentModulatedValue: faderValue
+  readonly property real defaultFaderValue: faderGain?.range.defaultNormalizedValue ?? 0.8
+  readonly property bool dragging: mouseArea.dragging
+  required property ProcessorParameter faderGain
+  property real faderValue: faderGain.baseValue
+  readonly property int handleHeight: 12
+  property bool hovered: false
+  required property UndoStack undoStack
+
+  signal bindMidiCC
+  signal resetFader
+
+  implicitHeight: 200
+  implicitWidth: 36
+
+  ContextMenu.menu: Menu {
+    id: contextMenu
+
+    MenuItem {
+      text: qsTr("Reset")
+
+      onTriggered: {
+        paramOp.setValue(root.defaultFaderValue);
+      }
+    }
+
+    MenuItem {
+      text: qsTr("Bind MIDI CC")
+
+      onTriggered: {
+        root.bindMidiCC();
+      }
+    }
+  }
+
+  // Update currently automated/modulated values
+  Timer {
+    interval: 16 // ~60fps
+    repeat: true
+    running: root.faderGain !== null
+
+    onTriggered: {
+      root.currentAutomatedValue = root.faderGain.valueAfterAutomationApplied();
+      root.currentModulatedValue = root.faderGain.currentValue();
+    }
+  }
+
+  ProcessorParameterOperator {
+    id: paramOp
+  }
+
+  Binding {
+    property: "processorParameter"
+    restoreMode: Binding.RestoreNone
+    target: paramOp
+    value: root.faderGain
+    when: root.faderGain !== null
+  }
+
+  Binding {
+    property: "undoStack"
+    restoreMode: Binding.RestoreNone
+    target: paramOp
+    value: root.undoStack
+    when: root.undoStack !== null
+  }
+
+  Rectangle {
+    id: background
+
+    anchors.fill: parent
+    color: ZrythmTheme.getColorBlendedTowardsContrast(palette.window)
+    opacity: root.hovered ? 0.8 : 0.6
+    radius: root.bgRadius
+  }
+
+  Rectangle {
+    id: fillRect
+
+    readonly property color endColor: ZrythmTheme.getColorBlendedTowardsContrast(palette.accent)
+
+    bottomLeftRadius: root.bgRadius
+    bottomRightRadius: root.bgRadius
+    color: {
+      const intensity = root.faderValue;
+      const fgColor = palette.accent;
+
+      const r = (1.0 - intensity) * endColor.r + intensity * fgColor.r;
+      const g = (1.0 - intensity) * endColor.g + intensity * fgColor.g;
+      const b = (1.0 - intensity) * endColor.b + intensity * fgColor.b;
+      let a = (1.0 - intensity) * endColor.a + intensity * fgColor.a;
+
+      if (!root.hovered) {
+        a = 0.9;
+      }
+
+      return Qt.rgba(r, g, b, a);
+    }
+    height: parent.height * root.faderValue
+    topLeftRadius: 2
+    topRightRadius: 2
+
+    anchors {
+      bottom: parent.bottom
+      left: parent.left
+      margins: 3
+      right: parent.right
+    }
+  }
+
+  Rectangle {
+    id: currentValueRect
+
+    bottomRightRadius: root.bgRadius
+    color: QmlUtils.adjustOpacity(palette.highlightedText, 0.8)
+    height: parent.height * root.currentModulatedValue
+    visible: root.currentModulatedValue != root.faderValue
+    width: 3
+
+    anchors {
+      bottom: parent.bottom
+      margins: 3
+      right: parent.right
+    }
+  }
+
+  Rectangle {
+    id: handle
+
+    color: {
+      var brightness = root.hovered || root.dragging ? 0.84 : 0.72;
+      return palette.button;  // Qt.rgba(brightness, brightness, brightness, 1.0);
+    }
+    height: root.handleHeight
+    radius: 3
+    width: parent.width
+
+    anchors {
+      bottom: fillRect.top
+      bottomMargin: root.handleHeight / 2
+      horizontalCenter: parent.horizontalCenter
+    }
+  }
+
+  TextMetrics {
+    id: valueTextMetrics
+
+    font: valueText.font
+    text: "-99.99 dB"
+  }
+
+  Text {
+    id: valueText
+
+    anchors.centerIn: handle
+    color: palette.buttonText
+    font.pixelSize: 10
+    horizontalAlignment: Text.AlignHCenter
+    text: {
+      let db = 20 * Math.log10(root.faderGain.range.convertFrom0To1(root.faderGain.baseValue));
+      if (db < -100)
+        return "-∞";
+      return db.toFixed(1) + " dB";
+    }
+    visible: root.hovered || root.dragging
+    width: valueTextMetrics.width
+  }
+
+  WarpDragArea {
+    id: mouseArea
+
+    allowedAxes: Qt.Vertical
+    anchors.fill: parent
+    defaultValue: root.defaultFaderValue
+    value: root.faderGain.baseValue
+
+    onEntered: {
+      root.hovered = true;
+    }
+    onExited: {
+      root.hovered = false;
+    }
+    onValueModified: function (newValue) {
+      paramOp.setValue(newValue);
+    }
+  }
+}

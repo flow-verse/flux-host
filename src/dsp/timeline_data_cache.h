@@ -1,0 +1,350 @@
+// SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include <span>
+
+#include "dsp/curve.h"
+#include "dsp/midi_event.h"
+#include "utils/units.h"
+
+#include <QObject>
+
+#include <juce_audio_basics/juce_audio_basics.h>
+
+namespace zrythm::dsp
+{
+
+/**
+ * @brief Base class for timeline data caches.
+ *
+ * Provides common functionality for all timeline data cache types.
+ * This is an abstract base class that defines the interface that
+ * all derived cache classes must implement.
+ */
+class TimelineDataCache : public QObject
+{
+  Q_OBJECT
+
+public:
+  using IntervalType = std::pair<units::sample_t, units::sample_t>;
+
+  explicit TimelineDataCache (QObject * parent = nullptr) : QObject (parent) { }
+
+  ~TimelineDataCache () override;
+
+  /**
+   * @brief Clears all cached data and emits cachedRangesChanged.
+   */
+  void clear ()
+  {
+    clear_impl ();
+    Q_EMIT cachedRangesChanged (compute_cached_sample_ranges ());
+  }
+
+  /**
+   * @brief Removes cached data for intervals that truly overlap with the given
+   * interval.
+   *
+   * Adjacent intervals (where one's end equals another's start) are NOT
+   * considered overlapping, since cache entries use exclusive-end semantics
+   * (end = one past the last sample).
+   *
+   * @param interval The time interval to remove (in samples).
+   *
+   * Call finalize_changes() after one or more calls to this method.
+   */
+  virtual void remove_sequences_matching_interval (IntervalType interval) = 0;
+
+  /**
+   * @brief Finalizes changes, prepares cached data for access, and emits
+   * cachedRangesChanged.
+   *
+   * This should be called after all modifications are complete to prepare the
+   * cached data for real-time access.
+   */
+  void finalize_changes ()
+  {
+    finalize_changes_impl ();
+    Q_EMIT cachedRangesChanged (compute_cached_sample_ranges ());
+  }
+
+  /**
+   * @brief Checks if the cache has any content.
+   *
+   * @return True if the cache contains any data, false otherwise.
+   */
+  virtual bool has_content () const = 0;
+
+  /**
+   * @brief Emitted when the cache content changes (after finalize_changes or
+   * clear).
+   *
+   * Carries the current list of sample intervals that are cached.
+   * Used for debug visualization of cache coverage.
+   */
+  Q_SIGNAL void cachedRangesChanged (std::vector<IntervalType> ranges) const;
+
+protected:
+  /**
+   * @brief Validates that the given interval has a positive width (start <
+   * end).
+   *
+   * @throws std::invalid_argument if start >= end.
+   */
+  static void validate_interval (IntervalType interval)
+  {
+    if (interval.first >= interval.second)
+      {
+        throw std::invalid_argument (
+          "Interval start must be strictly less than end");
+      }
+  }
+
+  /**
+   * @brief Returns true if two intervals truly overlap (adjacent intervals do
+   * not count).
+   */
+  static bool intervals_overlap (IntervalType a, IntervalType b) noexcept
+  {
+    return a.second > b.first && a.first < b.second;
+  }
+
+private:
+  virtual void clear_impl () = 0;
+  virtual void finalize_changes_impl () = 0;
+
+  /**
+   * @brief Computes the sample ranges currently cached.
+   */
+  virtual std::vector<IntervalType> compute_cached_sample_ranges () const = 0;
+};
+
+/**
+ * @brief MIDI-specific timeline data cache.
+ *
+ * Handles caching of MIDI sequences with thread-safe access and
+ * range-based updates.
+ */
+class MidiTimelineDataCache : public TimelineDataCache
+{
+public:
+  explicit MidiTimelineDataCache (QObject * parent = nullptr)
+      : TimelineDataCache (parent)
+  {
+  }
+
+  /**
+   * @brief Adds a MIDI sequence for the given interval.
+   *
+   * @param interval The time interval (in samples).
+   * @param sequence The MIDI message sequence.
+   */
+  void add_midi_sequence (
+    IntervalType                          interval,
+    std::span<const SampleBasedMidiEvent> events);
+
+  /**
+   * @brief Gets the cached MIDI events.
+   *
+   * @return Span of the merged MIDI events.
+   */
+  std::span<const SampleBasedMidiEvent> midi_events () const
+  {
+    return merged_midi_events_;
+  }
+
+  void remove_sequences_matching_interval (IntervalType interval) override;
+  bool has_content () const override;
+
+private:
+  void                      clear_impl () override;
+  void                      finalize_changes_impl () override;
+  std::vector<IntervalType> compute_cached_sample_ranges () const override;
+  /**
+   * @brief MIDI sequences organized by time interval.
+   *
+   * The key is the time interval (start/end samples) and the value is the
+   * MIDI events for that interval.
+   */
+  std::map<IntervalType, std::vector<SampleBasedMidiEvent>> midi_sequences_;
+
+  /**
+   * @brief Merged MIDI events ready for real-time access.
+   *
+   * This is populated during finalize_changes() and contains all MIDI events
+   * from all sequences, properly merged and sorted.
+   */
+  std::vector<SampleBasedMidiEvent> merged_midi_events_;
+};
+
+/**
+ * @brief Audio-specific timeline data cache.
+ *
+ * Handles caching of audio clips with thread-safe access and
+ * range-based updates.
+ */
+class AudioTimelineDataCache : public TimelineDataCache
+{
+public:
+  explicit AudioTimelineDataCache (QObject * parent = nullptr)
+      : TimelineDataCache (parent)
+  {
+  }
+
+  /**
+   * @brief Audio clip entry for caching.
+   *
+   * Contains all the information needed to process an audio clip during
+   * playback without accessing the clip object directly in the real-time
+   * thread.
+   */
+  struct AudioClipEntry
+  {
+    /** Copy of the audio sample buffer. */
+    juce::AudioSampleBuffer audio_buffer;
+
+    /** Start position in samples. */
+    units::sample_t start_sample;
+
+    /** End position in samples. */
+    units::sample_t end_sample;
+  };
+
+  /**
+   * @brief Adds an audio clip for the given interval.
+   *
+   * @param interval The time interval (in samples).
+   * @param audio_buffer The audio sample buffer to copy.
+   */
+  void add_audio_clip (
+    IntervalType                   interval,
+    const juce::AudioSampleBuffer &audio_buffer);
+
+  /**
+   * @brief Gets the cached audio clips.
+   *
+   * @return Reference to the vector of audio clip entries.
+   */
+  std::span<const AudioClipEntry> audio_clips () const { return audio_clips_; }
+
+  void remove_sequences_matching_interval (IntervalType interval) override;
+  bool has_content () const override;
+
+private:
+  void                      clear_impl () override;
+  void                      finalize_changes_impl () override;
+  std::vector<IntervalType> compute_cached_sample_ranges () const override;
+  /**
+   * @brief Audio clip entries for playback.
+   *
+   * These are stored in a vector and sorted by start position during
+   * finalization for efficient processing.
+   */
+  std::vector<AudioClipEntry> audio_clips_;
+};
+
+/**
+ * @brief Automation-specific timeline data cache.
+ *
+ * Handles caching of automation sequences with thread-safe access and
+ * range-based updates.
+ */
+class AutomationTimelineDataCache : public TimelineDataCache
+{
+public:
+  explicit AutomationTimelineDataCache (QObject * parent = nullptr)
+      : TimelineDataCache (parent)
+  {
+  }
+
+  /**
+   * @brief A constant-tempo sub-segment of an automation curve.
+   *
+   * Because the tempo is constant within each segment, the sample-space ratio
+   * equals the tick-space ratio, so the audio thread can evaluate the curve
+   * without accessing the tempo map.
+   */
+  struct CachedAutomationSegment
+  {
+    /** Absolute sample positions (for binary search). */
+    units::sample_t start_sample;
+    units::sample_t end_sample;
+
+    /**
+     * @brief Position within the full automation point pair (0 = first
+     * point, 1 = second point).
+     *
+     * For sub-segments split by tempo changes, these span a sub-range of
+     * [0, 1]. For flat hold segments, both are 1.0.
+     */
+    float ratio_start;
+    float ratio_end;
+
+    /** Values of the two automation points bracketing this segment. */
+    float point_a_value;
+    float point_b_value;
+
+    /** Curve parameters from the automation point that drives this segment. */
+    dsp::CurveOptions::Algorithm curve_algo;
+    float                        curve_curviness;
+  };
+
+  /**
+   * @brief Automation cache entry for caching.
+   *
+   * Contains all the information needed to process automation data during
+   * playback without accessing the automation objects directly in the
+   * real-time thread.
+   */
+  struct AutomationCacheEntry
+  {
+    /** Sorted constant-tempo segments covering the clip's span. */
+    std::vector<CachedAutomationSegment> segments;
+
+    /** Start position in samples. */
+    units::sample_t start_sample;
+
+    /** End position in samples. */
+    units::sample_t end_sample;
+  };
+
+  /**
+   * @brief Adds an automation cache entry for the given interval.
+   *
+   * @param interval The time interval (in samples).
+   * @param entry The automation cache entry (segments + interval).
+   */
+  void
+  add_automation_sequence (IntervalType interval, AutomationCacheEntry &&entry);
+
+  /**
+   * @brief Gets the cached automation sequences.
+   *
+   * @return Reference to the vector of automation cache entries.
+   */
+  std::span<const AutomationCacheEntry> automation_sequences () const
+  {
+    return automation_sequences_;
+  }
+
+  void remove_sequences_matching_interval (IntervalType interval) override;
+  bool has_content () const override;
+
+private:
+  void                      clear_impl () override;
+  void                      finalize_changes_impl () override;
+  std::vector<IntervalType> compute_cached_sample_ranges () const override;
+  /**
+   * @brief Automation sequences for playback.
+   *
+   * These are stored in a vector and sorted by start position during
+   * finalization for efficient processing.
+   */
+  std::vector<AutomationCacheEntry> automation_sequences_;
+};
+
+} // namespace zrythm::dsp
+
+Q_DECLARE_METATYPE (std::vector<zrythm::dsp::TimelineDataCache::IntervalType>)

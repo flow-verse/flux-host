@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="20"
+   height="20"
+   viewBox="0 0 20 20"
+   fill="none"
+   version="1.1"
+   id="svg4"
+   sodipodi:docname="piano-roll.svg"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)">
+  <metadata
+     id="metadata10">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs8" />
+  <sodipodi:namedview
+     inkscape:document-rotation="0"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1025"
+     id="namedview6"
+     showgrid="false"
+     inkscape:zoom="29.663129"
+     inkscape:cx="7.6145759"
+     inkscape:cy="9.4717419"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg4" />
+  <path
+     fill-rule="evenodd"
+     clip-rule="evenodd"
+     d="M 17.381268,0.7734145 H 2.6187316 c -1.019141,0 -1.8453171,0.8261761 -1.8453171,1.8453171 v 3.6247287 0.065906 1.9112226 3.5588501 1.911195 0.06588 3.624756 c 0,1.019169 0.8261761,1.845317 1.8453171,1.845317 H 17.381268 c 1.019169,0 1.845317,-0.826148 1.845317,-1.845317 V 13.690634 6.3093658 2.6187316 c 0,-1.019141 -0.826148,-1.8453171 -1.845317,-1.8453171 z M 2.6187316,14.613293 v 2.767975 H 17.381268 v -3.690634 h -5.535951 v 0.06588 c 0,0.856781 -0.641248,0.856781 -1.383988,0.856781 z m 9.2265854,-2.767976 h 5.535951 V 8.1546829 h -5.535951 v 0.065906 c 0,0.8567531 -0.641248,0.8567531 -1.383988,0.8567531 H 2.6187316 v 1.845318 h 7.8425974 c 0.74274,0 1.383988,0 1.383988,0.85678 z m 0,-5.6018567 v 0.065906 h 5.535951 V 2.6187316 H 2.6187316 v 2.7679757 h 7.8425974 c 0.74274,0 1.383988,0 1.383988,0.856753 z"
+     fill="black"
+     id="path2"
+     style="fill:#e6e6e6;stroke-width:0.922659" />
+</svg>

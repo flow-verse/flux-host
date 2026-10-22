@@ -1,0 +1,23 @@
+using Gtk 4.0;
+
+template $ZoomButtonsWidget : Box {
+  Button zoom_in {
+    icon-name: "gnome-icon-library-arrows-pointing-inward-symbolic";
+    action-name: "app.zoom-in";
+  }
+
+  Button zoom_out {
+    icon-name: "gnome-icon-library-arrows-pointing-outward-symbolic";
+    action-name: "app.zoom-out";
+  }
+
+  Button original_size {
+    icon-name: "gnome-icon-library-fullscreen-square-symbolic";
+    action-name: "app.original-size";
+  }
+
+  Button best_fit {
+    icon-name: "gnome-icon-library-object-scale-to-fit-symbolic";
+    action-name: "app.best-fit";
+  }
+}

@@ -1,0 +1,332 @@
+// SPDX-FileCopyrightText: © 2025 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#pragma once
+
+#include "dsp/tempo_map.h"
+#include "utils/qt.h"
+
+#include <QObject>
+#include <QtQml/QQmlListProperty>
+#include <QtQmlIntegration/qqmlintegration.h>
+
+namespace zrythm::dsp
+{
+
+class TempoEventWrapper : public QObject
+{
+  Q_OBJECT
+  Q_PROPERTY (qint64 tick READ tick CONSTANT)
+  Q_PROPERTY (double bpm READ bpm CONSTANT)
+  Q_PROPERTY (CurveType curve READ curve CONSTANT)
+  QML_ELEMENT
+  QML_UNCREATABLE ("")
+
+public:
+  explicit TempoEventWrapper (
+    const TempoMap::TempoEvent &event,
+    QObject *                   parent = nullptr)
+      : QObject (parent), event_ (event)
+  {
+  }
+
+  enum class CurveType : std::uint8_t
+  {
+    Constant, ///< Constant tempo
+    Linear    ///< Linear tempo ramp
+  };
+  Q_ENUM (CurveType)
+
+  qint64    tick () const { return event_.tick.in (units::ticks); }
+  double    bpm () const { return event_.bpm.in (units::bpm); }
+  CurveType curve () const
+  {
+    return static_cast<CurveType> (std::to_underlying (event_.curve));
+  }
+
+private:
+  TempoMap::TempoEvent event_;
+};
+
+class TimeSignatureEventWrapper : public QObject
+{
+  Q_OBJECT
+  Q_PROPERTY (qint64 tick READ tick CONSTANT)
+  Q_PROPERTY (int numerator READ numerator CONSTANT)
+  Q_PROPERTY (int denominator READ denominator CONSTANT)
+  QML_ELEMENT
+  QML_UNCREATABLE ("")
+
+public:
+  explicit TimeSignatureEventWrapper (
+    const TempoMap::TimeSignatureEvent &event,
+    QObject *                           parent = nullptr)
+      : QObject (parent), event_ (event)
+  {
+  }
+
+  qint64 tick () const { return event_.tick.in (units::ticks); }
+  int    numerator () const { return event_.time_signature.numerator; }
+  int    denominator () const { return event_.time_signature.denominator; }
+
+private:
+  TempoMap::TimeSignatureEvent event_;
+};
+
+class MusicalPositionWrapper : public QObject
+{
+  Q_OBJECT
+  Q_PROPERTY (int bar READ bar CONSTANT)
+  Q_PROPERTY (int beat READ beat CONSTANT)
+  Q_PROPERTY (int sixteenth READ sixteenth CONSTANT)
+  Q_PROPERTY (int tick READ tick CONSTANT)
+  QML_ELEMENT
+  QML_UNCREATABLE ("")
+
+public:
+  explicit MusicalPositionWrapper (
+    const TempoMap::MusicalPosition &pos,
+    QObject *                        parent = nullptr)
+      : QObject (parent), pos_ (pos)
+  {
+  }
+
+  int bar () const { return pos_.bar; }
+  int beat () const { return pos_.beat; }
+  int sixteenth () const { return pos_.sixteenth; }
+  int tick () const { return pos_.tick; }
+
+private:
+  TempoMap::MusicalPosition pos_;
+};
+
+class TempoMapWrapper : public QObject
+{
+  Q_OBJECT
+  Q_PROPERTY (
+    QQmlListProperty<TempoEventWrapper> tempoEvents READ tempoEvents NOTIFY
+      tempoEventsChanged)
+  Q_PROPERTY (
+    QQmlListProperty<TimeSignatureEventWrapper> timeSignatureEvents READ
+      timeSignatureEvents NOTIFY timeSignatureEventsChanged)
+  Q_PROPERTY (
+    double sampleRate READ sampleRate WRITE setSampleRate NOTIFY
+      sampleRateChanged)
+  Q_PROPERTY (double baseBpm READ baseBpm WRITE setBaseBpm NOTIFY baseBpmChanged)
+  Q_PROPERTY (
+    int baseTimeSignatureNumerator READ baseTimeSignatureNumerator WRITE
+      setBaseTimeSignatureNumerator NOTIFY baseTimeSignatureChanged)
+  Q_PROPERTY (
+    int baseTimeSignatureDenominator READ baseTimeSignatureDenominator WRITE
+      setBaseTimeSignatureDenominator NOTIFY baseTimeSignatureChanged)
+  QML_NAMED_ELEMENT (TempoMap)
+  QML_UNCREATABLE ("")
+
+public:
+  explicit TempoMapWrapper (TempoMap &tempo_map, QObject * parent = nullptr)
+      : QObject (parent), tempo_map_ (tempo_map)
+  {
+    rebuildWrappers ();
+  }
+
+  QQmlListProperty<TempoEventWrapper> tempoEvents ()
+  {
+    return { this, &tempoEventWrappers_ };
+  }
+
+  QQmlListProperty<TimeSignatureEventWrapper> timeSignatureEvents ()
+  {
+    return { this, &timeSigEventWrappers_ };
+  }
+
+  /**
+   * @brief Returns the time signature at the given tick.
+   */
+  Q_INVOKABLE int timeSignatureNumeratorAtTick (int64_t tick) const;
+  Q_INVOKABLE int timeSignatureDenominatorAtTick (int64_t tick) const;
+
+  Q_INVOKABLE double tempoAtTick (int64_t tick) const;
+
+  // this should be static but i don't know how to use it from QML then
+  Q_INVOKABLE int getPpq () const
+  {
+    return TempoMap::get_ppq ().in (units::ticks);
+  }
+
+  double sampleRate () const
+  {
+    return tempo_map_.get_sample_rate ().in (units::sample_rate);
+  }
+  void setSampleRate (double sampleRate)
+  {
+    if (
+      qFuzzyCompare (
+        sampleRate, tempo_map_.get_sample_rate ().in (units::sample_rate)))
+      return;
+    tempo_map_.set_sample_rate (units::sample_rate (sampleRate));
+    Q_EMIT sampleRateChanged ();
+  }
+
+  // Base tempo at tick 0 (governs the region from tick 0 up to the first
+  // inserted tempo event, or the whole timeline if none).
+  double baseBpm () const { return tempo_map_.base_bpm ().in (units::bpm); }
+  void   setBaseBpm (double bpm)
+  {
+    if (qFuzzyCompare (bpm, baseBpm ()))
+      return;
+    tempo_map_.set_base_bpm (units::bpm (bpm));
+    rebuildTempoWrappers ();
+    Q_EMIT baseBpmChanged ();
+    Q_EMIT tempoEventsChanged ();
+  }
+
+  int baseTimeSignatureNumerator () const
+  {
+    return tempo_map_.base_time_signature ().time_signature.numerator;
+  }
+  int baseTimeSignatureDenominator () const
+  {
+    return tempo_map_.base_time_signature ().time_signature.denominator;
+  }
+  void setBaseTimeSignatureNumerator (int numerator)
+  {
+    if (numerator == baseTimeSignatureNumerator ())
+      return;
+    tempo_map_.set_base_time_signature (
+      TimeSignature{ numerator, baseTimeSignatureDenominator () });
+    rebuildTimeSigWrappers ();
+    Q_EMIT baseTimeSignatureChanged ();
+    Q_EMIT timeSignatureEventsChanged ();
+  }
+  void setBaseTimeSignatureDenominator (int denominator)
+  {
+    if (denominator == baseTimeSignatureDenominator ())
+      return;
+    tempo_map_.set_base_time_signature (
+      TimeSignature{ baseTimeSignatureNumerator (), denominator });
+    rebuildTimeSigWrappers ();
+    Q_EMIT baseTimeSignatureChanged ();
+    Q_EMIT timeSignatureEventsChanged ();
+  }
+
+  Q_INVOKABLE void
+  addTempoEvent (qint64 tick, double bpm, TempoEventWrapper::CurveType curveType)
+  {
+    tempo_map_.add_tempo_event (
+      units::ticks (tick), units::bpm (bpm),
+      static_cast<TempoMap::CurveType> (curveType));
+    rebuildTempoWrappers ();
+    Q_EMIT tempoEventsChanged ();
+  }
+
+  Q_INVOKABLE void
+  addTimeSignatureEvent (qint64 tick, int numerator, int denominator)
+  {
+    tempo_map_.add_time_signature_event (
+      units::ticks (tick), TimeSignature{ numerator, denominator });
+    rebuildTimeSigWrappers ();
+    Q_EMIT timeSignatureEventsChanged ();
+  }
+
+  Q_INVOKABLE void clearTempoEvents ()
+  {
+    tempo_map_.clear_tempo_events ();
+    rebuildTempoWrappers ();
+    Q_EMIT tempoEventsChanged ();
+  }
+
+  Q_INVOKABLE void clearTimeSignatureEvents ()
+  {
+    tempo_map_.clear_time_signature_events ();
+    rebuildTimeSigWrappers ();
+    Q_EMIT timeSignatureEventsChanged ();
+  }
+
+  Q_INVOKABLE MusicalPositionWrapper * getMusicalPosition (int64_t tick) const
+  {
+    return new MusicalPositionWrapper (
+      tempo_map_.tick_to_musical_position (units::ticks (tick)));
+  }
+
+  Q_INVOKABLE QString getMusicalPositionString (int64_t tick) const;
+
+  Q_INVOKABLE int64_t
+  getTickFromMusicalPosition (int bar, int beat, int sixteenth, int tick) const
+  {
+    return tempo_map_
+      .musical_position_to_tick (
+        TempoMap::MusicalPosition{
+          .bar = bar, .beat = beat, .sixteenth = sixteenth, .tick = tick })
+      .asQuantity ()
+      .in (units::ticks);
+  }
+
+  // additional API when we want to avoid allocations and we only need 1 part
+
+  Q_INVOKABLE int getMusicalPositionBar (int64_t tick) const
+  {
+    return tempo_map_.tick_to_musical_position (units::ticks (tick)).bar;
+  }
+  Q_INVOKABLE int getMusicalPositionBeat (int64_t tick) const
+  {
+    return tempo_map_.tick_to_musical_position (units::ticks (tick)).beat;
+  }
+  Q_INVOKABLE int getMusicalPositionSixteenth (int64_t tick) const
+  {
+    return tempo_map_.tick_to_musical_position (units::ticks (tick)).sixteenth;
+  }
+  Q_INVOKABLE int getMusicalPositionTick (int64_t tick) const
+  {
+    return tempo_map_.tick_to_musical_position (units::ticks (tick)).tick;
+  }
+
+  /**
+   * @brief To be called when the tempo map has been modified directly.
+   */
+  void rebuildWrappers ()
+  {
+    rebuildTempoWrappers ();
+    rebuildTimeSigWrappers ();
+  }
+
+  /// Read-only access to tempo map
+  const TempoMap &get_tempo_map () const { return tempo_map_; }
+
+Q_SIGNALS:
+  void tempoEventsChanged ();
+  void timeSignatureEventsChanged ();
+  void sampleRateChanged ();
+  void baseBpmChanged ();
+  void baseTimeSignatureChanged ();
+
+private:
+  void rebuildTempoWrappers ()
+  {
+    qDeleteAll (tempoEventWrappers_);
+    tempoEventWrappers_.clear ();
+    for (const auto &event : tempo_map_.tempo_events ())
+      {
+        tempoEventWrappers_.append (new TempoEventWrapper (event, this));
+      }
+  }
+
+  void rebuildTimeSigWrappers ()
+  {
+    qDeleteAll (timeSigEventWrappers_);
+    timeSigEventWrappers_.clear ();
+    for (const auto &event : tempo_map_.time_signature_events ())
+      {
+        timeSigEventWrappers_.append (
+          new TimeSignatureEventWrapper (event, this));
+      }
+  }
+
+private:
+  TempoMap                          &tempo_map_;
+  QList<TempoEventWrapper *>         tempoEventWrappers_;
+  QList<TimeSignatureEventWrapper *> timeSigEventWrappers_;
+};
+
+} // namespace zrythm::dsp
+
+Q_DECLARE_METATYPE (zrythm::dsp::TempoMap::CurveType)

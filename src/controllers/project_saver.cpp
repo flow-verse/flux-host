@@ -1,0 +1,528 @@
+// SPDX-FileCopyrightText: © 2025-2026 Alexandros Theodotou <alex@zrythm.org>
+// SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+#include <exception>
+
+#include "utils/format_qt.h"
+#include <fmt/std.h>
+
+#include "controllers/project_json_serializer.h"
+#include "controllers/project_saver.h"
+#include "structure/project/project.h"
+#include "structure/project/project_path_provider.h"
+#include "structure/project/project_ui_state.h"
+#include "undo/undo_stack.h"
+#include "utils/exceptions.h"
+#include "utils/format.h"
+#include "utils/io_utils.h"
+#include "utils/views.h"
+
+#include <QtConcurrentRun>
+
+#include <zstd.h>
+
+namespace zrythm::controllers
+{
+
+void
+ProjectSaver::make_project_dirs (const std::filesystem::path &project_directory)
+{
+  for (
+    auto type :
+    { structure::project::ProjectPathProvider::ProjectPath::BackupsDir,
+      structure::project::ProjectPathProvider::ProjectPath::ExportsDir,
+      structure::project::ProjectPathProvider::ProjectPath::ExportStemsDir,
+      structure::project::ProjectPathProvider::ProjectPath::AudioFilePoolDir })
+    {
+      const auto dir =
+        project_directory
+        / structure::project::ProjectPathProvider::get_path (type);
+      assert (!dir.empty ());
+      try
+        {
+          utils::io::mkdir (dir);
+        }
+      catch (const ZrythmException &)
+        {
+          std::throw_with_nested (ZrythmException (
+            fmt::format ("Failed to create directory {}", dir)));
+        }
+    }
+}
+
+void
+ProjectSaver::compress_or_decompress (
+  bool              compress,
+  char **           _dest,
+  size_t *          _dest_size,
+  const QByteArray &src)
+{
+  z_info (
+    "using zstd v{}.{}.{}", ZSTD_VERSION_MAJOR, ZSTD_VERSION_MINOR,
+    ZSTD_VERSION_RELEASE);
+
+  char * dest = nullptr;
+  size_t dest_size = 0;
+  if (compress)
+    {
+      z_info ("compressing project...");
+      size_t compress_bound = ZSTD_compressBound (src.size ());
+      dest = (char *) malloc (compress_bound);
+      dest_size =
+        ZSTD_compress (dest, compress_bound, src.constData (), src.size (), 1);
+      if (ZSTD_isError (dest_size))
+        {
+          free (dest);
+          throw ZrythmException (format_str (
+            "Failed to compress project file: {}",
+            ZSTD_getErrorName (dest_size)));
+        }
+    }
+  else /* decompress */
+    {
+#if (ZSTD_VERSION_MAJOR == 1 && ZSTD_VERSION_MINOR < 3)
+      unsigned long long const frame_content_size =
+        ZSTD_getDecompressedSize (src.constData (), src.size ());
+      if (frame_content_size == 0)
+#else
+      unsigned long long const frame_content_size =
+        ZSTD_getFrameContentSize (src.constData (), src.size ());
+      if (frame_content_size == ZSTD_CONTENTSIZE_ERROR)
+#endif
+        {
+          throw ZrythmException ("Project not compressed by zstd");
+        }
+      dest = (char *) malloc ((size_t) frame_content_size);
+      dest_size = ZSTD_decompress (
+        dest, frame_content_size, src.constData (), src.size ());
+      if (ZSTD_isError (dest_size))
+        {
+          free (dest);
+          throw ZrythmException (format_str (
+            "Failed to decompress project file: {}",
+            ZSTD_getErrorName (dest_size)));
+        }
+      if (dest_size != frame_content_size)
+        {
+          free (dest);
+          /* impossible because zstd will check this condition */
+          throw ZrythmException ("uncompressed_size != frame_content_size");
+        }
+    }
+
+  z_debug (
+    "{} : {} bytes -> {} bytes", compress ? "Compression" : "Decompression",
+    src.size (), dest_size);
+
+  *_dest = dest;
+  *_dest_size = dest_size;
+}
+
+void
+ProjectSaver::set_and_create_next_available_backup_dir ()
+{
+// TODO
+#if 0
+  auto backups_dir = get_path (ProjectPath::BACKUPS, false);
+
+  int i = 0;
+  do
+    {
+      if (i > 0)
+        {
+          std::string bak_title = fmt::format ("{}.bak{}", title_, i);
+          backup_dir_ = backups_dir / bak_title;
+        }
+      else
+        {
+          std::string bak_title = fmt::format ("{}.bak", title_);
+          backup_dir_ = backups_dir / bak_title;
+        }
+      i++;
+    }
+  while (
+    backup_dir_.has_value () && utils::io::path_exists (backup_dir_.value ()));
+
+  try
+    {
+      utils::io::mkdir (*backup_dir_);
+    }
+  catch (ZrythmException &e)
+    {
+      throw ZrythmException (format_qstr (
+        QObject::tr ("Failed to create backup directory {}"), backup_dir_));
+    }
+#endif
+}
+
+std::string
+ProjectSaver::get_existing_uncompressed_text (
+  const std::filesystem::path &project_dir)
+{
+  /* get file contents */
+  const auto project_file_path =
+    project_dir
+    / structure::project::ProjectPathProvider::get_path (
+      structure::project::ProjectPathProvider::ProjectPath::ProjectFile);
+  z_debug ("getting text for project file {}", project_file_path);
+
+  QByteArray compressed_pj{};
+  try
+    {
+      compressed_pj = utils::io::read_file_contents (project_file_path);
+    }
+  catch (const ZrythmException &)
+    {
+      std::throw_with_nested (ZrythmException (format_qstr (
+        QObject::tr ("Unable to read file at {}"), project_file_path)));
+    }
+
+  /* decompress */
+  z_info ("decompressing project...");
+  char * text = nullptr;
+  size_t text_size = 0;
+  try
+    {
+      decompress (&text, &text_size, compressed_pj);
+    }
+  catch (const ZrythmException &)
+    {
+      std::throw_with_nested (ZrythmException (format_qstr (
+        QObject::tr ("Unable to decompress project file at {}"),
+        project_file_path)));
+    }
+
+  /* make string null-terminated */
+  text = (char *) realloc (text, text_size + sizeof (char));
+  text[text_size] = '\0';
+  std::string ret (text);
+  free (text);
+  return ret;
+}
+
+int
+ProjectSaver::autosave_cb (void * data)
+{
+#if 0
+  if (
+    !PROJECT || !PROJECT->loaded_ || PROJECT->dir_.empty ()
+    || PROJECT->datetime_str_.empty () || !MAIN_WINDOW || !MAIN_WINDOW->setup)
+    return G_SOURCE_CONTINUE;
+
+  unsigned int autosave_interval_mins =
+    g_settings_get_uint (S_P_PROJECTS_GENERAL, "autosave-interval");
+
+  /* return if autosave disabled */
+  if (autosave_interval_mins <= 0)
+    return G_SOURCE_CONTINUE;
+
+  auto &out_ports =
+    PROJECT->tracklist_->master_track_->channel ()->stereo_out_;
+  auto cur_time = SteadyClock::now ();
+  /* subtract 4 seconds because the time this gets called is not exact (this is
+   * an old comment and I don't remember why this is done) */
+  auto autosave_interval =
+    std::chrono::minutes (autosave_interval_mins) - std::chrono::seconds (4);
+
+  /* skip if semaphore busy */
+  SemaphoreRAII sem (PROJECT->save_sem_);
+  if (!sem.is_acquired ())
+    {
+      z_debug ("can't acquire project lock - skipping autosave");
+      return G_SOURCE_CONTINUE;
+    }
+
+  auto * last_action = PROJECT->undo_manager_->get_last_action ();
+
+  /* skip if bad time to save or rolling */
+  if (cur_time - PROJECT->last_successful_autosave_time_ < autosave_interval || TRANSPORT->is_rolling() || (TRANSPORT->play_state_ == Transport::PlayState::RollRequested && (TRANSPORT->preroll_frames_remaining_ > 0 || TRANSPORT->countin_frames_remaining_ > 0)))
+    {
+      return G_SOURCE_CONTINUE;
+    }
+
+  /* skip if sound is playing */
+  if (
+    out_ports->get_l ().get_peak () >= 0.0001f
+    || out_ports->get_r ().get_peak () >= 0.0001f)
+    {
+      z_debug ("sound is playing, skipping autosave");
+      return G_SOURCE_CONTINUE;
+    }
+
+  /* skip if currently performing action */
+  if (arranger_widget_any_doing_action ())
+    {
+      z_debug ("in the middle of an action, skipping autosave");
+      return G_SOURCE_CONTINUE;
+    }
+
+  if (PROJECT->last_action_in_last_successful_autosave_ == last_action)
+    {
+      z_debug ("last action is same as previous backup - skipping autosave");
+      return G_SOURCE_CONTINUE;
+    }
+
+  /* skip if any modal window is open */
+  if (ZRYTHM_HAVE_UI)
+    {
+      auto toplevels = gtk_window_get_toplevels ();
+      auto num_toplevels = g_list_model_get_n_items (toplevels);
+      for (guint i = 0; i < num_toplevels; i++)
+        {
+          auto window = GTK_WINDOW (g_list_model_get_item (toplevels, i));
+          if (
+            gtk_widget_get_visible (GTK_WIDGET (window))
+            && (gtk_window_get_modal (window) || gtk_window_get_transient_for (window) == GTK_WINDOW (MAIN_WINDOW)))
+            {
+              z_debug ("modal/transient windows exist - skipping autosave");
+              z_gtk_widget_print_hierarchy (GTK_WIDGET (window));
+              return G_SOURCE_CONTINUE;
+            }
+        }
+    }
+
+  /* ok to save */
+  try
+    {
+      PROJECT->save (PROJECT->dir_, true, true, true);
+      PROJECT->last_successful_autosave_time_ = cur_time;
+    }
+  catch (const ZrythmException &e)
+    {
+      if (ZRYTHM_HAVE_UI)
+        {
+          e.handle (QObject::tr ("Failed to save the project"));
+        }
+      else
+        {
+          z_warning ("{}", e.what ());
+        }
+    }
+
+  return G_SOURCE_CONTINUE;
+#endif
+  return 0;
+}
+
+QFuture<QString>
+ProjectSaver::save (
+  const structure::project::Project        &project,
+  const structure::project::ProjectUiState &ui_state,
+  const undo::UndoStack                    &undo_stack,
+  utils::Version                            app_version,
+  const std::filesystem::path              &path,
+  bool                                      is_backup)
+{
+  z_info ("Saving project at {}, is backup: {}", path, is_backup);
+
+  const auto title = utils::Utf8String::from_path (path.filename ());
+  const auto project_file_path =
+    path
+    / structure::project::ProjectPathProvider::get_path (
+      structure::project::ProjectPathProvider::ProjectPath::ProjectFile);
+  const auto temp_project_file_path =
+    path
+    / (utils::Utf8String::from_path (
+         structure::project::ProjectPathProvider::get_path (
+           structure::project::ProjectPathProvider::ProjectPath::ProjectFile))
+       + u8".tmp")
+        .to_path ();
+
+  /* pause engine */
+  dsp::AudioEngine::EngineState state{};
+  bool                          engine_paused = false;
+  auto *                        engine = project.engine ();
+  if (engine->activated ())
+    {
+      engine->wait_for_pause (state, false, true);
+      engine_paused = true;
+    }
+
+  const auto resume_engine = [engine, engine_paused, state] () {
+    if (engine_paused)
+      {
+        engine->resume (state);
+      }
+  };
+
+  /* Subtask lambdas */
+  const auto create_dirs_task = [is_backup, path] () {
+    if (is_backup)
+      {
+        set_and_create_next_available_backup_dir ();
+      }
+    utils::io::mkdir (path);
+    make_project_dirs (path);
+  };
+
+  const auto write_pool_task = [&project, is_backup] () {
+// TODO
+#if 0
+    if (this == get_active_instance ())
+      {
+        /* write the pool */
+        pool_->remove_unused (is_backup);
+      }
+#endif
+    project.pool_->write_to_disk (is_backup);
+  };
+
+  const auto build_json_task =
+    [&project, &ui_state, &undo_stack, app_version, title] () {
+      z_debug ("serializing project to json...");
+      QElapsedTimer timer;
+      timer.start ();
+      auto json = ProjectJsonSerializer::serialize (
+        project, ui_state, undo_stack, app_version, title.view ());
+      z_debug ("time to serialize: {}ms", timer.elapsed ());
+      return json;
+    };
+
+  const auto validate_json_task = [] (const nlohmann::json &json) {
+    z_debug ("Validating project JSON...");
+    QElapsedTimer timer;
+    timer.start ();
+    // TODO
+    try
+      {
+        ProjectJsonSerializer::validate_json (json);
+      }
+    catch (const ZrythmException &e)
+      {
+        utils::log_exception (e, "Validation failed");
+      }
+    z_debug ("time to validate: {}ms", timer.elapsed ());
+    return json;
+  };
+
+  const auto write_json_task =
+    [temp_project_file_path] (const nlohmann::json &json) {
+      char * compressed_json{};
+      size_t compressed_size{};
+
+      const auto json_str = json.dump (2);
+      utils::io::set_file_contents (
+        temp_project_file_path.parent_path () / "project-debug.json",
+        utils::Utf8String::from_utf8_encoded_string (json_str));
+
+      /* compress */
+      // warning: this byte array depends on json_str being alive while it's used
+      QByteArray src_data = QByteArray::fromRawData (
+        json_str.c_str (), static_cast<qsizetype> (json_str.length ()));
+      compress (&compressed_json, &compressed_size, src_data);
+
+      /* set file contents */
+      z_debug ("saving project file at {}...", temp_project_file_path);
+      utils::io::set_file_contents (
+        temp_project_file_path, compressed_json, compressed_size);
+      free (compressed_json);
+    };
+
+  const auto rename_file_task = [project_file_path, temp_project_file_path] () {
+    utils::io::move_file (project_file_path, temp_project_file_path, true);
+  };
+
+  // Progress stages (0-100):
+  // 0-10: Creating directories
+  // 10-30: Writing audio pool files
+  // 30-60: Serializing to JSON
+  // 60-70: Validating JSON
+  // 70-90: Compressing and writing the project file
+  // 90-100: Finalizing
+  constexpr int kStageCreateDirs = 10;
+  constexpr int kStageWritePool = 30;
+  constexpr int kStageSerialize = 60;
+  constexpr int kStageValidate = 70;
+  constexpr int kStageWriteFile = 90;
+  constexpr int kStageDone = 100;
+
+  return QtConcurrent::run (
+    [engine, resume_engine, create_dirs_task, write_pool_task, build_json_task,
+     validate_json_task, write_json_task, rename_file_task, path,
+     is_backup] (QPromise<QString> &promise) {
+      // The pool write and serialization access live project data, so they
+      // must run on the engine's thread. Any exception is rethrown on this
+      // thread: exceptions must not escape into the main event loop
+      const auto run_on_engine_thread = [engine] (const auto &func) {
+        std::exception_ptr eptr;
+        QMetaObject::invokeMethod (
+          engine,
+          [&eptr, &func] {
+            try
+              {
+                func ();
+              }
+            catch (...)
+              {
+                eptr = std::current_exception ();
+              }
+          },
+          Qt::BlockingQueuedConnection);
+        if (eptr != nullptr)
+          std::rethrow_exception (eptr);
+      };
+      // Resumes the engine and reports whether cancellation was requested
+      const auto cancel_if_requested =
+        [&run_on_engine_thread, &promise, resume_engine] () {
+          if (!promise.isCanceled ())
+            return false;
+          z_debug ("Project save canceled");
+          run_on_engine_thread (resume_engine);
+          return true;
+        };
+
+      promise.setProgressRange (0, kStageDone);
+
+      try
+        {
+          create_dirs_task ();
+          if (cancel_if_requested ())
+            return;
+
+          promise.setProgressValueAndText (
+            kStageCreateDirs, QObject::tr ("Writing audio files..."));
+          run_on_engine_thread (write_pool_task);
+          if (cancel_if_requested ())
+            return;
+
+          promise.setProgressValueAndText (
+            kStageWritePool, QObject::tr ("Serializing project..."));
+          nlohmann::json json;
+          run_on_engine_thread ([&json, &build_json_task] {
+            json = build_json_task ();
+          });
+          if (cancel_if_requested ())
+            return;
+
+          promise.setProgressValueAndText (
+            kStageSerialize, QObject::tr ("Validating project data..."));
+          json = validate_json_task (json);
+
+          promise.setProgressValueAndText (
+            kStageValidate, QObject::tr ("Writing project file..."));
+          write_json_task (json);
+
+          promise.setProgressValueAndText (
+            kStageWriteFile, QObject::tr ("Finalizing save..."));
+          rename_file_task ();
+
+          run_on_engine_thread ([path, is_backup, resume_engine] {
+            z_info (
+              "Successfully saved project at {}, is backup: {}", path,
+              is_backup);
+            resume_engine ();
+          });
+
+          promise.setProgressValueAndText (
+            kStageDone, QObject::tr ("Project saved"));
+          promise.addResult (utils::Utf8String::from_path (path).to_qstring ());
+        }
+      catch (const std::exception &e)
+        {
+          utils::log_exception (e, "Project save failed");
+          run_on_engine_thread (resume_engine);
+          promise.setException (std::current_exception ());
+        }
+    });
+}
+}

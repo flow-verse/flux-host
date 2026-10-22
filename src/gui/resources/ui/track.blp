@@ -1,0 +1,25 @@
+using Gtk 4.0;
+
+template $TrackWidget : Widget {
+  Box highlight_top_box {
+    name: "track-highlight-top-box";
+  }
+
+  Box main_box {
+    name: "track-main-box";
+    Box group_colors_box {}
+    $TrackCanvasWidget canvas {
+      hexpand: true;
+      vexpand: true;
+    }
+    Gtk.Box {
+      spacing: 2;
+      $MeterWidget meter_l {}
+      $MeterWidget meter_r {}
+    }
+  }
+
+  Box highlight_bot_box {
+    name: "track-highlight-bot-box";
+  }
+}

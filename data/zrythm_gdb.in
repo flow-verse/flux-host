@@ -1,0 +1,48 @@
+#!/usr/bin/env sh
+# SPDX-FileCopyrightText: © 2021-2024, 2026 Alexandros Theodotou <alex@zrythm.org>
+# SPDX-License-Identifier: LicenseRef-ZrythmLicense
+
+set -x
+
+flatpak_build="@FLATPAK_BUILD_ONE_OR_ZERO@"
+if [ "$flatpak_build" != "1" ]; then
+  jack_path=$(dirname $(ldconfig -p | grep 'libjack.so ' | head -n 1 | cut -d ' ' -f 4))
+
+  export GSETTINGS_SCHEMA_DIR=@gschemas_dir@
+
+  # used by the universal installer
+  if [ "@ZRYTHM_IS_INSTALLER_VER_ONE_OR_ZERO@" = "1" ]; then
+    export GDK_PIXBUF_MODULE_FILE="@CMAKE_INSTALL_FULL_LIBDIR@/gdk-pixbuf-2.0/2.10.0/loaders.cache"
+    export PATH="@CMAKE_INSTALL_PREFIX@/libexec:$PATH"
+    export @LD_LIBRARY_PATH_ENV@="@zrythm_libdir@:@CMAKE_INSTALL_FULL_LIBDIR@:$jack_path:$@LD_LIBRARY_PATH_ENV@"
+  else
+    export @LD_LIBRARY_PATH_ENV@="@zrythm_libdir@:$jack_path:@CMAKE_INSTALL_FULL_LIBDIR@:$@LD_LIBRARY_PATH_ENV@"
+  fi
+fi
+
+export G_MESSAGES_DEBUG=zrythm
+
+user_dir="`gsettings get org.zrythm.Zrythm.preferences.general.paths zrythm-dir | sed s/\'//g`"
+user_gdb_dir="$user_dir/gdb"
+date_str=`date +%Y-%m-%d_%H-%M-%S`
+gdb_out_file="$user_gdb_dir/gdb_$date_str.bt"
+
+gdb -q --batch \
+  -ex "run" \
+  -ex "set logging overwrite on" \
+  -ex "set logging file $gdb_out_file" \
+  -ex "set logging on" \
+  -ex "set pagination off" \
+  -ex "handle SIG32 pass nostop print" \
+  -ex "handle SIGTRAP pass nostop print" \
+  -ex "echo backtrace:\\n" \
+  -ex "backtrace full" \
+  -ex "echo \\n\\nregisters:\\n" \
+  -ex "info registers" \
+  -ex "echo \\n\\ncurrent instructions:\\n" \
+  -ex "x/16i $pc" \
+  -ex "echo \\n\\nthreads backtrace:\\n" \
+  -ex "thread apply all backtrace full" \
+  -ex "set logging off" \
+  -ex "quit" \
+  --args @CMAKE_INSTALL_FULL_BINDIR@/@prog_name_lowercase@ "$@"

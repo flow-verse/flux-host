@@ -10,7 +10,7 @@ Guidance for AI coding assistants working in `flux-host`.
 - Before committing, check the message contains no AI attribution.
 
 ## Project rules
-- License is GPL-3.0-or-later; keep new files compatible.
+- Licence is AGPL-3.0-or-later with the Zrythm additional terms (see flux/docs/UPSTREAM.md). Never use the Zrythm name or logo in user-visible output of Flux builds.
 - Keep changes small and tested.
 - Audio thread code (`rt/`) must not allocate, lock, or do I/O. Hand off to it only via lock-free SPSC queues.
 
