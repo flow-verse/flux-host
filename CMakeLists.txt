@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.20)
+project(flux_host_rt CXX)
+set(CMAKE_CXX_STANDARD 20)
+add_library(flux_rt INTERFACE)
+target_include_directories(flux_rt INTERFACE rt/spsc)
