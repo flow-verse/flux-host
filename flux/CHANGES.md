@@ -25,3 +25,13 @@ Deliberately unchanged (internal identifiers, or true factual references):
 - Messages such as "saved by an older version of Zrythm" and the "Zrythm License" / "Zrythm Trademark Policy" labels in the About dialog name Zrythm truthfully, which `TRADEMARKS.md` allows.
 - Linux/Windows executable and package file names (`bin/zrythm`, AppImage desktop file, Inno Setup) are not renamed yet; only the macOS bundle is (`flux/CMakeLists.txt`). Do this before the first Linux or Windows release.
 - Translations in `i18n/` still hold the old strings; the changed `qsTr()` source strings fall back to English until re-translated. The old entries are unreachable (no source string matches them) but are still compiled into the binary's `.qm` catalogues, so `strings` on the binary finds them. Running `lupdate -no-obsolete` would drop them, at the cost of touching all 50+ upstream `.ts` files; do it before the first public release.
+
+## Headless engine (flux/engine, P1/P2)
+
+`flux-engine` lives in `flux/engine/` and links the upstream libraries unchanged, except for:
+
+| File | Change |
+|---|---|
+| `flux/CMakeLists.txt` | `add_subdirectory(engine)` (Flux file, listed for completeness) |
+| `src/plugins/clap_plugin.h`, `src/plugins/clap_plugin.cpp` | New `ClapPlugin::set_clap_render_offline(bool)`: main-thread call to the CLAP render extension (`render.set(CLAP_RENDER_OFFLINE / REALTIME)`), used by flux-engine around offline renders. The GUI exporter does not call it, so its behaviour is unchanged |
+| `src/plugins/clap_plugin.cpp` | Bug fix: the input note ports' supported dialects were queried only when ports were created for a new instance. A plugin loaded from a saved project kept an empty list, so the host sent MIDI-dialect events, which a CLAP-note-only instrument ignores: it was silent after a reload. `load_plugin()` now queries the dialects for restored ports too (`ClapPluginImpl::query_note_in_dialects()`, shared with `create_ports_from_clap_plugin()`). Worth sending upstream |

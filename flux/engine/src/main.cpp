@@ -52,7 +52,7 @@ constexpr const char * kUsage = R"(usage:
       --format wav|flac             default: from the file extension, else wav
       --bits 16|24|32f              default 24 (32f is 32-bit float, WAV only)
       --sr RATE                     engine sample rate (default 48000)
-      --block N                     render block length (default 256)
+      --block N                     render block length (default 1024)
       --stems                       also write one file per track
       --json                        print the result as one JSON line
   flux-engine serve [--project <dir>] [--sr RATE] [--block N]
@@ -125,7 +125,7 @@ struct Args
   std::string              format;
   std::string              bits = "24";
   int                      sr = 48000;
-  int                      block = 256;
+  int                      block = 1024;
   bool                     stems = false;
   bool                     json_output = false;
   bool                     log = false;

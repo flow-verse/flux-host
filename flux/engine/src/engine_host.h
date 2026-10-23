@@ -46,7 +46,7 @@ public:
   struct Options
   {
     int sample_rate = 48000;
-    int block_length = 256;
+    int block_length = 1024;
   };
 
   explicit EngineHost (Options options);

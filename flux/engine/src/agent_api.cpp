@@ -1047,32 +1047,64 @@ AgentApi::add_track (const json &p)
   if (is_dry_run (p))
     return dry_run_result (json::array ({ change }));
 
-  undo::UndoStack::ScopedMacro macro (
-    s.undo_stack (),
-    QObject::tr ("Add track %1")
-      .arg (name ? QString::fromStdString (*name) : QString::fromStdString (type_str)));
-  auto * track =
-    s.track_creator ().addEmptyTrackFromType (type).value<Track *> ();
-  if (track == nullptr)
-    throw std::runtime_error ("failed to create the track");
-  if (name)
+  json        out;
+  std::string plugin_error;
+  {
+    undo::UndoStack::ScopedMacro macro (
+      s.undo_stack (),
+      QObject::tr ("Add track %1")
+        .arg (
+          name ? QString::fromStdString (*name)
+               : QString::fromStdString (type_str)));
+    auto * track =
+      s.track_creator ().addEmptyTrackFromType (type).value<Track *> ();
+    if (track == nullptr)
+      throw std::runtime_error ("failed to create the track");
+    if (name)
+      {
+        const auto unique =
+          s.project ().tracklist ()->collection ()->get_unique_name_for_track (
+            track->get_uuid (),
+            utils::Utf8String::from_utf8_encoded_string (*name));
+        s.undo_stack ().push (
+          new commands::RenameTrackCommand (*track, unique.to_qstring ()));
+      }
+    out = json{
+      { "track", id_of (*track)                   },
+      { "name",  track->name ().toStdString ()    },
+      { "type",  track_type_name (track->type ()) },
+    };
+    if (entry)
+      {
+        try
+          {
+            const auto descriptor = PluginCatalog::make_descriptor (*entry);
+            auto *     plugin = s.import_plugin (*descriptor, track);
+            out["plugin"] = plugin_json (*track, *plugin);
+          }
+        catch (const std::exception &e)
+          {
+            plugin_error = e.what ();
+          }
+      }
+  }
+  if (!plugin_error.empty ())
     {
-      const auto unique =
-        s.project ().tracklist ()->collection ()->get_unique_name_for_track (
-          track->get_uuid (), utils::Utf8String::from_utf8_encoded_string (*name));
-      s.undo_stack ().push (
-        new commands::RenameTrackCommand (*track, unique.to_qstring ()));
-    }
-  json out{
-    { "track", id_of (*track)                 },
-    { "name",  track->name ().toStdString ()  },
-    { "type",  track_type_name (track->type ()) },
-  };
-  if (entry)
-    {
-      const auto descriptor = PluginCatalog::make_descriptor (*entry);
-      auto *     plugin = s.import_plugin (*descriptor, track);
-      out["plugin"] = plugin_json (*track, *plugin);
+      // Roll back the empty track (inside an open turn the macro cannot be
+      // undone yet; the turn can be discarded instead)
+      if (!turn_)
+        {
+          s.undo_stack ().undo ();
+          throw RpcError (
+            rpc_error::kOperationFailed,
+            fmt::format ("{}; the track was not added", plugin_error));
+        }
+      throw RpcError (
+        rpc_error::kOperationFailed,
+        fmt::format (
+          "{}; the empty track {} stays in the open turn (end_agent_turn "
+          "with discard: true drops the whole turn)",
+          plugin_error, out["track"].get<std::string> ()));
     }
   out["changes"] = json::array ({ change });
   return out;
@@ -1107,6 +1139,19 @@ AgentApi::load_plugin (const json &p)
           "'{}' is an instrument and needs an instrument track; track '{}' is {}",
           entry->name, track->name ().toStdString (),
           track_type_name (track->type ())));
+    }
+  if (entry->is_instrument && track->channel ()->instruments () != nullptr)
+    {
+      std::vector<plugins::PluginUuidReference> existing;
+      track->channel ()->instruments ()->get_plugins (existing);
+      if (!existing.empty ())
+        {
+          throw RpcError (
+            rpc_error::kStateConflict,
+            fmt::format (
+              "track '{}' already has an instrument; add a new instrument track",
+              track->name ().toStdString ()));
+        }
     }
   json change{
     { "op",     "load_plugin"                                     },

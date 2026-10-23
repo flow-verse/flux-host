@@ -302,6 +302,12 @@ TEST_F (EngineApiTest, DryRunChangesNothing)
   // The applied call reports the same change list
   auto applied = call ("add_track", { { "type", "midi" }, { "name", "X" } });
   EXPECT_EQ (applied["changes"], r["changes"]);
+
+  // An empty clip is allowed
+  const auto empty = call (
+    "write_notes",
+    { { "track", applied["track"] }, { "start_bar", 2 }, { "length_bars", 1 }, { "notes", json::array () } });
+  EXPECT_FALSE (empty["clip"].get<std::string> ().empty ());
 }
 
 TEST_F (EngineApiTest, MalformedRequestsReturnErrors)
@@ -429,6 +435,25 @@ TEST_F (EngineApiTest, ImportMidiAndSetParamsInPlainUnits)
   ASSERT_TRUE (std::filesystem::exists (midi_file));
   auto r = call ("import_midi", { { "path", midi_file.string () }, { "start_bar", 2 } });
   EXPECT_FALSE (r["clips"].empty ());
+
+  // Audio import into an existing audio track
+  const auto audio = call ("add_track", { { "type", "audio" }, { "name", "Loop" } })["track"];
+  auto       ra = call (
+    "import_audio",
+    { { "track", audio }, { "path", std::string (TEST_WAV_FILE_PATH) }, { "start_bar", 1 } });
+  ASSERT_EQ (ra["clips"].size (), 1u);
+  EXPECT_TRUE (ra["tracks"].empty ());
+  EXPECT_EQ (
+    call_error (
+      "import_audio",
+      { { "track", added["track"] }, { "path", std::string (TEST_WAV_FILE_PATH) } }),
+    rpc_error::kWrongType)
+    << "audio needs an audio track";
+
+  // A second instrument on the same track is refused
+  EXPECT_EQ (
+    call_error ("load_plugin", { { "track", added["track"] }, { "plugin_id", synth } }),
+    rpc_error::kStateConflict);
 }
 
 } // namespace flux::engine::tests
