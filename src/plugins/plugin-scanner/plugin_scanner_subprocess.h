@@ -69,7 +69,7 @@ private:
   void handleAsyncUpdate () override;
   const juce::String getApplicationName () override
   {
-    return "Zrythm Plugin Scanner";
+    return PROGRAM_NAME " Plugin Scanner";
   }
   const juce::String getApplicationVersion () override { return "v1"; }
   bool               moreThanOneInstanceAllowed () override { return true; }

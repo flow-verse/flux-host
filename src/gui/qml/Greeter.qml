@@ -47,7 +47,7 @@ ApplicationWindow {
   font.pointSize: ZrythmTheme.fontPointSize
   height: 420
   minimumWidth: 256
-  title: "Zrythm"
+  title: Config.PROGRAM_NAME
   visible: true
   width: 640
 
@@ -99,7 +99,7 @@ ApplicationWindow {
     id: donationPage
 
     PlaceholderPage {
-      description: qsTr("Zrythm relies on donations and purchases to sustain development. If you enjoy the software, please consider %1donating%2 or %3buying an installer%2.").arg("<a href=\"" + Config.DONATION_URL + "\">").arg("</a>").arg("<a href=\"" + Config.PURCHASE_URL + "\">")
+      description: qsTr("%1 is free software built in the open. If you enjoy it, please consider %2contributing%3.").arg(Config.PROGRAM_NAME).arg("<a href=\"" + Config.DONATION_URL + "\">").arg("</a>")
       icon.source: ResourceManager.getIconUrl("gnome-icon-library", "credit-card-symbolic.svg")
       title: qsTr("Donate")
     }
@@ -166,7 +166,7 @@ ApplicationWindow {
 
           Item {
             PlaceholderPage {
-              description: qsTr("Welcome to the Zrythm digital audio workstation. Move to the next page to get started.")
+              description: qsTr("Welcome to the %1 digital audio workstation. Move to the next page to get started.").arg(Config.PROGRAM_NAME)
               icon.source: ResourceManager.getIconUrl("zrythm-dark", "zrythm.svg")
               title: qsTr("Welcome")
             }
@@ -174,7 +174,7 @@ ApplicationWindow {
 
           Item {
             PlaceholderPage {
-              description: qsTr("If this is your first time using Zrythm, we suggest going through the 'Getting Started' section in the %1user manual%2.").arg("<a href=\"" + Config.USER_MANUAL_URL + "\">").arg("</a>")
+              description: qsTr("If this is your first time using %3, we suggest going through the 'Getting Started' section in the %1user manual%2.").arg("<a href=\"" + Config.USER_MANUAL_URL + "\">").arg("</a>").arg(Config.PROGRAM_NAME)
               icon.source: ResourceManager.getIconUrl("gnome-icon-library", "open-book-symbolic.svg")
               title: qsTr("Read the Manual")
             }
@@ -385,7 +385,7 @@ ApplicationWindow {
             MenuItem {
               // Handle about action
 
-              text: qsTr("About Zrythm")
+              text: qsTr("About %1").arg(Config.PROGRAM_NAME)
 
               onTriggered: aboutDialog.open()
             }

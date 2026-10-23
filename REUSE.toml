@@ -81,10 +81,11 @@ SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileComment = "Custom created icons"
 
 [[annotations]]
-path = ["data/platform/windows/zrythm.ico", "doc/user/_static/favicon.ico", "doc/user/_static/z.svg", "**/zrythm-dark/**/zrythm.svg", "**/zrythm-dark/**/zrythm-monochrome.svg", "**/zrythm-dark/**/zrythm-splash**"]
+path = ["data/platform/windows/zrythm.ico", "doc/user/_static/favicon.ico", "doc/user/_static/z.svg", "**/zrythm-dark/**/zrythm.svg", "**/zrythm-dark/**/zrythm-monochrome.svg", "**/zrythm-dark/**/zrythm-splash**", "flux/branding/**"]
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2020 Alexandros Theodotou <alex@zrythm.org>"
-SPDX-License-Identifier = "LicenseRef-ZrythmLogoLicense"
+SPDX-FileCopyrightText = "2026 Flux contributors"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
+SPDX-FileComment = "Flux logo (replaces the Zrythm logo, see flux/CHANGES.md)"
 
 [[annotations]]
 path = ["**/zrythm-dark/**/audio-insert.svg", "**/zrythm-dark/**/audio-send.svg", "**/zrythm-dark/**/audio-send2.svg", "**/zrythm-dark/**/audition.svg", "**/zrythm-dark/**/audition2.svg", "**/zrythm-dark/**/category.svg", "**/zrythm-dark/**/chord-pad.svg", "**/zrythm-dark/**/cut-tool.svg", "**/zrythm-dark/**/draw-line.svg", "**/zrythm-dark/**/bars.svg", "**/zrythm-dark/**/draw-line.svg", "**/zrythm-dark/**/edit-clear.svg", "**/zrythm-dark/**/edit-copy.svg", "**/zrythm-dark/**/edit-cut.svg", "**/zrythm-dark/**/edit-delete.svg", "**/zrythm-dark/**/edit-duplicate.svg", "**/zrythm-dark/**/edit-paste.svg", "**/zrythm-dark/**/edit-purge.svg", "**/zrythm-dark/**/edit-redo.svg", "**/zrythm-dark/**/edit-select*.svg", "**/zrythm-dark/**/edit-tool.svg", "**/zrythm-dark/**/edit-undo.svg", "**/zrythm-dark/**/effect.svg", "**/zrythm-dark/**/event-viewer.svg", "**/zrythm-dark/**/face-smile.svg", "**/zrythm-dark/**/fader.svg", "**/zrythm-dark/**/image-missing.svg", "**/zrythm-dark/**/info.svg", "**/zrythm-dark/**/instrument.svg", "**/zrythm-dark/**/media-playlist-repeat.svg", "**/zrythm-dark/**/media-record.svg", "**/zrythm-dark/**/midi-insert.svg", "**/zrythm-dark/**/midi-send.svg", "**/zrythm-dark/**/midi-send2.svg", "**/zrythm-dark/**/mixer.svg", "**/zrythm-dark/**/modulator.svg", "**/zrythm-dark/**/musical-mode.svg", "**/zrythm-dark/**/pencil.svg", "**/zrythm-dark/**/piano-roll.svg", "**/zrythm-dark/**/plug.svg", "**/zrythm-dark/**/protocol.svg", "**/zrythm-dark/**/quantize-options-vertical.svg", "**/zrythm-dark/**/quantize-options.svg", "**/zrythm-dark/**/quick-quantize.svg", "**/zrythm-dark/**/signal-midi.svg", "**/zrythm-dark/**/snap-to-grid.svg", "**/zrythm-dark/**/split.svg", "**/zrythm-dark/**/track-inspector.svg", "**/zrythm-dark/**/view-media-visualization.svg", "**/zrythm-dark/**/view-visible.svg"]
@@ -480,8 +481,8 @@ SPDX-License-Identifier = "GPL-2.0-or-later"
 [[annotations]]
 path = ["data/platform/macos/dmg_background_512.png" ]
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2025 Alexandros Theodotou <alex@zrythm.org>"
-SPDX-License-Identifier = "LicenseRef-ZrythmLogoLicense"
+SPDX-FileCopyrightText = "2026 Flux contributors"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
 SPDX-FileComment = "DMG background image"
 
 [[annotations]]

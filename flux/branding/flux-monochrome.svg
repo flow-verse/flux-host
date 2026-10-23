@@ -1,0 +1,7 @@
+<svg width="800" height="800" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- SPDX-FileCopyrightText: © 2026 Flux contributors -->
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+<path d="M150 470C230 470 250 330 330 330C410 330 390 470 470 470C550 470 570 330 650 330" stroke="black" stroke-width="56" stroke-linecap="round"/>
+<path d="M150 590C230 590 250 450 330 450C410 450 390 590 470 590C550 590 570 450 650 450" stroke="black" stroke-opacity="0.55" stroke-width="36" stroke-linecap="round"/>
+<path d="M150 210H650" stroke="black" stroke-width="56" stroke-linecap="round"/>
+</svg>

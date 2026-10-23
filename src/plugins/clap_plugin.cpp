@@ -572,9 +572,9 @@ ClapPlugin::ClapPlugin (
   QObject *               parent)
     : Plugin (registry, parent),
       ClapHostBase (
-        "Zrythm",
-        "Alexandros Theodotou",
-        "https://www.zrythm.org",
+        PROGRAM_NAME,
+        "Flux contributors",
+        MAIN_REPO_URL,
         PACKAGE_VERSION),
       pimpl_ (
         std::make_unique<ClapPluginImpl> (*this, std::move (host_window_factory)))

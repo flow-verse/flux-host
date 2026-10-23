@@ -136,11 +136,11 @@ ZrythmApplication::initialize ()
   impl_->signal_handling_ = utils::Backtrace::init_signal_handlers ();
 
   /* app info */
-  setApplicationName (u"Zrythm"_s);
+  setApplicationName (QStringLiteral (PROGRAM_NAME));
   setApplicationVersion (QString::fromUtf8 (PACKAGE_VERSION));
-  setOrganizationName (u"Zrythm.org"_s);
-  setOrganizationDomain (u"zrythm.org"_s);
-  setApplicationDisplayName (u"Zrythm"_s);
+  setOrganizationName (u"flow-verse"_s);
+  setOrganizationDomain (u"flow-verse.github.io"_s);
+  setApplicationDisplayName (QStringLiteral (PROGRAM_NAME));
 
   // doesn't work for some reason but the path is correct
   setWindowIcon (QIcon (":/qt/qml/Zrythm/icons/zrythm-dark/zrythm.svg"));
@@ -276,10 +276,10 @@ ZrythmApplication::initialize ()
            "Write comments and bugs to {}\n"
            "Support this project at {}\n\n"),
          PROGRAM_NAME, ver, copyright_line, PROGRAM_NAME, ISSUE_TRACKER_URL,
-         "https://liberapay.com/Zrythm"))
+         MAIN_REPO_URL))
     << "==============================================================\n\n";
 
-  z_info ("Running Zrythm in '{}'", QDir::currentPath ());
+  z_info ("Running {} in '{}'", PROGRAM_NAME, QDir::currentPath ());
 
   // TODO: install signal handlers
 
@@ -459,8 +459,8 @@ ZrythmApplication::verify_installation ()
         zrythm::utils::Utf8String::from_utf8_encoded_string (
           fmt::format (
             "LV2 specification bundles not found in '{}': the installation is "
-            "incomplete (reinstall Zrythm)",
-            spec_bundles_dir)));
+            "incomplete (reinstall {})",
+            spec_bundles_dir, PROGRAM_NAME)));
     }
 
   const auto num_bundles = std::ranges::count_if (
@@ -484,7 +484,7 @@ void
 ZrythmApplication::setup_command_line_options ()
 {
   cmd_line_parser_.setApplicationDescription (
-    u"Zrythm Digital Audio Workstation"_s);
+    QStringLiteral (PROGRAM_NAME " Digital Audio Workstation"));
   cmd_line_parser_.addHelpOption ();
   cmd_line_parser_.addVersionOption ();
 

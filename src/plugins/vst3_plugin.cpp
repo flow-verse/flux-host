@@ -4,6 +4,8 @@
  * VST3 hosting implemented against the VST3 SDK.
  */
 
+#include "zrythm-config.h"
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -101,7 +103,7 @@ public:
 
   tresult PLUGIN_API getName (Vst::String128 name) override
   {
-    return Vst::StringConvert::convert ("Zrythm", name) ? kResultTrue : kInternalError;
+    return Vst::StringConvert::convert (PROGRAM_NAME, name) ? kResultTrue : kInternalError;
   }
 
   tresult PLUGIN_API createInstance (TUID cid, TUID _iid, void ** obj) override

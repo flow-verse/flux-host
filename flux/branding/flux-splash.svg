@@ -1,0 +1,17 @@
+<svg width="580" height="300" viewBox="0 0 580 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- SPDX-FileCopyrightText: © 2026 Flux contributors -->
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+<rect width="580" height="300" rx="24" fill="url(#flux_splash_bg)"/>
+<g transform="translate(40 50) scale(0.25)">
+<path d="M150 470C230 470 250 330 330 330C410 330 390 470 470 470C550 470 570 330 650 330" stroke="white" stroke-width="56" stroke-linecap="round"/>
+<path d="M150 590C230 590 250 450 330 450C410 450 390 590 470 590C550 590 570 450 650 450" stroke="white" stroke-opacity="0.55" stroke-width="36" stroke-linecap="round"/>
+<path d="M150 210H650" stroke="white" stroke-width="56" stroke-linecap="round"/>
+</g>
+<text x="260" y="172" fill="white" font-family="Helvetica, Arial, sans-serif" font-size="88" font-weight="700">Flux</text>
+<defs>
+<linearGradient id="flux_splash_bg" x1="0" y1="0" x2="580" y2="300" gradientUnits="userSpaceOnUse">
+<stop stop-color="#1FB5A8"/>
+<stop offset="1" stop-color="#2D3A8C"/>
+</linearGradient>
+</defs>
+</svg>

@@ -231,7 +231,7 @@ MenuBar {
 
         Action {
           enabled: ZrythmTheme.darkMode
-          text: qsTr("Zrythm Orange")
+          text: qsTr("Classic Orange")
 
           onTriggered: {
             ZrythmTheme.primaryColor = ZrythmTheme.zrythmColor;
@@ -327,7 +327,7 @@ MenuBar {
     title: qsTr("&Help")
 
     Action {
-      text: qsTr("About Zrythm")
+      text: qsTr("About %1").arg(Config.PROGRAM_NAME)
 
       onTriggered: root.aboutDialog.open()
     }

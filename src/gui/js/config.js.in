@@ -9,6 +9,7 @@ function is_true(val) {
     return val == "ON" || val == "TRUE" || val == "1";
 }
 
+const PROGRAM_NAME = "@prog_name@";
 const VERSION = "@ZRYTHM_VERSION@";
 const VERSION_STRING_FULL_WITHOUT_V = "@ZRYTHM_VERSION_STRING_FULL_WITHOUT_V@";
 const COPYRIGHT_NAME = "@copyright_name@"

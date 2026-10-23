@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: © 2026 Alexandros Theodotou <alex@zrythm.org>
 // SPDX-License-Identifier: LicenseRef-ZrythmLicense
 
+#include "zrythm-config.h"
+
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
@@ -407,7 +409,7 @@ collect_presets (const clap_plugin_entry &entry, std::string_view plugin_id)
       IndexerCtx                      indexer_ctx;
       clap_preset_discovery_indexer_t indexer{};
       indexer.clap_version = CLAP_VERSION;
-      indexer.name = "Zrythm";
+      indexer.name = PROGRAM_NAME;
       indexer.indexer_data = &indexer_ctx;
       indexer.declare_filetype =
         +[] (

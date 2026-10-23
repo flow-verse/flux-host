@@ -17,7 +17,7 @@ Dialog {
   modal: true
   popupType: Popup.Window
   standardButtons: Dialog.Ok
-  title: stackView.currentItem ? stackView.currentItem.title : qsTr("About Zrythm")
+  title: stackView.currentItem ? stackView.currentItem.title : qsTr("About %1").arg(Config.PROGRAM_NAME)
   x: (parent.width - width) / 2
   y: (parent.height - height) / 2
 
@@ -54,7 +54,7 @@ Dialog {
     id: mainPage
 
     ColumnLayout {
-      property string title: qsTr("About Zrythm")
+      property string title: qsTr("About %1").arg(Config.PROGRAM_NAME)
 
       spacing: 8
 
@@ -69,7 +69,7 @@ Dialog {
         Layout.alignment: Qt.AlignHCenter
         font.bold: true
         font.pointSize: 16
-        text: "Zrythm"
+        text: Config.PROGRAM_NAME
       }
 
       Label {
@@ -145,7 +145,7 @@ Dialog {
 
           onClicked: {
             const installKind = Config.FLATPAK_BUILD ? "Flatpak" : (Config.IS_INSTALLER_VER ? "Official build" : "Local build");
-            const info = "Zrythm v%1\nQt %2\n%3\nOS: %4 (%5)\nPlatform: %6\nBuild: %7 (%8)".arg(Config.VERSION_STRING_FULL_WITHOUT_V).arg(QmlUtils.qtRuntimeVersion()).arg(QmlUtils.juceVersion()).arg(QmlUtils.osDescription()).arg(QmlUtils.cpuArchitecture()).arg(Qt.platform.pluginName).arg(Config.BUILD_TYPE).arg(installKind);
+            const info = Config.PROGRAM_NAME + " v%1\nQt %2\n%3\nOS: %4 (%5)\nPlatform: %6\nBuild: %7 (%8)".arg(Config.VERSION_STRING_FULL_WITHOUT_V).arg(QmlUtils.qtRuntimeVersion()).arg(QmlUtils.juceVersion()).arg(QmlUtils.osDescription()).arg(QmlUtils.cpuArchitecture()).arg(Qt.platform.pluginName).arg(Config.BUILD_TYPE).arg(installKind);
             QmlUtils.copyToClipboard(info);
           }
         }
@@ -155,7 +155,7 @@ Dialog {
         Layout.alignment: Qt.AlignHCenter
         font.italic: true
         font.pointSize: 8
-        text: qsTr("Zrythm and the Zrythm logo are trademarks of Alexandros Theodotou.")
+        text: qsTr("%1 is based on Zrythm by Alexandros Theodotou and is not affiliated with or endorsed by the Zrythm project. Zrythm and the Zrythm logo are trademarks of Alexandros Theodotou.").arg(Config.PROGRAM_NAME)
       }
     }
   }

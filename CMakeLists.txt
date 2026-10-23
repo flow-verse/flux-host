@@ -297,6 +297,8 @@ set(ZRYTHM_ICNS_FILE_NAME "Zrythm.icns")
 set(ZRYTHM_ICNS_FILE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${ZRYTHM_ICNS_FILE_NAME}")
 set(ZRYTHM_ICO_FILE "${CMAKE_CURRENT_SOURCE_DIR}/data/platform/windows/zrythm.ico")
 set(ZRYTHM_BMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/Zrythm.bmp")
+# Flux: product identity overrides (see flux/docs/UPSTREAM.md)
+include(flux/cmake/branding.cmake)
 
 # if latest version in changelog is the project's
 # version, add the changelog to the config
@@ -378,8 +380,8 @@ message(STATUS "Locales: ${locales_str}")
 
 # JUCE properties
 set_directory_properties(PROPERTIES
-  JUCE_COMPANY_NAME "Zrythm"
-  JUCE_COMPANY_WEBSITE "${PROJECT_HOMEPAGE_URL}"
+  JUCE_COMPANY_NAME "${prog_name}"
+  JUCE_COMPANY_WEBSITE "${main_repo_url}"
   JUCE_COMPANY_COPYRIGHT  "Copyright (c) ${copyright_years} - ${copyright_name}"
 )
 
@@ -1299,5 +1301,9 @@ set(CPACK_INNOSETUP_USE_MODERN_WIZARD ON)
 set(CPACK_INNOSETUP_ICON_FILE "${ZRYTHM_ICO_FILE}")
 set(CPACK_INNOSETUP_LANGUAGES "english;brazilianPortuguese;catalan;french;german;hebrew;italian;japanese;norwegian;polish;portuguese;russian;spanish;turkish;ukrainian")
 set(CPACK_INNOSETUP_RUN_EXECUTABLES "zrythm")
+
+# Flux: Flux-only targets and package names
+add_subdirectory(flux)
+include(flux/cmake/packaging.cmake)
 
 include(CPack) # must be included after specifying the CPACK_ variables
