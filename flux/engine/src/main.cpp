@@ -250,6 +250,7 @@ run_render (const Args &args, ProtocolOut &out)
                               std::chrono::steady_clock::now () - load_start)
                               .count ();
       opts.title = session->title ();
+      warm_up_plugins (session->project ());
       const auto result = render_project (session->project (), opts);
       if (args.json_output)
         {

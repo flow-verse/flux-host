@@ -456,4 +456,26 @@ TEST_F (EngineApiTest, ImportMidiAndSetParamsInPlainUnits)
     rpc_error::kStateConflict);
 }
 
+TEST_F (EngineApiTest, PresetMethodsValidateInput)
+{
+  call ("create_project", { { "dir", (root_ / "pre").string () } });
+  const auto synth = find_test_synth_id ();
+  const std::string plugin = call (
+    "add_track", { { "type", "instrument" }, { "name", "S" }, { "plugin_id", synth } })["plugin"]["id"];
+  // Test Synth has no CLAP preset-discovery provider
+  const auto listed = call ("list_presets", { { "plugin", plugin } });
+  EXPECT_EQ (listed["total"], 0);
+  EXPECT_TRUE (listed["presets"].empty ());
+  EXPECT_TRUE (listed["selected"].is_null ());
+  EXPECT_EQ (
+    call_error ("load_preset", { { "plugin", plugin }, { "preset", "Anything" } }),
+    rpc_error::kWrongType);
+  EXPECT_EQ (
+    call_error ("list_presets", { { "plugin", plugin }, { "limit", 0 } }),
+    rpc_error::kInvalidParams);
+  EXPECT_EQ (
+    call_error ("load_preset", { { "plugin", "not-a-uuid" }, { "preset", 0 } }),
+    rpc_error::kNotFound);
+}
+
 } // namespace flux::engine::tests

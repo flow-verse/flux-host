@@ -121,6 +121,26 @@ Sets several parameters as one undo step. `unit` is `"normalized"` (default, 0�
    "name":"Level","from":1.0,"to":0.5,"plain_to":0.5}]}}
 ```
 
+### `list_presets {plugin, query?, limit?}`
+
+Lists the plugin's presets from CLAP preset discovery (CLAP only; other formats return none). `query` matches name or collection, case-insensitively; `limit` defaults to 200. `selected` is the preset last loaded, or `null`.
+
+```json
+→ {"jsonrpc":"2.0","id":6,"method":"list_presets","params":{"plugin":"fa2c…","query":"house organ"}}
+← {"result":{"plugin":"fa2c…","total":2977,"matched":1,"selected":null,"presets":[{"index":1194,
+   "name":"House Organ","group":"Surge XT Factory Presets","id":"F\u001f/…/Keys/House Organ.fxp\u001f"}]}}
+```
+
+### `load_preset {plugin, preset}`
+
+Loads a preset as one undo step (undo restores the plugin's previous state). `preset` is an `index` or `id` from `list_presets`, an exact name (or `"collection/name"`), or a substring that matches exactly one name; ambiguous names return an error listing the matches. The next `render` first runs a one-second discarded warm-up, because some plugins (Surge XT) apply a loaded patch only while processing.
+
+```json
+→ {"jsonrpc":"2.0","id":7,"method":"load_preset","params":{"plugin":"fa2c…","preset":"House Organ"}}
+← {"result":{"plugin":"fa2c…","preset":{"index":1194,"name":"House Organ","group":"Surge XT Factory Presets",
+   "id":"…"},"changes":[{"op":"load_preset","plugin":"fa2c…","preset":{…}}]}}
+```
+
 ## Arrangement
 
 ### `write_notes {track, start_bar, length_bars, notes, name?}`

@@ -101,6 +101,17 @@ struct RenderResult
  * @throw std::invalid_argument for bad options, std::runtime_error on
  * render or write failure.
  */
+/**
+ * @brief Renders a short span to a discarded file.
+ *
+ * Some plugins apply state loaded on the main thread (a preset, an undo, a
+ * project load) only during their next processing; Surge XT, for example,
+ * plays the first render after a patch load partly with the old state. Call
+ * this before a render that follows such a change.
+ */
+void
+warm_up_plugins (zrythm::structure::project::Project &project);
+
 RenderResult
 render_project (zrythm::structure::project::Project &project, const RenderOptions &options);
 

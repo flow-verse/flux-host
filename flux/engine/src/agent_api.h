@@ -95,6 +95,8 @@ private:
   nlohmann::json load_plugin (const nlohmann::json &p);
   nlohmann::json list_params (const nlohmann::json &p);
   nlohmann::json set_params (const nlohmann::json &p);
+  nlohmann::json list_presets (const nlohmann::json &p);
+  nlohmann::json load_preset (const nlohmann::json &p);
   nlohmann::json write_notes (const nlohmann::json &p);
   nlohmann::json import_file (const nlohmann::json &p, bool midi);
   nlohmann::json set_tempo (const nlohmann::json &p);
@@ -118,6 +120,8 @@ private:
   };
   std::optional<Turn> turn_;
   bool                shutdown_requested_ = false;
+  /** Plugin state changed since the last render (see warm_up_plugins). */
+  bool                plugin_state_dirty_ = true;
 };
 
 } // namespace flux::engine

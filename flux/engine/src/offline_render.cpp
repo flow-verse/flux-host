@@ -18,6 +18,7 @@
 
 #include <fmt/format.h>
 #include <QFuture>
+#include <QTemporaryDir>
 
 #include <juce_audio_formats/juce_audio_formats.h>
 
@@ -246,6 +247,20 @@ RenderResult::to_json () const
     { "speed_factor",         round_decimals (speed_factor, 2)      },
     { "clap_offline_plugins", clap_offline_plugins                            },
   };
+}
+
+void
+warm_up_plugins (structure::project::Project &project)
+{
+  QTemporaryDir dir;
+  if (!dir.isValid ())
+    return;
+  RenderOptions o;
+  o.out = std::filesystem::path (dir.path ().toStdString ()) / "warmup.wav";
+  o.start_sec = 0.0;
+  o.end_sec = 1.0;
+  o.bits = 16;
+  render_project (project, o);
 }
 
 RenderResult

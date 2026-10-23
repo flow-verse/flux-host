@@ -18,6 +18,7 @@
 
 #include "musical_time.h"
 #include "offline_render.h"
+#include "load_preset_command.h"
 #include "set_params_command.h"
 
 namespace flux::engine
@@ -598,6 +599,10 @@ AgentApi::dispatch (const std::string &method, const json &p)
     return list_params (p);
   if (method == "set_params")
     return set_params (p);
+  if (method == "list_presets")
+    return list_presets (p);
+  if (method == "load_preset")
+    return load_preset (p);
   if (method == "write_notes")
     return write_notes (p);
   if (method == "import_audio")
@@ -945,6 +950,7 @@ AgentApi::create_project (const json &p)
 json
 AgentApi::open_project_method (const json &p)
 {
+  plugin_state_dirty_ = true;
   const auto dir = std::filesystem::absolute (get_string (p, "dir"));
   if (!std::filesystem::is_directory (dir))
     {
@@ -1332,6 +1338,170 @@ AgentApi::set_params (const json &p)
   return {
     { "plugin",  id_of (*plugin) },
     { "changes", changes_json    },
+  };
+}
+
+namespace
+{
+std::string
+preset_id_string (const plugins::Plugin::PresetId &id)
+{
+  return std::visit (
+    [] (const auto &v) -> std::string {
+      if constexpr (std::is_same_v<std::decay_t<decltype (v)>, int>)
+        return std::to_string (v);
+      else
+        return v.toStdString ();
+    },
+    id);
+}
+
+json
+preset_json (const plugins::Plugin::PresetEntry &e, size_t index)
+{
+  return {
+    { "index", index                       },
+    { "name",  e.name.toStdString ()       },
+    { "group", e.group.toStdString ()      },
+    { "id",    preset_id_string (e.id)     },
+  };
+}
+} // namespace
+
+json
+AgentApi::list_presets (const json &p)
+{
+  auto &s = require_session ();
+  auto [plugin, track] = find_plugin (s, get_string (p, "plugin"));
+  std::string query;
+  if (p.contains ("query"))
+    query = lower (get_string (p, "query"));
+  size_t limit = 200;
+  if (p.contains ("limit"))
+    {
+      if (!p["limit"].is_number_integer () || p["limit"].get<int64_t> () < 1)
+        invalid ("'limit' must be a positive integer");
+      limit = static_cast<size_t> (p["limit"].get<int64_t> ());
+    }
+  const auto entries = plugin->presetEntries ();
+  json       out = json::array ();
+  size_t     matched = 0;
+  for (size_t i = 0; i < entries.size (); ++i)
+    {
+      const auto &e = entries[i];
+      if (
+        !query.empty ()
+        && lower (e.name.toStdString ()).find (query) == std::string::npos
+        && lower (e.group.toStdString ()).find (query) == std::string::npos)
+        continue;
+      ++matched;
+      if (out.size () < limit)
+        out.push_back (preset_json (e, i));
+    }
+  const auto sel = plugin->presetIndex ();
+  return {
+    { "plugin",   id_of (*plugin)                                        },
+    { "total",    entries.size ()                                        },
+    { "matched",  matched                                                },
+    { "presets",  out                                                    },
+    { "selected", sel >= 0 ? json (preset_json (entries[static_cast<size_t> (sel)], static_cast<size_t> (sel))) : json (nullptr) },
+  };
+}
+
+json
+AgentApi::load_preset (const json &p)
+{
+  auto &s = require_session ();
+  auto [plugin, track] = find_plugin (s, get_string (p, "plugin"));
+  const auto entries = plugin->presetEntries ();
+  if (entries.empty ())
+    {
+      throw RpcError (
+        rpc_error::kWrongType,
+        fmt::format (
+          "plugin '{}' offers no presets (CLAP preset-discovery only)",
+          plugin->get_name ().str ()));
+    }
+  if (!p.contains ("preset"))
+    invalid ("load_preset needs 'preset' (index, id or name; see list_presets)");
+  const auto &want = p["preset"];
+  std::optional<size_t> index;
+  if (want.is_number_integer ())
+    {
+      const auto i = want.get<int64_t> ();
+      if (i < 0 || static_cast<size_t> (i) >= entries.size ())
+        invalid (fmt::format ("preset index {} is outside 0..{}", i, entries.size () - 1));
+      index = static_cast<size_t> (i);
+    }
+  else if (want.is_string ())
+    {
+      const auto key = want.get<std::string> ();
+      const auto key_l = lower (key);
+      // Exact id first, then exact name (optionally "group/name"), then unique substring
+      for (size_t i = 0; i < entries.size () && !index; ++i)
+        if (preset_id_string (entries[i].id) == key)
+          index = i;
+      for (size_t i = 0; i < entries.size () && !index; ++i)
+        {
+          const auto name = lower (entries[i].name.toStdString ());
+          const auto full = lower (entries[i].group.toStdString ()) + "/" + name;
+          if (name == key_l || full == key_l)
+            index = i;
+        }
+      if (!index)
+        {
+          std::vector<size_t> hits;
+          for (size_t i = 0; i < entries.size (); ++i)
+            if (lower (entries[i].name.toStdString ()).find (key_l) != std::string::npos)
+              hits.push_back (i);
+          if (hits.size () == 1)
+            index = hits.front ();
+          else if (hits.size () > 1)
+            {
+              std::string names;
+              for (size_t k = 0; k < std::min<size_t> (hits.size (), 8); ++k)
+                names += (k ? ", " : "") + entries[hits[k]].name.toStdString ();
+              throw RpcError (
+                rpc_error::kInvalidParams,
+                fmt::format (
+                  "'{}' matches {} presets ({}{}); use an exact name or the id",
+                  key, hits.size (), names, hits.size () > 8 ? ", ..." : ""));
+            }
+        }
+      if (!index)
+        {
+          throw RpcError (
+            rpc_error::kNotFound,
+            fmt::format ("no preset matches '{}' (see list_presets)", key));
+        }
+    }
+  else
+    invalid ("'preset' must be an index (integer) or an id/name (string)");
+
+  const auto &entry = entries[*index];
+  json change{
+    { "op",     "load_preset"                },
+    { "plugin", id_of (*plugin)              },
+    { "preset", preset_json (entry, *index)  },
+  };
+  if (is_dry_run (p))
+    return dry_run_result (json::array ({ change }));
+  auto * cmd = new LoadPresetCommand (*plugin, static_cast<int> (*index), entry.name);
+  s.undo_stack ().push (cmd);
+  plugin_state_dirty_ = true;
+  if (!cmd->applied ())
+    {
+      s.undo_stack ().undo ();
+      throw RpcError (
+        rpc_error::kInternalError,
+        fmt::format (
+          "plugin '{}' refused preset '{}'", plugin->get_name ().str (),
+          entry.name.toStdString ()));
+    }
+  return {
+    { "plugin",  id_of (*plugin)          },
+    { "preset",  preset_json (entry, *index) },
+    { "changes", json::array ({ change }) },
   };
 }
 
@@ -1746,6 +1916,11 @@ AgentApi::render (const json &p)
     {
       // Rendering is not an edit; it is allowed inside a turn
     }
+  if (plugin_state_dirty_)
+    {
+      warm_up_plugins (s.project ());
+      plugin_state_dirty_ = false;
+    }
   return render_project (s.project (), opts).to_json ();
 }
 
@@ -1757,6 +1932,7 @@ json
 AgentApi::undo_redo (const json &p, bool undo)
 {
   auto &s = require_session ();
+  plugin_state_dirty_ = true;
   auto &stack = s.undo_stack ();
   if (turn_)
     {

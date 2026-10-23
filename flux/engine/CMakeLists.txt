@@ -16,6 +16,7 @@ add_library(flux_engine_lib STATIC
   src/offline_render.h
   src/plugin_catalog.cpp
   src/plugin_catalog.h
+  src/load_preset_command.h
   src/set_params_command.h
 )
 target_include_directories(flux_engine_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
