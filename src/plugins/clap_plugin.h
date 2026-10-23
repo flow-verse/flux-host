@@ -124,6 +124,16 @@ public:
 
   bool hasNativeUi () const override;
 
+  /**
+   * @brief Asks the plugin to switch to offline (or back to realtime)
+   * rendering via the CLAP render extension.
+   *
+   * Main thread only (render.set() is a main-thread call). Flux addition.
+   *
+   * @return Whether the plugin supports and accepted the mode.
+   */
+  bool set_clap_render_offline (bool offline) noexcept;
+
   /** Returns the presets discovered for the loaded plugin. */
   std::span<const PresetEntry> presetEntries () const override
   {

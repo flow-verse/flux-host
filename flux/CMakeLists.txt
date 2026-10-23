@@ -5,6 +5,7 @@
 # upstream targets (zrythm, zrythm_*_lib) already exist.
 
 add_subdirectory(rt)
+add_subdirectory(engine)
 
 # The macOS bundle is what users see in Finder and the Dock.
 if(APPLE AND TARGET zrythm)

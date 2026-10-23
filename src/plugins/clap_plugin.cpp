@@ -505,6 +505,30 @@ private:
    */
   std::vector<uint32_t> note_in_supported_dialects_;
 
+  /**
+   * @brief Queries note_in_supported_dialects_ from the (inactive) plugin.
+   *
+   * Defaults to the MIDI dialect when unknown: its passthrough is lossless,
+   * while the CLAP-note conversion currently drops non-note messages (see
+   * TODOs in generate_midi_input_events()).
+   */
+  void query_note_in_dialects ()
+  {
+    note_in_supported_dialects_.clear ();
+    if (!plugin_->canUseNotePorts ())
+      return;
+    const auto count = plugin_->notePortsCount (true);
+    for (const auto i : std::views::iota (0u, count))
+      {
+        clap_note_port_info info{};
+        // Always push so the vector stays index-aligned with the note ports
+        note_in_supported_dialects_.push_back (
+          plugin_->notePortsGet (i, true, &info)
+            ? info.supported_dialects
+            : static_cast<uint32_t> (CLAP_NOTE_DIALECT_MIDI));
+      }
+  }
+
   /* param update queues */
 
   /**
@@ -623,6 +647,17 @@ bool
 ClapPlugin::hasNativeUi () const
 {
   return pimpl_->plugin_ != nullptr && pimpl_->plugin_->canUseGui ();
+}
+
+bool
+ClapPlugin::set_clap_render_offline (bool offline) noexcept
+{
+  if (
+    !threadCheckIsMainThread () || pimpl_->plugin_ == nullptr
+    || !pimpl_->plugin_->canUseRender ())
+    return false;
+  return pimpl_->plugin_->renderSet (
+    offline ? CLAP_RENDER_OFFLINE : CLAP_RENDER_REALTIME);
 }
 
 void
@@ -1706,6 +1741,11 @@ ClapPlugin::load_plugin (
 
   if (!generate_new_ports)
     {
+      // Ports were restored from the project, but the note dialects are not
+      // saved: query them so note input uses a dialect the plugin accepts
+      // (Flux fix: a CLAP-note-only instrument was silent after a reload)
+      pimpl_->query_note_in_dialects ();
+
       // Ports were restored from the project: negotiate the saved bus
       // topology into the (still inactive) plugin, after its state is
       // applied so the negotiation acts on the final state. Loading always
@@ -2584,18 +2624,9 @@ ClapPlugin::create_ports_from_clap_plugin ()
     {
       const auto midi_in_ports = pimpl_->plugin_->notePortsCount (true);
       const auto midi_out_ports = pimpl_->plugin_->notePortsCount (false);
-      pimpl_->note_in_supported_dialects_.clear ();
+      pimpl_->query_note_in_dialects ();
       for (const auto i : std::views::iota (0u, midi_in_ports))
         {
-          clap_note_port_info info{};
-          // Always push so the vector stays index-aligned with the note
-          // ports. Default to the MIDI dialect when unknown: its passthrough
-          // is lossless, while the CLAP-note conversion currently drops
-          // non-note messages (see TODOs in generate_midi_input_events()).
-          pimpl_->note_in_supported_dialects_.push_back (
-            pimpl_->plugin_->notePortsGet (i, true, &info)
-              ? info.supported_dialects
-              : static_cast<uint32_t> (CLAP_NOTE_DIALECT_MIDI));
           auto port_ref = utils::create_object<dsp::MidiPort> (
             registry (),
             utils::Utf8String::from_utf8_encoded_string (
