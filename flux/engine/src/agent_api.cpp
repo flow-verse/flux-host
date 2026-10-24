@@ -19,6 +19,8 @@
 #include "musical_time.h"
 #include "offline_render.h"
 #include "load_preset_command.h"
+
+#include <unordered_set>
 #include "set_params_command.h"
 
 namespace flux::engine
@@ -554,7 +556,10 @@ AgentApi::handle_one (const json &request, bool &is_notification)
 
   try
     {
-      auto result = dispatch (request["method"].get<std::string> (), params);
+      const auto method = request["method"].get<std::string> ();
+      auto       result = dispatch (method, params);
+      if (!is_dry_run (params))
+        notify_changed (method, result);
       return json{
         { "jsonrpc", "2.0"             },
         { "id",      id                },
@@ -629,7 +634,9 @@ AgentApi::dispatch (const std::string &method, const json &p)
   if (method == "end_agent_turn")
     return end_agent_turn (p);
   if (method == "get_history")
-    return history ();
+    return get_history (p);
+  if (method == "close_project")
+    return close_project (p);
   if (method == "shutdown")
     {
       close_session ();
@@ -656,10 +663,132 @@ AgentApi::history () const
     { "undo_text", u.canUndo () ? u.text (u.index () - 1).toStdString () : "" },
     { "redo_text", u.canRedo () ? u.text (u.index ()).toStdString () : ""     },
     { "turn_open", turn_.has_value ()                                             },
+    { "unsaved",   unsaved_                                                       },
+    { "revision",  revision_                                                      },
   };
   if (turn_)
     j["turn_label"] = turn_->label.toStdString ();
   return j;
+}
+
+json
+AgentApi::get_history (const json &p) const
+{
+  auto j = history ();
+  if (!session_)
+    return j;
+  // Entries, oldest first: every undo step with its label. Agent turns are
+  // the macros begun by begin_agent_turn ("Agent: <label>")
+  int64_t limit = 200;
+  if (p.contains ("limit"))
+    {
+      if (!p["limit"].is_number_integer () || p["limit"].get<int64_t> () < 1)
+        invalid ("'limit' must be a positive integer");
+      limit = p["limit"].get<int64_t> ();
+    }
+  auto       &u = session_->undo_stack ();
+  const int   count = u.count ();
+  const int   first = static_cast<int> (std::max<int64_t> (0, count - limit));
+  json        entries = json::array ();
+  json        turns = json::array ();
+  const QString prefix = QStringLiteral ("Agent: ");
+  for (int i = 0; i < count; ++i)
+    {
+      const auto text = u.text (i);
+      const bool agent = text.startsWith (prefix);
+      if (agent)
+        {
+          turns.push_back (
+            { { "index", i }, { "label", text.mid (prefix.size ()).toStdString () },
+              { "done", i < u.index () } });
+        }
+      if (i < first)
+        continue;
+      json e{ { "index", i }, { "text", text.toStdString () }, { "done", i < u.index () },
+              { "agent_turn", agent } };
+      if (agent)
+        e["label"] = text.mid (prefix.size ()).toStdString ();
+      entries.push_back (std::move (e));
+    }
+  j["entries"] = std::move (entries);
+  j["entries_truncated"] = first > 0;
+  j["agent_turns"] = std::move (turns);
+  return j;
+}
+
+json
+AgentApi::close_project (const json &p)
+{
+  if (!session_)
+    throw RpcError (rpc_error::kStateConflict, "no project is open");
+  const bool discard = opt_bool (p, "discard_unsaved", false);
+  const auto dir = session_->directory ().string ();
+  if (turn_)
+    {
+      throw RpcError (
+        rpc_error::kStateConflict,
+        fmt::format (
+          "agent turn '{}' is open; end_agent_turn first", turn_->label.toStdString ()));
+    }
+  if (unsaved_ && !discard)
+    {
+      throw RpcError (
+        rpc_error::kStateConflict,
+        "the project has unsaved changes; save_project first, or pass "
+        "discard_unsaved: true");
+    }
+  json change{ { "op", "close_project" }, { "dir", dir }, { "discarded_unsaved", unsaved_ && discard } };
+  if (is_dry_run (p))
+    return dry_run_result (json::array ({ change }));
+  close_session ();
+  unsaved_ = false;
+  return { { "closed", true }, { "dir", dir }, { "changes", json::array ({ change }) } };
+}
+
+void
+AgentApi::notify_changed (const std::string &method, const json &result)
+{
+  // Methods that change the project or what is open; reads, render and
+  // begin_agent_turn (which records nothing yet) do not notify
+  static const std::unordered_set<std::string> kChanging{
+    "create_project", "open_project", "save_project", "close_project",
+    "add_track", "load_plugin", "set_params", "load_preset", "write_notes",
+    "import_audio", "import_midi", "set_tempo", "add_marker",
+    "set_loop_range", "set_range", "undo", "redo", "end_agent_turn",
+  };
+  if (!kChanging.contains (method))
+    return;
+  if (method == "save_project" || method == "create_project" || method == "open_project")
+    unsaved_ = false;
+  else if (method != "close_project")
+    {
+      const bool recorded =
+        method != "end_agent_turn" || result.value ("recorded", false)
+        || result.value ("discarded", false);
+      if (!recorded)
+        return;
+      unsaved_ = true;
+    }
+  ++revision_;
+  if (!notify_)
+    return;
+  json params{
+    { "request",  current_id_ },
+    { "method",   method      },
+    { "revision", revision_   },
+    { "open",     session_ != nullptr },
+    { "unsaved",  unsaved_    },
+  };
+  if (result.is_object () && result.contains ("changes"))
+    params["changes"] = result["changes"];
+  if (session_)
+    {
+      const auto h = history ();
+      params["history"] = { { "index", h["index"] }, { "count", h["count"] },
+                            { "undo_text", h["undo_text"] }, { "turn_open", h["turn_open"] } };
+      params["dir"] = session_->directory ().string ();
+    }
+  notify_ (json{ { "jsonrpc", "2.0" }, { "method", "project_changed" }, { "params", params } });
 }
 
 // ===========================================================================

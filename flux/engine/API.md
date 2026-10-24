@@ -50,6 +50,10 @@ Loads a saved project and waits for its plugins. Any open project is closed (an 
 
 Saves to the current directory, or to `dir` ("save as"), which then becomes the current directory. Returns `{"dir": ...}`.
 
+### `close_project {discard_unsaved?}`
+
+Closes the project. Refused while an agent turn is open, and when there are unsaved edits unless `discard_unsaved` is true. Methods that need a project then fail with code -32000 until `create_project` or `open_project`. (`create_project` and `open_project` themselves replace an open project without asking; clients that want a guard, like flux-mcp, check `get_history.unsaved` first.)
+
 ### `describe_project {include_notes?}`
 
 A snapshot of the open project. It contains no undo-history fields, so undoing a turn restores it exactly. With `include_notes: true` each MIDI clip lists its notes.
@@ -205,11 +209,27 @@ Everything between the two becomes one undo step, "Agent: <label>". Turns do not
 
 Undoes or redoes one step (a whole agent turn, if it was one). Returns `{"changes":[{"op":"undo","text":"Agent: arrange"}], "history": {...}}`.
 
-### `get_history {}`
+### `get_history {limit?}`
+
+The undo history: `entries` (oldest first, the last `limit` steps, default 200; `done` is false for steps that were undone), `agent_turns` (every turn's label, whatever the limit), whether there are `unsaved` edits, and the change `revision`.
 
 ```json
-← {"result":{"can_undo":true,"can_redo":false,"index":3,"count":3,"undo_text":"Agent: arrange",
-   "redo_text":"","turn_open":false}}
+← {"result":{"can_undo":true,"can_redo":true,"index":1,"count":2,"undo_text":"Agent: add lead",
+   "redo_text":"Agent: write melody","turn_open":false,"unsaved":true,"revision":4,
+   "entries":[{"index":0,"text":"Agent: add lead","done":true,"agent_turn":true,"label":"add lead"},
+              {"index":1,"text":"Agent: write melody","done":false,"agent_turn":true,"label":"write melody"}],
+   "entries_truncated":false,
+   "agent_turns":[{"index":0,"label":"add lead","done":true},{"index":1,"label":"write melody","done":false}]}}
+```
+
+### `project_changed` (notification)
+
+After every successful edit, undo/redo, recorded or discarded agent turn, and after create/open/save/close, the engine sends a notification (no `id`) before the response. Reads, dry runs, renders and `begin_agent_turn` send none. Clients can refresh `describe_project` when `revision` moves.
+
+```json
+← {"jsonrpc":"2.0","method":"project_changed","params":{"request":7,"method":"write_notes","revision":5,
+   "open":true,"unsaved":true,"dir":"/tmp/song","changes":[{"op":"add_midi_clip",…}],
+   "history":{"index":3,"count":3,"undo_text":"Agent: arrange","turn_open":true}}}
 ```
 
 ## Other

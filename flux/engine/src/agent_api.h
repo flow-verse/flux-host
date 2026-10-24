@@ -118,6 +118,10 @@ private:
   nlohmann::json begin_agent_turn (const nlohmann::json &p);
   nlohmann::json end_agent_turn (const nlohmann::json &p);
   nlohmann::json history () const;
+  nlohmann::json get_history (const nlohmann::json &p) const;
+  nlohmann::json close_project (const nlohmann::json &p);
+  /** Sends project_changed after a successful edit (see API.md). */
+  void notify_changed (const std::string &method, const nlohmann::json &result);
 
   EngineHost                    &host_;
   PluginCatalog                 &catalog_;
@@ -133,6 +137,10 @@ private:
   std::function<void (const nlohmann::json &)> notify_;
   /** id of the request being handled (for progress notifications). */
   nlohmann::json      current_id_;
+  /** Edits since the project was created, opened or last saved. */
+  bool                unsaved_ = false;
+  /** Incremented on every change notification. */
+  int64_t             revision_ = 0;
   /** Plugin state changed since the last render (see warm_up_plugins). */
   bool                plugin_state_dirty_ = true;
 };

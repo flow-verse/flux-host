@@ -38,8 +38,8 @@ ENGINE_PID=$!
 exec 3>"$WORK/in"
 exec 4<"$WORK/out"
 
-# Reads one line from the engine (60 s timeout), skipping progress
-# notifications (they carry no id and may come before a render's response)
+# Reads one line from the engine (60 s timeout), skipping progress and
+# project_changed notifications (they carry no id)
 recv () {
   local line
   while :; do
@@ -47,7 +47,7 @@ recv () {
       fail "no response from the engine"
     fi
     case "$line" in
-      *'"method":"progress"'*) ;;
+      *'"method":"progress"'*|*'"method":"project_changed"'*) ;;
       *) break ;;
     esac
   done

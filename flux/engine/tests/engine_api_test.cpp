@@ -519,26 +519,43 @@ TEST_F (EngineApiTest, WriteNotesCarriesChannelsAndControlEvents)
 
 namespace
 {
-/** Index of the first sample above -60 dBFS in a rendered file, or -1. */
-long long
-onset_frame (const std::string &path, int from = 0)
+juce::AudioSampleBuffer
+read_audio (const std::string &path)
 {
   juce::AudioFormatManager fm;
   fm.registerBasicFormats ();
   std::unique_ptr<juce::AudioFormatReader> r (fm.createReaderFor (juce::File (juce::String (path))));
   if (!r)
-    return -2;
+    return {};
   juce::AudioSampleBuffer buf (static_cast<int> (r->numChannels), static_cast<int> (r->lengthInSamples));
   r->read (&buf, 0, buf.getNumSamples (), 0, true, true);
-  // Skip the tail of the previous note: find the first quiet stretch, then the attack
-  int i = from;
-  while (i < buf.getNumSamples () && std::abs (buf.getSample (0, i)) > 0.001f)
-    ++i;
-  for (; i < buf.getNumSamples (); ++i)
-    for (int ch = 0; ch < buf.getNumChannels (); ++ch)
-      if (std::abs (buf.getSample (ch, i)) > 0.001f)
-        return i;
-  return -1;
+  return buf;
+}
+
+/** Lag (in frames, within ±max_lag) that best aligns b to a over [from, to). */
+int
+best_lag (const juce::AudioSampleBuffer &a, const juce::AudioSampleBuffer &b, int from, int to, int max_lag)
+{
+  int    best = 0;
+  double best_err = std::numeric_limits<double>::max ();
+  for (int lag = -max_lag; lag <= max_lag; ++lag)
+    {
+      double err = 0;
+      for (int i = from; i < to; i += 4)
+        {
+          const int k = i + lag;
+          if (k < 0 || k >= b.getNumSamples () || i >= a.getNumSamples ())
+            continue;
+          const double d = a.getSample (0, i) - b.getSample (0, k);
+          err += d * d;
+        }
+      if (err < best_err)
+        {
+          best_err = err;
+          best = lag;
+        }
+    }
+  return best;
 }
 } // namespace
 
@@ -596,9 +613,77 @@ TEST_F (EngineApiTest, RenderStreamsMetersAndTrimsLatency)
   // plugin. Compare from the second beat: an event exactly at the range start
   // is already sent to instruments during the preroll (upstream scheduler
   // behaviour), so the first note's attack differs
-  EXPECT_EQ (
-    onset_frame ((root_ / "latent.wav").string (), 24000),
-    onset_frame ((root_ / "plain.wav").string (), 24000));
+  const auto plain_audio = read_audio ((root_ / "plain.wav").string ());
+  const auto latent_audio = read_audio ((root_ / "latent.wav").string ());
+  EXPECT_EQ (best_lag (plain_audio, latent_audio, 24000, 96000, 512), 0);
+}
+
+TEST_F (EngineApiTest, HistoryLabelsCloseProjectAndChangeNotifications)
+{
+  std::vector<json> changed;
+  api_->set_notifier ([&changed] (const json &n) {
+    if (n["method"].get<std::string> () == "project_changed")
+      changed.push_back (n["params"]);
+  });
+  const auto dir = (root_ / "hist").string ();
+  call ("create_project", { { "dir", dir } });
+  ASSERT_EQ (changed.size (), 1u);
+  EXPECT_EQ (changed.back ()["method"].get<std::string> (), "create_project");
+  EXPECT_FALSE (changed.back ()["unsaved"].get<bool> ());
+
+  const auto synth = find_test_synth_id ();
+  call ("begin_agent_turn", { { "label", "add lead" } });
+  const std::string t = call (
+    "add_track", { { "type", "instrument" }, { "name", "Lead" }, { "plugin_id", synth } })["track"];
+  call ("end_agent_turn");
+  call ("begin_agent_turn", { { "label", "write melody" } });
+  call ("write_notes", { { "track", t }, { "start_bar", 1 }, { "length_bars", 1 }, { "notes", one_note_per_beat (1) } });
+  call ("end_agent_turn");
+  call ("begin_agent_turn", { { "label", "nothing" } });
+  const auto before_empty = changed.size ();
+  call ("end_agent_turn");
+  EXPECT_EQ (changed.size (), before_empty) << "an empty turn records nothing and does not notify";
+  call ("describe_project");
+  call ("add_marker", { { "name", "x" }, { "bar", 2 }, { "dry_run", true } });
+  EXPECT_EQ (changed.size (), before_empty) << "reads and dry runs do not notify";
+
+  // Revisions increase, edits mark the project unsaved
+  for (size_t i = 1; i < changed.size (); ++i)
+    EXPECT_GT (changed[i]["revision"].get<int64_t> (), changed[i - 1]["revision"].get<int64_t> ());
+  EXPECT_TRUE (changed.back ()["unsaved"].get<bool> ());
+  EXPECT_TRUE (changed.back ().contains ("history"));
+
+  call ("undo");
+  const auto h = call ("get_history");
+  ASSERT_EQ (h["agent_turns"].size (), 2u);
+  EXPECT_EQ (h["agent_turns"][0]["label"].get<std::string> (), "add lead");
+  EXPECT_TRUE (h["agent_turns"][0]["done"].get<bool> ());
+  EXPECT_EQ (h["agent_turns"][1]["label"].get<std::string> (), "write melody");
+  EXPECT_FALSE (h["agent_turns"][1]["done"].get<bool> ()) << "undone";
+  EXPECT_EQ (h["entries"].size (), 2u);
+  EXPECT_TRUE (h["unsaved"].get<bool> ());
+  EXPECT_EQ (call ("get_history", { { "limit", 1 } })["entries"].size (), 1u);
+
+  // close_project guards unsaved work and open turns
+  EXPECT_EQ (call_error ("close_project"), rpc_error::kStateConflict);
+  call ("save_project");
+  EXPECT_FALSE (changed.back ()["unsaved"].get<bool> ());
+  call ("begin_agent_turn", { { "label", "open turn" } });
+  EXPECT_EQ (call_error ("close_project"), rpc_error::kStateConflict);
+  call ("end_agent_turn");
+  const auto closed = call ("close_project");
+  EXPECT_TRUE (closed["closed"].get<bool> ());
+  EXPECT_EQ (changed.back ()["method"].get<std::string> (), "close_project");
+  EXPECT_FALSE (changed.back ()["open"].get<bool> ());
+  EXPECT_FALSE (call ("get_history")["open"].get<bool> ());
+  EXPECT_EQ (call_error ("describe_project"), rpc_error::kNoProject);
+  EXPECT_EQ (call_error ("close_project"), rpc_error::kStateConflict);
+
+  // Reopen, edit, then close discarding the edit
+  call ("open_project", { { "dir", dir } });
+  call ("add_marker", { { "name", "m" }, { "bar", 2 } });
+  EXPECT_EQ (call_error ("close_project"), rpc_error::kStateConflict);
+  EXPECT_TRUE (call ("close_project", { { "discard_unsaved", true } })["closed"].get<bool> ());
 }
 
 } // namespace flux::engine::tests
