@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: © 2026 Flux contributors
+# SPDX-License-Identifier: CC0-1.0
+#
+# Upstream's gcc_release targets x86_64 with -march=x86-64-v3. This is the same
+# profile for 64-bit ARM Linux (e.g. a container on Apple Silicon, Graviton).
+include(_gcc)
+include(_qt_common)
+
+[settings]
+arch=armv8
+os=Linux
+build_type=Release
+
+[conf]
+# Conan installs the system packages recipes ask for (X11, OpenGL, ...) with dnf/apt
+tools.system.package_manager:mode=install
+tools.system.package_manager:sudo=False
