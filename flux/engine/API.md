@@ -143,9 +143,9 @@ Loads a preset as one undo step (undo restores the plugin's previous state). `pr
 
 ## Arrangement
 
-### `write_notes {track, start_bar, length_bars, notes, name?}`
+### `write_notes {track, start_bar, length_bars, notes, events?, name?}`
 
-Creates one MIDI clip of `length_bars` bars at `start_bar` on a MIDI or instrument track and fills it, as one undo step. Each note is `{pitch 0–127, start_beat >= 0, length_beats > 0, velocity 1–127 (default 100)}`. A note that ends after the clip is rejected (bars are never silently shifted or truncated). An empty `notes` list makes an empty clip.
+Creates one MIDI clip of `length_bars` bars at `start_bar` on a MIDI or instrument track and fills it, as one undo step. Each note is `{pitch 0–127, start_beat >= 0, length_beats > 0, velocity 1–127 (default 100), channel 0–15 (default 0)}`. Optional `events` are channel events in the same clip: `{type: "pitch_bend", beat, value -1..1, channel?}` (a fraction of the instrument's bend range; Surge XT's default range is ±2 semitones, so 0.25 is a quarter tone up) and `{type: "cc", beat, controller 0–127, value 0–127, channel?}`. Many instruments, Surge XT included unless MPE is on, apply a pitch bend to all their voices, whatever the channel. A note that ends after the clip is rejected (bars are never silently shifted or truncated). An empty `notes` list makes an empty clip.
 
 ```json
 → {"jsonrpc":"2.0","id":3,"method":"write_notes","params":{"track":"bb4f…","start_bar":1,"length_bars":2,

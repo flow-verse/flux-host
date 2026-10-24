@@ -1544,6 +1544,7 @@ AgentApi::write_notes (const json &p)
     int    velocity;
     double start;
     double end;
+    int    channel;
   };
   std::vector<NoteSpec> specs;
   specs.reserve (notes.size ());
@@ -1573,6 +1574,13 @@ AgentApi::write_notes (const json &p)
             invalid (fmt::format (
               "{}.velocity must be an integer 1..127, got {}", where, velocity));
         }
+      double channel = 0;
+      if (n.contains ("channel"))
+        {
+          channel = num ("channel");
+          if (channel != std::floor (channel) || channel < 0 || channel > 15)
+            invalid (fmt::format ("{}.channel must be an integer 0..15, got {}", where, channel));
+        }
       const double start_beat = num ("start_beat");
       const double length_beats = num ("length_beats");
       if (start_beat < 0)
@@ -1589,7 +1597,80 @@ AgentApi::write_notes (const json &p)
       specs.push_back (
         { static_cast<int> (pitch), static_cast<int> (velocity),
           start_beat * ticks_per_beat,
-          std::min ((start_beat + length_beats) * ticks_per_beat, clip_len) });
+          std::min ((start_beat + length_beats) * ticks_per_beat, clip_len),
+          static_cast<int> (channel) });
+    }
+
+  // Optional channel events: pitch bend (-1..1 of the instrument's bend range)
+  // and control change (0..127), placed in beats from the clip start
+  using EventType = structure::arrangement::MidiControlEvent::EventType;
+  struct EventSpec
+  {
+    EventType type;
+    int       channel;
+    int       controller;
+    int       value;
+    double    start;
+  };
+  std::vector<EventSpec> events;
+  if (p.contains ("events"))
+    {
+      const auto &evs = p["events"];
+      if (!evs.is_array ())
+        invalid ("'events' must be an array of {type, beat, value, channel?, controller?}");
+      for (size_t i = 0; i < evs.size (); ++i)
+        {
+          const auto &e = evs[i];
+          const auto  where = fmt::format ("events[{}]", i);
+          if (!e.is_object ())
+            invalid (fmt::format ("{} must be an object", where));
+          const auto num = [&] (const char * key) {
+            if (!e.contains (key) || !e[key].is_number ())
+              invalid (fmt::format ("{}.{} must be a number", where, key));
+            const auto d = e[key].get<double> ();
+            if (!std::isfinite (d))
+              invalid (fmt::format ("{}.{} must be finite", where, key));
+            return d;
+          };
+          if (!e.contains ("type") || !e["type"].is_string ())
+            invalid (fmt::format ("{}.type must be \"pitch_bend\" or \"cc\"", where));
+          const auto   type = e["type"].get<std::string> ();
+          const double beat = num ("beat");
+          if (beat < 0 || beat > clip_beats + kEps)
+            invalid (fmt::format ("{}.beat {} is outside the clip (0..{})", where, beat, round6 (clip_beats)));
+          double channel = 0;
+          if (e.contains ("channel"))
+            {
+              channel = num ("channel");
+              if (channel != std::floor (channel) || channel < 0 || channel > 15)
+                invalid (fmt::format ("{}.channel must be an integer 0..15, got {}", where, channel));
+            }
+          const double value = num ("value");
+          EventSpec spec{ EventType::ControlChange, static_cast<int> (channel), 0, 0,
+                          std::min (beat * ticks_per_beat, clip_len) };
+          if (type == "pitch_bend")
+            {
+              if (value < -1.0 || value > 1.0)
+                invalid (fmt::format ("{}.value for pitch_bend must be -1..1, got {}", where, value));
+              spec.type = EventType::PitchBend;
+              spec.value = std::clamp (
+                static_cast<int> (std::lround (8192.0 + value * 8192.0)), 0,
+                structure::arrangement::MidiControlEvent::kMaxValuePitchBend);
+            }
+          else if (type == "cc")
+            {
+              const double ctrl = num ("controller");
+              if (ctrl != std::floor (ctrl) || ctrl < 0 || ctrl > 127)
+                invalid (fmt::format ("{}.controller must be an integer 0..127, got {}", where, ctrl));
+              if (value != std::floor (value) || value < 0 || value > 127)
+                invalid (fmt::format ("{}.value for cc must be an integer 0..127, got {}", where, value));
+              spec.controller = static_cast<int> (ctrl);
+              spec.value = static_cast<int> (value);
+            }
+          else
+            invalid (fmt::format ("{}.type must be \"pitch_bend\" or \"cc\", got \"{}\"", where, type));
+          events.push_back (spec);
+        }
     }
 
   json change{
@@ -1598,6 +1679,7 @@ AgentApi::write_notes (const json &p)
     { "start_bar",   start_bar         },
     { "length_bars", length_bars       },
     { "notes",       specs.size ()     },
+    { "events",      events.size ()    },
   };
   if (is_dry_run (p))
     return dry_run_result (json::array ({ change }));
@@ -1616,9 +1698,23 @@ AgentApi::write_notes (const json &p)
                         .with_velocity (spec.velocity)
                         .with_start_ticks (units::ticks (spec.start))
                         .with_end_ticks (units::ticks (spec.end))
+                        .with_midi_channel (spec.channel)
                         .build_in_registry ();
       clip->structure::arrangement::ArrangerObjectOwner<
         structure::arrangement::MidiNote>::add_object (note_ref);
+    }
+  for (const auto &ev : events)
+    {
+      auto ev_ref = factory.get_builder<structure::arrangement::MidiControlEvent> ()
+                      .with_start_ticks (units::ticks (ev.start))
+                      .build_in_registry ();
+      auto * obj = ev_ref.get_object_as<structure::arrangement::MidiControlEvent> ();
+      obj->setControlType (ev.type);
+      obj->setChannel (ev.channel);
+      obj->setController (ev.controller);
+      obj->setValue (ev.value);
+      clip->structure::arrangement::ArrangerObjectOwner<
+        structure::arrangement::MidiControlEvent>::add_object (ev_ref);
     }
   clip->set_loop_range (
     dsp::ContentTick (units::ticks (0.0)), dsp::ContentTick (units::ticks (0.0)),

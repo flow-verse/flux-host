@@ -478,4 +478,43 @@ TEST_F (EngineApiTest, PresetMethodsValidateInput)
     rpc_error::kNotFound);
 }
 
+TEST_F (EngineApiTest, WriteNotesCarriesChannelsAndControlEvents)
+{
+  call ("create_project", { { "dir", (root_ / "ev").string () } });
+  const auto synth = find_test_synth_id ();
+  const std::string track = call (
+    "add_track", { { "type", "instrument" }, { "name", "S" }, { "plugin_id", synth } })["track"];
+  json notes = json::array ({
+    { { "pitch", 60 }, { "start_beat", 0 }, { "length_beats", 1 }, { "channel", 3 } } });
+  json events = json::array ({
+    { { "type", "pitch_bend" }, { "beat", 0 }, { "value", 0.25 }, { "channel", 3 } },
+    { { "type", "cc" }, { "beat", 1 }, { "controller", 74 }, { "value", 90 } } });
+  auto r = call (
+    "write_notes",
+    { { "track", track }, { "start_bar", 1 }, { "length_bars", 1 }, { "notes", notes }, { "events", events } });
+  EXPECT_EQ (r["changes"][0]["events"], 2);
+  const auto bad = [&] (json ev) {
+    return call_error (
+      "write_notes",
+      { { "track", track }, { "start_bar", 2 }, { "length_bars", 1 }, { "notes", notes },
+        { "events", json::array ({ ev }) } });
+  };
+  EXPECT_EQ (bad ({ { "type", "pitch_bend" }, { "beat", 0 }, { "value", 1.5 } }), rpc_error::kInvalidParams);
+  EXPECT_EQ (bad ({ { "type", "cc" }, { "beat", 0 }, { "value", 10 } }), rpc_error::kInvalidParams)
+    << "cc needs a controller";
+  EXPECT_EQ (bad ({ { "type", "aftertouch" }, { "beat", 0 }, { "value", 1 } }), rpc_error::kInvalidParams);
+  EXPECT_EQ (bad ({ { "type", "cc" }, { "beat", 9 }, { "controller", 1 }, { "value", 1 } }), rpc_error::kInvalidParams)
+    << "beat outside the clip";
+  json bad_note = json::array ({ { { "pitch", 60 }, { "start_beat", 0 }, { "length_beats", 1 }, { "channel", 16 } } });
+  EXPECT_EQ (
+    call_error ("write_notes", { { "track", track }, { "start_bar", 2 }, { "length_bars", 1 }, { "notes", bad_note } }),
+    rpc_error::kInvalidParams);
+  // Survives save and reopen
+  call ("save_project");
+  const auto dir = (root_ / "ev").string ();
+  call ("open_project", { { "dir", dir } });
+  const auto d = call ("describe_project", { { "include_notes", true } });
+  EXPECT_FALSE (d["tracks"].empty ());
+}
+
 } // namespace flux::engine::tests
