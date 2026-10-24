@@ -21,4 +21,4 @@ if [ "$flatpak_build" != "1" ]; then
   # fi
 fi
 
-exec "${HERE}/@prog_name_lowercase@" "$@"
+exec "${HERE}/@exe_name@" "$@"

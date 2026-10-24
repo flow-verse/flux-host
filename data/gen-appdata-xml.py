@@ -55,14 +55,14 @@ def main(output_file, app_id):
         f.write(f"""<?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright 2022-2024 Alexandros Theodotou -->
 <component type="desktop-application">
-    <id>org.zrythm.Zrythm</id>
+    <id>{app_id}</id>
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>AGPL-3.0-or-later</project_license>
-    <name>Zrythm</name>
-    <developer_name>The Zrythm project</developer_name>
+    <name>@prog_name@</name>
+    <developer_name>@appdata_developer@</developer_name>
     <summary>Digital audio workstation</summary>
     <description>
-        <p>Zrythm is a digital audio workstation tailored for both professionals and beginners, offering an intuitive interface and robust functionality.</p>
+        <p>@prog_name@ is a digital audio workstation tailored for both professionals and beginners, offering an intuitive interface and robust functionality.</p>
         <p>Key features include:</p>
         <ul>
             <li>Streamlined editing workflows</li>
@@ -92,23 +92,23 @@ def main(output_file, app_id):
             <caption>Main window with plugins</caption>
         </screenshot>
     </screenshots>
-    <update_contact>alex_at_zrythm.org</update_contact>
+    <update_contact>@appdata_update_contact@</update_contact>
     <keywords>
-        <keyword>Zrythm</keyword>
+        <keyword>@prog_name@</keyword>
         <keyword>DAW</keyword>
     </keywords>
     <kudos>
         <kudo>HiDpiIcon</kudo>
         <kudo>ModernToolkit</kudo>
     </kudos>
-    <project_group>Zrythm</project_group>
+    <project_group>@prog_name@</project_group>
     <translation type="gettext">zrythm</translation>
     <provides>
-        <binary>zrythm_launch</binary>
+        <binary>@exe_name@_launch</binary>
     </provides>
     <branding>
-        <color type="primary" scheme_preference="light">#FF8B73</color>
-        <color type="primary" scheme_preference="dark">#B12408</color>
+        <color type="primary" scheme_preference="light">@appdata_color_light@</color>
+        <color type="primary" scheme_preference="dark">@appdata_color_dark@</color>
     </branding>
     <releases>
         {get_releases()}

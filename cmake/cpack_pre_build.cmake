@@ -10,7 +10,7 @@ if(CPACK_GENERATOR STREQUAL "AppImage")
   file(REMOVE_RECURSE "${CPACK_TEMPORARY_DIRECTORY}/share/bash-completion")
   file(REMOVE_RECURSE "${CPACK_TEMPORARY_DIRECTORY}/share/fish")
   file(WRITE "${CPACK_TEMPORARY_DIRECTORY}/AppRun"
-    "#!/usr/bin/env bash\nset -e\nthis_dir=\"$(readlink -f \"$(dirname \"$0\")\")\"\nexec \"$this_dir/bin/zrythm\" \"$@\"\n")
+    "#!/usr/bin/env bash\nset -e\nthis_dir=\"$(readlink -f \"$(dirname \"$0\")\")\"\nexec \"$this_dir/bin/${CPACK_APPRUN_EXECUTABLE}\" \"$@\"\n")
 
   # Debug AppImages: strip DWARF from bundled third-party libraries to keep
   # the image under GitLab's artifact size cap. `bin/zrythm` is left untouched.

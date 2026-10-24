@@ -230,6 +230,14 @@ MenuBar {
         title: qsTr("Theme Color")
 
         Action {
+          text: qsTr("Flux Teal")
+
+          onTriggered: {
+            ZrythmTheme.primaryColor = ZrythmTheme.fluxTealColor;
+          }
+        }
+
+        Action {
           enabled: ZrythmTheme.darkMode
           text: qsTr("Classic Orange")
 

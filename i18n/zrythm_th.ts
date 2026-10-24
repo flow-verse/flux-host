@@ -6,7 +6,7 @@
     <message>
         <location filename="../src/gui/qml/components/AboutDialog.qml" line="20"/>
         <location filename="../src/gui/qml/components/AboutDialog.qml" line="57"/>
-        <source>About Zrythm</source>
+        <source>About %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -36,7 +36,7 @@
     </message>
     <message>
         <location filename="../src/gui/qml/components/AboutDialog.qml" line="158"/>
-        <source>Zrythm and the Zrythm logo are trademarks of Alexandros Theodotou.</source>
+        <source>%1 is based on Zrythm by Alexandros Theodotou and is not affiliated with or endorsed by the Zrythm project. Zrythm and the Zrythm logo are trademarks of Alexandros Theodotou.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -82,52 +82,52 @@
 <context>
     <name>Arranger</name>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="657"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="662"/>
         <source>Cut</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="663"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="668"/>
         <source>Copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="669"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="674"/>
         <source>Paste</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="675"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="680"/>
         <source>Duplicate</source>
         <translation type="unfinished">ทำซ้ำ</translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="681"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="686"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="690"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="695"/>
         <source>Toggle &amp;Mute</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="700"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="705"/>
         <source>Timebase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="704"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="709"/>
         <source>Inherit from Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="710"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="715"/>
         <source>Musical</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="716"/>
+        <location filename="../src/gui/qml/components/arranger/Arranger.qml" line="721"/>
         <source>Absolute</source>
         <translation type="unfinished"></translation>
     </message>
@@ -178,37 +178,37 @@
 <context>
     <name>AutomationTracksListView</name>
     <message>
-        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="78"/>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="75"/>
         <source>Change automatable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="127"/>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="122"/>
         <source>On</source>
         <translation type="unfinished">เปิด</translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="141"/>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="135"/>
         <source>Touch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="141"/>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="135"/>
         <source>Latch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="158"/>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="151"/>
         <source>Off</source>
         <translation type="unfinished">ปิด</translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="193"/>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="185"/>
         <source>Hide automation lane</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="217"/>
+        <location filename="../src/gui/qml/components/AutomationTracksListView.qml" line="209"/>
         <source>Add automation lane</source>
         <translation type="unfinished"></translation>
     </message>
@@ -257,17 +257,17 @@
 <context>
     <name>CenterDock</name>
     <message>
-        <location filename="../src/gui/qml/components/CenterDock.qml" line="342"/>
+        <location filename="../src/gui/qml/components/CenterDock.qml" line="347"/>
         <source>Arrangement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/CenterDock.qml" line="347"/>
+        <location filename="../src/gui/qml/components/CenterDock.qml" line="352"/>
         <source>Port Connections</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/CenterDock.qml" line="352"/>
+        <location filename="../src/gui/qml/components/CenterDock.qml" line="357"/>
         <source>Midi CC Bindings</source>
         <translation type="unfinished"></translation>
     </message>
@@ -520,6 +520,11 @@
 <context>
     <name>DemoView</name>
     <message>
+        <location filename="../src/gui/qml/DemoView.qml" line="142"/>
+        <source>Classic Orange</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../src/gui/qml/DemoView.qml" line="332"/>
         <source>Editor</source>
         <translation type="unfinished"></translation>
@@ -633,11 +638,6 @@
     <message>
         <location filename="../src/gui/qml/DemoView.qml" line="139"/>
         <source>Theme Color</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/gui/qml/DemoView.qml" line="142"/>
-        <source>Zrythm Orange</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -932,42 +932,54 @@ XRun Count: %2</source>
 <context>
     <name>FaderButtons</name>
     <message>
-        <location filename="../src/gui/qml/components/FaderButtons.qml" line="36"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="107"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="120"/>
         <source>Mono compatibility</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/FaderButtons.qml" line="58"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="68"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="82"/>
         <source>Record</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/FaderButtons.qml" line="114"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="162"/>
         <source>Monitor: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/FaderButtons.qml" line="131"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="55"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="63"/>
         <source>Solo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/FaderButtons.qml" line="149"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="38"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="50"/>
         <source>Mute</source>
         <translation type="unfinished">ปิดเสียง</translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/FaderButtons.qml" line="169"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="87"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="96"/>
         <source>Listen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/FaderButtons.qml" line="187"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="125"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="137"/>
         <source>Swap phase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/FaderButtons.qml" line="204"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="142"/>
+        <source>Monitor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="169"/>
+        <location filename="../src/gui/qml/components/FaderButtons.qml" line="179"/>
         <source>Channel settings</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1003,11 +1015,6 @@ XRun Count: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/Greeter.qml" line="102"/>
-        <source>Zrythm relies on donations and purchases to sustain development. If you enjoy the software, please consider %1donating%2 or %3buying an installer%2.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../src/gui/qml/Greeter.qml" line="112"/>
         <source>All Ready!</source>
         <translation type="unfinished"></translation>
@@ -1024,18 +1031,8 @@ XRun Count: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/Greeter.qml" line="169"/>
-        <source>Welcome to the Zrythm digital audio workstation. Move to the next page to get started.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../src/gui/qml/Greeter.qml" line="179"/>
         <source>Read the Manual</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/gui/qml/Greeter.qml" line="177"/>
-        <source>If this is your first time using Zrythm, we suggest going through the &apos;Getting Started&apos; section in the %1user manual%2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1051,6 +1048,21 @@ XRun Count: %2</source>
     <message>
         <location filename="../src/gui/qml/Greeter.qml" line="250"/>
         <source>Continue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="102"/>
+        <source>%1 is free software built in the open. If you enjoy it, please consider %2contributing%3.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="169"/>
+        <source>Welcome to the %1 digital audio workstation. Move to the next page to get started.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="177"/>
+        <source>If this is your first time using %3, we suggest going through the &apos;Getting Started&apos; section in the %1user manual%2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1074,11 +1086,6 @@ XRun Count: %2</source>
         <translation type="unfinished">วัตถุมาตราส่วน</translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/Greeter.qml" line="388"/>
-        <source>About Zrythm</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../src/gui/qml/Greeter.qml" line="358"/>
         <source>Create New Project...</source>
         <translation type="unfinished"></translation>
@@ -1091,6 +1098,11 @@ XRun Count: %2</source>
     <message>
         <location filename="../src/gui/qml/Greeter.qml" line="378"/>
         <source>Device Selector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/Greeter.qml" line="388"/>
+        <source>About %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1181,145 +1193,155 @@ XRun Count: %2</source>
 <context>
     <name>MainMenuBar</name>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="45"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="47"/>
         <source>&amp;File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="60"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="62"/>
+        <source>Import File…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="68"/>
         <source>Export…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="69"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="77"/>
         <source>&amp;Edit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="76"/>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="76"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="84"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="84"/>
         <source>Undo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="86"/>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="86"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="94"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="94"/>
         <source>Redo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="116"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="124"/>
         <source>&amp;View</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="121"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="129"/>
         <source>Left Panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="132"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="140"/>
         <source>Bottom Panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="143"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="151"/>
         <source>Right Panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="176"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="184"/>
         <source>Language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="183"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="191"/>
         <source>System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="202"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="210"/>
         <source>More Languages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="212"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="220"/>
         <source>Appearance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="216"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="224"/>
         <source>Switch Light/Dark Theme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="222"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="230"/>
         <source>Theme Color</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="226"/>
-        <source>Zrythm Orange</source>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="233"/>
+        <source>Flux Teal</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="234"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="242"/>
+        <source>Classic Orange</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="338"/>
+        <source>About %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="250"/>
         <source>Celestial Blue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="243"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="259"/>
         <source>Jonquil Yellow</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="252"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="268"/>
         <source>Spring Green</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="261"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="277"/>
         <source>Munsell Red</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="270"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="286"/>
         <source>Gunmetal</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="278"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="294"/>
         <source>Electric Purple</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="292"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="308"/>
         <source>Debug</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="296"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="312"/>
         <source>Show Cache Activity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="307"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="323"/>
         <source>Devices</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="310"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="326"/>
         <source>Audio/MIDI Setup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="319"/>
+        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="335"/>
         <source>&amp;Help</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/gui/qml/components/MainMenuBar.qml" line="322"/>
-        <source>About Zrythm</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1485,176 +1507,6 @@ XRun Count: %2</source>
         <location filename="../src/gui/qml/components/MonitorSection.qml" line="251"/>
         <source>Device Settings</source>
         <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>MusicalMode</name>
-    <message>
-        <source>Inherit</source>
-        <translation type="obsolete">ค่าเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation type="obsolete">ปิด</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation type="obsolete">เปิด</translation>
-    </message>
-</context>
-<context>
-    <name>MusicalScale</name>
-    <message>
-        <source>Chromatic</source>
-        <translation type="obsolete">โครมาติก</translation>
-    </message>
-    <message>
-        <source>Major</source>
-        <translation type="obsolete">เมเจอร์</translation>
-    </message>
-    <message>
-        <source>Minor</source>
-        <translation type="obsolete">ไมเนอร์</translation>
-    </message>
-    <message>
-        <source>Ionian</source>
-        <translation type="obsolete">ไอโอเนียน</translation>
-    </message>
-    <message>
-        <source>Dorian</source>
-        <translation type="obsolete">ดอเรียน</translation>
-    </message>
-    <message>
-        <source>Phrygian</source>
-        <translation type="obsolete">ฟรีเจียน</translation>
-    </message>
-    <message>
-        <source>Lydian</source>
-        <translation type="obsolete">ไดเดียน</translation>
-    </message>
-    <message>
-        <source>Mixolydian</source>
-        <translation type="obsolete">มิกโซเลเดียน</translation>
-    </message>
-    <message>
-        <source>Aeolian</source>
-        <translation type="obsolete">อีโอเลียน</translation>
-    </message>
-    <message>
-        <source>Locrian</source>
-        <translation type="obsolete">โลเครียน</translation>
-    </message>
-    <message>
-        <source>Melodic Minor</source>
-        <translation type="obsolete">เมโลดิกไมเนอร์</translation>
-    </message>
-    <message>
-        <source>Harmonic Minor</source>
-        <translation type="obsolete">ฮาร์โมนิกไมเนอร์</translation>
-    </message>
-    <message>
-        <source>Whole Tone</source>
-        <translation type="obsolete">โฮลโทน</translation>
-    </message>
-    <message>
-        <source>Major Pentatonic</source>
-        <translation type="obsolete">แพนตาโทนิกเมเจอร์</translation>
-    </message>
-    <message>
-        <source>Minor Pentatonic</source>
-        <translation type="obsolete">แพนตาโทนิกไมเนอร์</translation>
-    </message>
-    <message>
-        <source>Octatonic Half Whole</source>
-        <translation type="obsolete">ออคตาโทนิกครึ่งโฮล</translation>
-    </message>
-    <message>
-        <source>Octatonic Whole Half</source>
-        <translation type="obsolete">ออคตาโทนิกโฮลครึ่ง</translation>
-    </message>
-    <message>
-        <source>Acoustic</source>
-        <translation type="obsolete">อะคูสติก</translation>
-    </message>
-    <message>
-        <source>Harmonic Major</source>
-        <translation type="obsolete">เมเจอร์ฮาร์โมนิก</translation>
-    </message>
-    <message>
-        <source>Phrygian Dominant</source>
-        <translation type="obsolete">ฟรีเจียโดมิแนนต์</translation>
-    </message>
-    <message>
-        <source>Major Locrian</source>
-        <translation type="obsolete">เมเจอร์โลเครียน</translation>
-    </message>
-    <message>
-        <source>Algerian</source>
-        <translation type="obsolete">แอลจีเรียน</translation>
-    </message>
-    <message>
-        <source>Augmented</source>
-        <translation type="obsolete">อัคแมนต์</translation>
-    </message>
-    <message>
-        <source>Double Harmonic</source>
-        <translation type="obsolete">ฮาร์โมนิกคู่</translation>
-    </message>
-    <message>
-        <source>Chinese</source>
-        <translation type="obsolete">จีน</translation>
-    </message>
-    <message>
-        <source>Diminished</source>
-        <translation type="obsolete">ดิมินิชต์</translation>
-    </message>
-    <message>
-        <source>Dominant Diminished</source>
-        <translation type="obsolete">โดมิแนนต์ดิมินิชต์</translation>
-    </message>
-    <message>
-        <source>Egyptian</source>
-        <translation type="obsolete">อียิปต์</translation>
-    </message>
-    <message>
-        <source>Eight Tone Spanish</source>
-        <translation type="obsolete">สเปนแปดโทน</translation>
-    </message>
-    <message>
-        <source>Enigmatic</source>
-        <translation type="obsolete">อินิคมาติก</translation>
-    </message>
-    <message>
-        <source>Geez</source>
-        <translation type="obsolete">กีซ</translation>
-    </message>
-    <message>
-        <source>Hindu</source>
-        <translation type="obsolete">ฮินดู</translation>
-    </message>
-    <message>
-        <source>Hirajoshi</source>
-        <translation type="obsolete">ฮิราโจชิ</translation>
-    </message>
-    <message>
-        <source>Hungarian Gypsy</source>
-        <translation type="obsolete">ยิปซีฮังการี</translation>
-    </message>
-    <message>
-        <source>Insen</source>
-        <translation type="obsolete">อินเซ็น</translation>
-    </message>
-    <message>
-        <source>Neapolitan Major</source>
-        <translation type="obsolete">เนเปิลส์เมเจอร์</translation>
-    </message>
-</context>
-<context>
-    <name>MuteButton</name>
-    <message>
-        <location filename="../src/gui/qml/components/basic/MuteButton.qml" line="16"/>
-        <source>Mute</source>
-        <translation type="unfinished">ปิดเสียง</translation>
     </message>
 </context>
 <context>
@@ -2093,42 +1945,72 @@ XRun Count: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="170"/>
-        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="182"/>
-        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="190"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="171"/>
+        <source>Cannot Import File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="179"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="191"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="199"/>
         <source>Cannot Perform Operation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="174"/>
-        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="194"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="183"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="203"/>
         <source>Pasted Content Modified</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="202"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="211"/>
         <source>Plugin Instantiation Failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="202"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="211"/>
         <source>Failed to instantiate plugin %1:
 
 %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="500"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="280"/>
+        <source>Importable files (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="282"/>
+        <source>MIDI files (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="283"/>
+        <source>Audio files (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="284"/>
+        <source>All files (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="286"/>
+        <source>Import Files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="530"/>
         <source>%1 Hz · %2 samples</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="503"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="533"/>
         <source>%1 tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="508"/>
+        <location filename="../src/gui/qml/views/ProjectWindow.qml" line="541"/>
         <source>Cache: %1 pending · %2 complete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2159,10 +2041,6 @@ XRun Count: %2</source>
         <location filename="../src/gui/backend/curve_preset.cpp" line="136"/>
         <source>Vital</source>
         <translation type="unfinished">Vital</translation>
-    </message>
-    <message>
-        <source>Home</source>
-        <translation type="obsolete">หน้าแรก</translation>
     </message>
     <message>
         <location filename="../src/gui/backend/plugin_collections.cpp" line="64"/>
@@ -2249,10 +2127,6 @@ XRun Count: %2</source>
         <location filename="../src/structure/project/project.cpp" line="379"/>
         <source>Chords</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>_Delete</source>
-        <translation type="obsolete">_ลบ</translation>
     </message>
     <message>
         <location filename="../src/gui/backend/chord_preset_manager.cpp" line="120"/>
@@ -2450,22 +2324,6 @@ XRun Count: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Invalid Value</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation type="obsolete">ไม่มี</translation>
-    </message>
-    <message>
-        <source>Invalid</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-    <message>
-        <source>right</source>
-        <translation type="obsolete">เขยิบไปทางขวา</translation>
-    </message>
-    <message>
         <location filename="../src/dsp/fader.cpp" line="48"/>
         <source>Fader Gain</source>
         <translation type="unfinished"></translation>
@@ -2557,26 +2415,6 @@ XRun Count: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Invalid Name</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-    <message>
-        <source>Tempo</source>
-        <translation type="obsolete">จังหวะ</translation>
-    </message>
-    <message>
-        <source>Invalid BPM Value</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-    <message>
-        <source>Duplicate Track</source>
-        <translation type="obsolete">ทำซ้ำ</translation>
-    </message>
-    <message>
-        <source>Duplicate Tracks</source>
-        <translation type="obsolete">ทำซ้ำ</translation>
-    </message>
-    <message>
         <location filename="../src/gui/backend/io/file_descriptor.cpp" line="192"/>
         <source>&lt;b&gt;{}&lt;/b&gt;
 Sample rate: {}
@@ -2588,11 +2426,6 @@ Bit depth: {} bits</source>
     <message>
         <location filename="../src/gui/backend/io/file_descriptor.cpp" line="210"/>
         <source>Failed reading metadata for {}</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/gui/backend/io/midi_file.cpp" line="129"/>
-        <source>Untitled Track {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2663,7 +2496,7 @@ Bit depth: {} bits</source>
         </translation>
     </message>
     <message>
-        <location filename="../src/gui/backend/zrythm_application.cpp" line="238"/>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="271"/>
         <source>{}-{}
 {}
 
@@ -2859,8 +2692,8 @@ Support this project at {}
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1712"/>
         <location filename="../src/actions/track_collection_operator.cpp" line="289"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1712"/>
         <source>%n audio item(s) were dropped</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -2874,16 +2707,12 @@ Support this project at {}
         </translation>
     </message>
     <message>
-        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1721"/>
         <location filename="../src/actions/track_collection_operator.cpp" line="302"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1721"/>
         <source> (content from another project could not be resolved here)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1831"/>
-        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1853"/>
-        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1868"/>
-        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1905"/>
         <location filename="../src/actions/plugin_operator.cpp" line="357"/>
         <location filename="../src/actions/plugin_operator.cpp" line="378"/>
         <location filename="../src/actions/plugin_operator.cpp" line="400"/>
@@ -2891,6 +2720,10 @@ Support this project at {}
         <location filename="../src/actions/track_collection_operator.cpp" line="265"/>
         <location filename="../src/actions/track_collection_operator.cpp" line="514"/>
         <location filename="../src/actions/track_collection_operator.cpp" line="529"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1831"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1853"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1868"/>
+        <location filename="../src/actions/arranger_object_selection_operator.cpp" line="1905"/>
         <source>The clipboard contents could not be pasted</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2940,7 +2773,7 @@ Support this project at {}
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/actions/arranger_object_creator.cpp" line="346"/>
+        <location filename="../src/actions/arranger_object_creator.cpp" line="415"/>
         <source>Edit chord</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2960,7 +2793,7 @@ Support this project at {}
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/backend/project_session.cpp" line="357"/>
+        <location filename="../src/gui/backend/project_session.cpp" line="359"/>
         <source>Recording %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3082,40 +2915,67 @@ Support this project at {}
         <source>The clipboard tracks contain invalid folder nesting</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>RecordButton</name>
     <message>
-        <location filename="../src/gui/qml/components/basic/RecordButton.qml" line="22"/>
-        <source>Record</source>
+        <location filename="../flux/engine/src/agent_api.cpp" line="1191"/>
+        <source>Add track %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../flux/engine/src/agent_api.cpp" line="2054"/>
+        <source>Set loop range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../flux/engine/src/agent_api.cpp" line="2110"/>
+        <source>Set song range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../flux/engine/src/load_preset_command.h" line="30"/>
+        <source>Load preset %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../flux/engine/src/set_params_command.h" line="34"/>
+        <source>Set %n parameter(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
     <name>RecordSplitButton</name>
     <message>
-        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="24"/>
+        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="51"/>
         <source>Record Options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="25"/>
+        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="52"/>
         <source>Record</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="38"/>
+        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="65"/>
         <source>Create takes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="46"/>
+        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="73"/>
         <source>Create takes (mute previous)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="57"/>
+        <location filename="../src/gui/qml/components/RecordSplitButton.qml" line="84"/>
         <source>Punch in/out</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RecordingIndicator</name>
+    <message>
+        <location filename="../src/gui/qml/components/RecordingIndicator.qml" line="29"/>
+        <source>REC</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3140,7 +3000,7 @@ Support this project at {}
 <context>
     <name>Ruler</name>
     <message>
-        <location filename="../src/gui/qml/components/Ruler.qml" line="305"/>
+        <location filename="../src/gui/qml/components/Ruler.qml" line="306"/>
         <source>Start</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3323,14 +3183,6 @@ Support this project at {}
     </message>
 </context>
 <context>
-    <name>SoloButton</name>
-    <message>
-        <location filename="../src/gui/qml/components/basic/SoloButton.qml" line="20"/>
-        <source>Solo</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>SplitButton</name>
     <message>
         <location filename="../src/gui/qml/components/basic/SplitButton.qml" line="56"/>
@@ -3435,17 +3287,17 @@ Support this project at {}
 <context>
     <name>Timeline</name>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Timeline.qml" line="45"/>
+        <location filename="../src/gui/qml/components/arranger/Timeline.qml" line="46"/>
         <source>Create Marker</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Timeline.qml" line="45"/>
+        <location filename="../src/gui/qml/components/arranger/Timeline.qml" line="46"/>
         <source>Create Scale Object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/arranger/Timeline.qml" line="104"/>
+        <location filename="../src/gui/qml/components/arranger/Timeline.qml" line="105"/>
         <source>Custom Marker</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3608,71 +3460,91 @@ Support this project at {}
 <context>
     <name>TrackView</name>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="72"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="71"/>
         <source>Cut %1 Tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="72"/>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="86"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="71"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="85"/>
         <source>Cut Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="74"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="73"/>
         <source>Copy %1 Tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="74"/>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="96"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="73"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="95"/>
         <source>Copy Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="77"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="76"/>
         <source>Duplicate %1 Tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="77"/>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="114"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="76"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="113"/>
         <source>Duplicate Track</source>
         <translation type="unfinished">ทำซ้ำ</translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="79"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="78"/>
         <source>Delete %1 Tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="79"/>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="127"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="78"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="126"/>
         <source>Delete Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="106"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="105"/>
         <source>Paste Tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="380"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="379"/>
         <source>Delete Lane</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="666"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="610"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="622"/>
+        <source>Mute</source>
+        <translation type="unfinished">ปิดเสียง</translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="627"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="636"/>
+        <source>Solo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="641"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="654"/>
+        <source>Record</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="673"/>
         <source>Scales</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="700"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="691"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="702"/>
         <source>Show lanes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TrackView.qml" line="717"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="707"/>
+        <location filename="../src/gui/qml/components/TrackView.qml" line="718"/>
         <source>Show automation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3688,62 +3560,62 @@ Support this project at {}
 <context>
     <name>TracklistHeader</name>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="27"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="29"/>
         <source>Add track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="34"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="36"/>
         <source>Add _MIDI Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="40"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="42"/>
         <source>Add Audio Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="49"/>
-        <source>Import File...</source>
-        <translation type="unfinished">ตัวชิ้กำลัง</translation>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="51"/>
+        <source>Import File…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="56"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="60"/>
         <source>Add Audio FX Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="62"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="66"/>
         <source>Add MIDI FX Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="71"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="75"/>
         <source>Add Audio Group Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="77"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="81"/>
         <source>Add MIDI Group Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="86"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="90"/>
         <source>Add Folder Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="100"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="104"/>
         <source>Clip Launcher</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="111"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="115"/>
         <source>Timeline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="122"/>
+        <location filename="../src/gui/qml/components/TracklistHeader.qml" line="126"/>
         <source>BPM &amp; Time Signature</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3826,1673 +3698,82 @@ Support this project at {}
     </message>
 </context>
 <context>
-    <name>build/data/org.zrythm.Zrythm.gschema.xml:1205</name>
+    <name>zrythm::actions::FileImporter</name>
     <message>
-        <source>CLAP plugins</source>
-        <translation type="obsolete">ปลั๊กอินกำหนดเอง</translation>
+        <location filename="../src/actions/file_importer.cpp" line="68"/>
+        <source>The track lane could not be found for importing</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>build/data/org.zrythm.Zrythm.gschema.xml:1245</name>
     <message>
-        <source>Audio</source>
-        <translation type="vanished">เสียง</translation>
+        <location filename="../src/actions/file_importer.cpp" line="99"/>
+        <location filename="../src/actions/file_importer.cpp" line="215"/>
+        <source>Unsupported file type</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>build/data/org.zrythm.Zrythm.gschema.xml:316</name>
     <message>
-        <source>Mute</source>
-        <translation type="vanished">ปิดเสียง</translation>
+        <location filename="../src/actions/file_importer.cpp" line="114"/>
+        <location filename="../src/actions/file_importer.cpp" line="121"/>
+        <location filename="../src/actions/file_importer.cpp" line="222"/>
+        <location filename="../src/actions/file_importer.cpp" line="228"/>
+        <source>Failed to import file (%1)</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>build/data/org.zrythm.Zrythm.gschema.xml:567</name>
     <message>
-        <source>Start velocity</source>
-        <translation type="obsolete">ความเร็ว</translation>
+        <location filename="../src/actions/file_importer.cpp" line="138"/>
+        <source>No clip slot found for the track</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>build/data/org.zrythm.Zrythm.gschema.xml:568</name>
     <message>
-        <source>Start velocity.</source>
-        <translation type="obsolete">ความเร็ว</translation>
+        <location filename="../src/actions/file_importer.cpp" line="154"/>
+        <location filename="../src/actions/file_importer.cpp" line="307"/>
+        <source>MIDI files can only be imported into MIDI or instrument tracks</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>build/data/org.zrythm.Zrythm.gschema.xml:572</name>
     <message>
-        <source>End velocity</source>
-        <translation type="obsolete">ความเร็ว</translation>
+        <location filename="../src/actions/file_importer.cpp" line="164"/>
+        <location filename="../src/actions/file_importer.cpp" line="316"/>
+        <source>Failed to read MIDI file (%1)</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>build/data/org.zrythm.Zrythm.gschema.xml:573</name>
     <message>
-        <source>End velocity.</source>
-        <translation type="obsolete">ความเร็ว</translation>
+        <location filename="../src/actions/file_importer.cpp" line="170"/>
+        <location filename="../src/actions/file_importer.cpp" line="323"/>
+        <source>MIDI file contains no notes</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>build/data/org.zrythm.Zrythm.gschema.xml:596</name>
     <message>
-        <source>velocity</source>
-        <translation type="obsolete">ความเร็ว</translation>
+        <location filename="../src/actions/file_importer.cpp" line="181"/>
+        <source>Failed to import MIDI file (%1)</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>build/data/org.zrythm.Zrythm.gschema.xml:703</name>
     <message>
-        <source>Instrument</source>
-        <translation type="vanished">ดนตรี</translation>
+        <location filename="../src/actions/file_importer.cpp" line="191"/>
+        <location filename="../src/actions/file_importer.cpp" line="247"/>
+        <source>Audio files can only be imported into audio tracks</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>inc/dsp/audio_function.h:56</name>
     <message>
-        <source>Invert</source>
-        <translation type="vanished">กลับด้าน</translation>
+        <location filename="../src/actions/file_importer.cpp" line="202"/>
+        <location filename="../src/actions/file_importer.cpp" line="287"/>
+        <source>Failed to import audio file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Normalize peak</source>
-        <translation type="vanished">ทำให้จุดพีคเป็นปกติ</translation>
+        <location filename="../src/actions/file_importer.cpp" line="209"/>
+        <location filename="../src/actions/file_importer.cpp" line="282"/>
+        <source>Failed to import audio file (%1)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Normalize RMS</source>
-        <translation type="vanished">ทำให้ RMS เป็นปกติ</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/audio_function.h:57</name>
-    <message>
-        <source>Normalize LUFS</source>
-        <translation type="vanished">ทำให้ LUFS เป็นปกติ</translation>
-    </message>
-    <message>
-        <source>Linear fade in</source>
-        <translation type="vanished">เฟดเข้าแบบลีเนียร์</translation>
-    </message>
-    <message>
-        <source>Linear fade out</source>
-        <translation type="vanished">เฟดออกแบบลีเนียร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/audio_function.h:58</name>
-    <message>
-        <source>Nudge left</source>
-        <translation type="vanished">เขยิบไปทางซ้าย</translation>
-    </message>
-    <message>
-        <source>Nudge right</source>
-        <translation type="vanished">เขยิบไปทางขวา</translation>
-    </message>
-    <message>
-        <source>Reverse</source>
-        <translation type="vanished">กลับด้าน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/audio_function.h:59</name>
-    <message>
-        <source>External program</source>
-        <translation type="vanished">โปรแกรมภายนอก</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/audio_function.h:60</name>
-    <message>
-        <source>Guile script</source>
-        <translation type="vanished">สคริปต์กิล</translation>
-    </message>
-    <message>
-        <source>Custom plugin</source>
-        <translation type="vanished">ปลั๊กอินกำหนดเอง</translation>
-    </message>
-    <message>
-        <source>Invalid</source>
-        <translation type="vanished">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/automation_function.h:35</name>
-    <message>
-        <source>Flip H</source>
-        <translation type="vanished">กลับด้านแนวนอน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/automation_function.h:36</name>
-    <message>
-        <source>Flip V</source>
-        <translation type="vanished">กลับด้านแนวตั้ง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/curve.h:100</name>
-    <message>
-        <source>Vital</source>
-        <translation type="vanished">Vital</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/curve.h:101</name>
-    <message>
-        <source>Pulse</source>
-        <translation type="vanished">Pulse</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/curve.h:98</name>
-    <message>
-        <source>Exponent</source>
-        <translation type="vanished">ตัวชิ้กำลัง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/curve.h:99</name>
-    <message>
-        <source>Superellipse</source>
-        <translation type="vanished">Superellipse</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/engine.h:170</name>
-    <message>
-        <source>1,024</source>
-        <translation type="vanished">1,024</translation>
-    </message>
-    <message>
-        <source>2,048</source>
-        <translation type="vanished">2,048</translation>
-    </message>
-    <message>
-        <source>4,096</source>
-        <translation type="vanished">4,096</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/engine.h:195</name>
-    <message>
-        <source>22,050</source>
-        <translation type="vanished">22,050</translation>
-    </message>
-    <message>
-        <source>32,000</source>
-        <translation type="vanished">32,000</translation>
-    </message>
-    <message>
-        <source>44,100</source>
-        <translation type="vanished">44,100</translation>
-    </message>
-    <message>
-        <source>48,000</source>
-        <translation type="vanished">48,000</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/engine.h:196</name>
-    <message>
-        <source>88,200</source>
-        <translation type="vanished">88,200</translation>
-    </message>
-    <message>
-        <source>96,000</source>
-        <translation type="vanished">96,000</translation>
-    </message>
-    <message>
-        <source>192,000</source>
-        <translation type="vanished">192,000</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/engine.h:240</name>
-    <message>
-        <source>Dummy</source>
-        <translation type="vanished">ตัวจำลอง</translation>
-    </message>
-    <message>
-        <source>Dummy (libsoundio)</source>
-        <translation type="vanished">ตัวจำลอง (libsoundio)</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/engine.h:295</name>
-    <message>
-        <source>Dummy</source>
-        <translation type="vanished">ตัวจำลอง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/engine.h:296</name>
-    <message>
-        <source>ALSA Sequencer (not working)</source>
-        <translation type="vanished">ซีเควนเซอร์ ALSA (ไม่ทำงาน)</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/engine.h:297</name>
-    <message>
-        <source>ALSA Sequencer (rtmidi)</source>
-        <translation type="vanished">ซีเควนเซอร์ ALSA (rtmidi)</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/exporter.h:127</name>
-    <message>
-        <source>Before inserts</source>
-        <translation type="vanished">ก่อนแทรก</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/exporter.h:128</name>
-    <message>
-        <source>Pre-fader</source>
-        <translation type="vanished">เฟดเดอร์ช่วงต้น</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/exporter.h:129</name>
-    <message>
-        <source>Post fader</source>
-        <translation type="vanished">เฟดเดอร์ช่วงหลัง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/midi_function.h:42</name>
-    <message>
-        <source>Crescendo</source>
-        <translation type="vanished">เครสเซนโด</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/midi_function.h:43</name>
-    <message>
-        <source>Flam</source>
-        <translation type="vanished">แฟลม</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/midi_function.h:44</name>
-    <message>
-        <source>Flip H</source>
-        <translation type="vanished">กลับด้านแนวนอน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/midi_function.h:45</name>
-    <message>
-        <source>Flip V</source>
-        <translation type="vanished">กลับด้านแนวตั้ง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/midi_function.h:46</name>
-    <message>
-        <source>Legato</source>
-        <translation type="vanished">เลกาโต</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/midi_function.h:47</name>
-    <message>
-        <source>Portato</source>
-        <translation type="vanished">พอร์ตาโต</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/midi_function.h:48</name>
-    <message>
-        <source>Staccato</source>
-        <translation type="vanished">สแตคคาโต</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/midi_function.h:49</name>
-    <message>
-        <source>Strum</source>
-        <translation type="vanished">สตรัม</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/region.h:62</name>
-    <message>
-        <source>Inherit</source>
-        <translation type="vanished">ค่าเริ่มต้น</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/region.h:63</name>
-    <message>
-        <source>Off</source>
-        <translation type="vanished">ปิด</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/region.h:64</name>
-    <message>
-        <source>On</source>
-        <translation type="vanished">เปิด</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:129</name>
-    <message>
-        <source>Chromatic</source>
-        <translation type="vanished">โครมาติก</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:130</name>
-    <message>
-        <source>Major</source>
-        <translation type="vanished">เมเจอร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:131</name>
-    <message>
-        <source>Minor</source>
-        <translation type="vanished">ไมเนอร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:132</name>
-    <message>
-        <source>Ionian</source>
-        <translation type="vanished">ไอโอเนียน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:133</name>
-    <message>
-        <source>Dorian</source>
-        <translation type="vanished">ดอเรียน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:134</name>
-    <message>
-        <source>Phrygian</source>
-        <translation type="vanished">ฟรีเจียน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:135</name>
-    <message>
-        <source>Lydian</source>
-        <translation type="vanished">ไดเดียน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:136</name>
-    <message>
-        <source>Mixolydian</source>
-        <translation type="vanished">มิกโซเลเดียน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:137</name>
-    <message>
-        <source>Aeolian</source>
-        <translation type="vanished">อีโอเลียน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:138</name>
-    <message>
-        <source>Locrian</source>
-        <translation type="vanished">โลเครียน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:139</name>
-    <message>
-        <source>Melodic Minor</source>
-        <translation type="vanished">เมโลดิกไมเนอร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:140</name>
-    <message>
-        <source>Harmonic Minor</source>
-        <translation type="vanished">ฮาร์โมนิกไมเนอร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:141</name>
-    <message>
-        <source>Whole Tone</source>
-        <translation type="vanished">โฮลโทน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:142</name>
-    <message>
-        <source>Major Pentatonic</source>
-        <translation type="vanished">แพนตาโทนิกเมเจอร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:143</name>
-    <message>
-        <source>Minor Pentatonic</source>
-        <translation type="vanished">แพนตาโทนิกไมเนอร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:144</name>
-    <message>
-        <source>Octatonic Half Whole</source>
-        <translation type="vanished">ออคตาโทนิกครึ่งโฮล</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:145</name>
-    <message>
-        <source>Octatonic Whole Half</source>
-        <translation type="vanished">ออคตาโทนิกโฮลครึ่ง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:146</name>
-    <message>
-        <source>Acoustic</source>
-        <translation type="vanished">อะคูสติก</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:147</name>
-    <message>
-        <source>Harmonic Major</source>
-        <translation type="vanished">เมเจอร์ฮาร์โมนิก</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:148</name>
-    <message>
-        <source>Phrygian Dominant</source>
-        <translation type="vanished">ฟรีเจียโดมิแนนต์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:149</name>
-    <message>
-        <source>Major Locrian</source>
-        <translation type="vanished">เมเจอร์โลเครียน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:150</name>
-    <message>
-        <source>Algerian</source>
-        <translation type="vanished">แอลจีเรียน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:151</name>
-    <message>
-        <source>Augmented</source>
-        <translation type="vanished">อัคแมนต์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:152</name>
-    <message>
-        <source>Double Harmonic</source>
-        <translation type="vanished">ฮาร์โมนิกคู่</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:153</name>
-    <message>
-        <source>Chinese</source>
-        <translation type="vanished">จีน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:154</name>
-    <message>
-        <source>Diminished</source>
-        <translation type="vanished">ดิมินิชต์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:155</name>
-    <message>
-        <source>Dominant Diminished</source>
-        <translation type="vanished">โดมิแนนต์ดิมินิชต์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:156</name>
-    <message>
-        <source>Egyptian</source>
-        <translation type="vanished">อียิปต์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:157</name>
-    <message>
-        <source>Eight Tone Spanish</source>
-        <translation type="vanished">สเปนแปดโทน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:158</name>
-    <message>
-        <source>Enigmatic</source>
-        <translation type="vanished">อินิคมาติก</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:159</name>
-    <message>
-        <source>Geez</source>
-        <translation type="vanished">กีซ</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:160</name>
-    <message>
-        <source>Hindu</source>
-        <translation type="vanished">ฮินดู</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:161</name>
-    <message>
-        <source>Hirajoshi</source>
-        <translation type="vanished">ฮิราโจชิ</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:162</name>
-    <message>
-        <source>Hungarian Gypsy</source>
-        <translation type="vanished">ยิปซีฮังการี</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:163</name>
-    <message>
-        <source>Insen</source>
-        <translation type="vanished">อินเซ็น</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/scale.h:164</name>
-    <message>
-        <source>Neapolitan Major</source>
-        <translation type="vanished">เนเปิลส์เมเจอร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/snap_grid.h:52</name>
-    <message>
-        <source>bar</source>
-        <translation type="obsolete">1 บาร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:163</name>
-    <message>
-        <source>Instrument</source>
-        <translation type="vanished">ดนตรี</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:164</name>
-    <message>
-        <source>Audio</source>
-        <translation type="vanished">เสียง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:165</name>
-    <message>
-        <source>Master</source>
-        <translation type="vanished">หลัก</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:166</name>
-    <message>
-        <source>Chord</source>
-        <translation type="vanished">คอร์ด</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:167</name>
-    <message>
-        <source>Marker</source>
-        <translation type="vanished">มาร์คเกอร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:168</name>
-    <message>
-        <source>Tempo</source>
-        <translation type="vanished">จังหวะ</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:169</name>
-    <message>
-        <source>Modulator</source>
-        <translation type="vanished">ตัวเปลี่ยนเสียง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:170</name>
-    <message>
-        <source>Audio FX</source>
-        <translation type="vanished">เอฟเฟ็กต์เสียง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:171</name>
-    <message>
-        <source>Audio Group</source>
-        <translation type="vanished">กลุ่มเสียง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:172</name>
-    <message>
-        <source>MIDI</source>
-        <translation type="vanished">MIDI</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:173</name>
-    <message>
-        <source>MIDI FX</source>
-        <translation type="vanished">เอฟเฟ็กต์ MIDI</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:174</name>
-    <message>
-        <source>MIDI Group</source>
-        <translation type="vanished">กลุ่ม MIDI</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/track.h:175</name>
-    <message>
-        <source>Folder</source>
-        <translation type="vanished">โฟลเดอร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/transport.h:51</name>
-    <message>
-        <source>None</source>
-        <translation type="vanished">ไม่มี</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/transport.h:52</name>
-    <message>
-        <source>1 bar</source>
-        <translation type="vanished">1 บาร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/transport.h:53</name>
-    <message>
-        <source>2 bars</source>
-        <translation type="vanished">2 บาร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/dsp/transport.h:54</name>
-    <message>
-        <source>4 bars</source>
-        <translation type="vanished">4 บาร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/gui/backend/arranger_object.h:80</name>
-    <message>
-        <source>None</source>
-        <translation type="vanished">ไม่มี</translation>
-    </message>
-</context>
-<context>
-    <name>inc/gui/backend/arranger_object.h:81</name>
-    <message>
-        <source>All</source>
-        <translation type="vanished">ทั้งหมด</translation>
-    </message>
-</context>
-<context>
-    <name>inc/gui/backend/arranger_object.h:82</name>
-    <message>
-        <source>Region</source>
-        <translation type="vanished">พื้นที่</translation>
-    </message>
-</context>
-<context>
-    <name>inc/gui/backend/arranger_object.h:83</name>
-    <message>
-        <source>Midi Note</source>
-        <translation type="vanished">โน๊ต Midi</translation>
-    </message>
-</context>
-<context>
-    <name>inc/gui/backend/arranger_object.h:84</name>
-    <message>
-        <source>Chord Object</source>
-        <translation type="vanished">วัตถุคอร์ด</translation>
-    </message>
-</context>
-<context>
-    <name>inc/gui/backend/arranger_object.h:85</name>
-    <message>
-        <source>Scale Object</source>
-        <translation type="vanished">วัตถุมาตราส่วน</translation>
-    </message>
-</context>
-<context>
-    <name>inc/gui/backend/arranger_object.h:86</name>
-    <message>
-        <source>Marker</source>
-        <translation type="vanished">มาร์คเกอร์</translation>
-    </message>
-</context>
-<context>
-    <name>inc/gui/backend/arranger_object.h:87</name>
-    <message>
-        <source>Automation Point</source>
-        <translation type="vanished">จุดอัตโนมัติ</translation>
-    </message>
-</context>
-<context>
-    <name>inc/gui/backend/arranger_object.h:88</name>
-    <message>
-        <source>Velocity</source>
-        <translation type="vanished">ความเร็ว</translation>
-    </message>
-</context>
-<context>
-    <name>inc/plugins/plugin_descriptor.h:142</name>
-    <message>
-        <source>Dummy</source>
-        <translation type="vanished">ตัวจำลอง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/gtk.h:42</name>
-    <message>
-        <source>MIDI learn</source>
-        <translation type="vanished">เรียนรู้ MIDI</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/gtk.h:45</name>
-    <message>
-        <source>Cu_t</source>
-        <translation type="vanished">ตั_ด</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/gtk.h:48</name>
-    <message>
-        <source>_Copy</source>
-        <translation type="vanished">_คัดลอก</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/gtk.h:51</name>
-    <message>
-        <source>_Paste</source>
-        <translation type="vanished">_วาง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/gtk.h:54</name>
-    <message>
-        <source>_Delete</source>
-        <translation type="vanished">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/gtk.h:58</name>
-    <message>
-        <source>Cle_ar Selection</source>
-        <translation type="vanished">ยก_เลิกการเลือก</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/gtk.h:61</name>
-    <message>
-        <source>Select A_ll</source>
-        <translation type="vanished">เลือกทั้ง_หมด</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/gtk.h:64</name>
-    <message>
-        <source>Duplicate</source>
-        <translation type="vanished">ทำซ้ำ</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/gtk.h:67</name>
-    <message>
-        <source>Mute</source>
-        <translation type="vanished">ปิดเสียง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/gtk.h:70</name>
-    <message>
-        <source>Unmute</source>
-        <translation type="vanished">ยกเลิกปิดเสียง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/ui.h:81</name>
-    <message>
-        <source>High</source>
-        <translation type="vanished">สูง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/ui.h:82</name>
-    <message>
-        <source>Normal</source>
-        <translation type="vanished">กลาง</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/ui.h:83</name>
-    <message>
-        <source>Low</source>
-        <translation type="vanished">ต่ำ</translation>
-    </message>
-</context>
-<context>
-    <name>inc/utils/ui.h:84</name>
-    <message>
-        <source>Ultra Low</source>
-        <translation type="vanished">ต่ำที่สุด</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:1706</name>
-    <message>
-        <source>Select File(s)</source>
-        <translation type="obsolete">เลือกทั้ง_หมด</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:1867</name>
-    <message>
-        <source>_Delete</source>
-        <translation type="vanished">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:2843</name>
-    <message>
-        <source>Region Color</source>
-        <translation type="obsolete">พื้นที่</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:3381</name>
-    <message>
-        <source>Delete?</source>
-        <translation type="obsolete">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:3385</name>
-    <message>
-        <source>_Delete</source>
-        <translation type="vanished">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:3433</name>
-    <message>
-        <source>Delete?</source>
-        <translation type="obsolete">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:3437</name>
-    <message>
-        <source>_Delete</source>
-        <translation type="vanished">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:3583</name>
-    <message>
-        <source>_Delete</source>
-        <translation type="vanished">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:3701</name>
-    <message>
-        <source>Delete?</source>
-        <translation type="obsolete">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:3705</name>
-    <message>
-        <source>_Delete</source>
-        <translation type="vanished">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:3964</name>
-    <message>
-        <source>Delete?</source>
-        <translation type="obsolete">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/actions/actions.c:3972</name>
-    <message>
-        <source>_Delete</source>
-        <translation type="vanished">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/automation_point.c:228</name>
-    <message>
-        <source>Invalid Value</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/automation_track.c:148</name>
-    <message>
-        <source>On</source>
-        <translation type="vanished">เปิด</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/automation_track.c:154</name>
-    <message>
-        <source>Off</source>
-        <translation type="vanished">ปิด</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/channel_send.c:56</name>
-    <message>
-        <source>None</source>
-        <translation type="vanished">ไม่มี</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/channel_send.c:73</name>
-    <message>
-        <source>Invalid</source>
-        <translation type="vanished">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/channel_send.c:95</name>
-    <message>
-        <source>Invalid</source>
-        <translation type="vanished">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/curve.c:361</name>
-    <message>
-        <source>Vital</source>
-        <translation type="vanished">Vital</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/curve.c:58</name>
-    <message>
-        <source>Exponent</source>
-        <translation type="vanished">ตัวชิ้กำลัง</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/curve.c:61</name>
-    <message>
-        <source>Superellipse</source>
-        <translation type="vanished">Superellipse</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/curve.c:67</name>
-    <message>
-        <source>Pulse</source>
-        <translation type="vanished">Pulse</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/engine_jack.c:739</name>
-    <message>
-        <source>right</source>
-        <translation type="obsolete">เขยิบไปทางขวา</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/region.c:468</name>
-    <message>
-        <source>MIDI</source>
-        <translation type="vanished">MIDI</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/region.c:471</name>
-    <message>
-        <source>Audio</source>
-        <translation type="vanished">เสียง</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/region.c:477</name>
-    <message>
-        <source>Chord</source>
-        <translation type="vanished">คอร์ด</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/tempo_track.c:191</name>
-    <message>
-        <source>Invalid BPM Value</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/tempo_track.c:84</name>
-    <message>
-        <source>Tempo</source>
-        <translation type="vanished">จังหวะ</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/track.c:3663</name>
-    <message>
-        <source>Duplicate Track</source>
-        <translation type="obsolete">ทำซ้ำ</translation>
-    </message>
-</context>
-<context>
-    <name>src/dsp/track.c:3665</name>
-    <message>
-        <source>Duplicate Tracks</source>
-        <translation type="obsolete">ทำซ้ำ</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/backend/file_manager.c:83</name>
-    <message>
-        <source>Home</source>
-        <translation type="vanished">หน้าแรก</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/arranger.c:1329</name>
-    <message>
-        <source>Create Object</source>
-        <translation type="obsolete">วัตถุคอร์ด</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/arranger.c:1332</name>
-    <message>
-        <source>Create</source>
-        <translation type="obsolete">วัตถุคอร์ด</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/arranger.c:2318</name>
-    <message>
-        <source>Automation value</source>
-        <translation type="obsolete">จุดอัตโนมัติ</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/balance_control.c:291</name>
-    <message>
-        <source>Invalid Value</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/balance_control.c:297</name>
-    <message>
-        <source>Invalid Value</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/bot_bar.c:308</name>
-    <message>
-        <source>Invalid Value</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/bot_bar.c:415</name>
-    <message>
-        <source>Audio</source>
-        <translation type="vanished">เสียง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/bot_bar.c:421</name>
-    <message>
-        <source>Off</source>
-        <translation type="vanished">ปิด</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation type="vanished">เปิด</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/cc_bindings_tree.c:131</name>
-    <message>
-        <source>On</source>
-        <translation type="vanished">เปิด</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/channel_slot.c:592</name>
-    <message>
-        <source>Normal</source>
-        <translation type="vanished">กลาง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/dialogs/export_dialog.c:1016</name>
-    <message>
-        <source>Export</source>
-        <translation type="obsolete">ตัวชิ้กำลัง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/dialogs/export_progress_dialog.c:83</name>
-    <message>
-        <source>Exporting %s</source>
-        <translation type="obsolete">ตัวชิ้กำลัง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/dialogs/midi_function_dialog.c:158</name>
-    <message>
-        <source>Velocity</source>
-        <translation type="vanished">ความเร็ว</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/dialogs/midi_function_dialog.c:87</name>
-    <message>
-        <source>Start Velocity</source>
-        <translation type="obsolete">ความเร็ว</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/dialogs/midi_function_dialog.c:99</name>
-    <message>
-        <source>End Velocity</source>
-        <translation type="obsolete">ความเร็ว</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/event_viewer.c:605</name>
-    <message>
-        <source>Velocity</source>
-        <translation type="vanished">ความเร็ว</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/greeter.c:473</name>
-    <message>
-        <source>Select Project</source>
-        <translation type="obsolete">วัตถุมาตราส่วน</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/greeter.c:508</name>
-    <message>
-        <source>Open a Project</source>
-        <translation type="obsolete">วัตถุมาตราส่วน</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/item_factory.c:176</name>
-    <message>
-        <source>Invalid Position</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/item_factory.c:182</name>
-    <message>
-        <source>Invalid Position</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/item_factory.c:246</name>
-    <message>
-        <source>Invalid Name</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/item_factory.c:249</name>
-    <message>
-        <source>Velocity</source>
-        <translation type="vanished">ความเร็ว</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/item_factory.c:255</name>
-    <message>
-        <source>Invalid Velocity</source>
-        <translation type="obsolete">ความเร็ว</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/item_factory.c:274</name>
-    <message>
-        <source>Invalid Pitch</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/item_factory.c:296</name>
-    <message>
-        <source>Invalid Value</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/item_factory.c:316</name>
-    <message>
-        <source>Invalid Value</source>
-        <translation type="obsolete">ไม่ถูกต้อง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/item_factory.c:591</name>
-    <message>
-        <source>On</source>
-        <translation type="vanished">เปิด</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/item_factory.c:761</name>
-    <message>
-        <source>Velocity</source>
-        <translation type="vanished">ความเร็ว</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/monitor_section.c:272</name>
-    <message>
-        <source>Mute</source>
-        <translation type="vanished">ปิดเสียง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/monitor_section.c:35</name>
-    <message>
-        <source>Mute</source>
-        <translation type="vanished">ปิดเสียง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/plugin_properties_expander.c:143</name>
-    <message>
-        <source>None</source>
-        <translation type="vanished">ไม่มี</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/plugin_properties_expander.c:144</name>
-    <message>
-        <source>None</source>
-        <translation type="vanished">ไม่มี</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/popovers/automatable_selector_popover.c:153</name>
-    <message>
-        <source>Tempo</source>
-        <translation type="vanished">จังหวะ</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/popovers/automatable_selector_popover.c:323</name>
-    <message>
-        <source>MIDI FX</source>
-        <translation type="vanished">เอฟเฟ็กต์ MIDI</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/popovers/automatable_selector_popover.c:326</name>
-    <message>
-        <source>Instrument</source>
-        <translation type="vanished">ดนตรี</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/popovers/automatable_selector_popover.c:342</name>
-    <message>
-        <source>MIDI</source>
-        <translation type="vanished">MIDI</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/popovers/automatable_selector_popover.c:363</name>
-    <message>
-        <source>Tempo</source>
-        <translation type="vanished">จังหวะ</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/port_connections_tree.c:194</name>
-    <message>
-        <source>On</source>
-        <translation type="vanished">เปิด</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/route_target_selector.c:112</name>
-    <message>
-        <source>None</source>
-        <translation type="vanished">ไม่มี</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/route_target_selector.c:204</name>
-    <message>
-        <source>None</source>
-        <translation type="vanished">ไม่มี</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/route_target_selector.c:61</name>
-    <message>
-        <source>None</source>
-        <translation type="vanished">ไม่มี</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/route_target_selector.c:77</name>
-    <message>
-        <source>None</source>
-        <translation type="vanished">ไม่มี</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/route_target_selector.c:87</name>
-    <message>
-        <source>Master</source>
-        <translation type="vanished">หลัก</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/route_target_selector.c:91</name>
-    <message>
-        <source>Groups</source>
-        <translation type="obsolete">กลุ่ม MIDI</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/route_target_selector.c:94</name>
-    <message>
-        <source>Instruments</source>
-        <translation type="obsolete">ดนตรี</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/snap_grid.c:42</name>
-    <message>
-        <source>Off</source>
-        <translation type="vanished">ปิด</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/timeline_arranger.c:1115</name>
-    <message>
-        <source>Automation Region</source>
-        <translation type="obsolete">จุดอัตโนมัติ</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/timeline_arranger.c:973</name>
-    <message>
-        <source>Loop Selection</source>
-        <translation type="obsolete">ยก_เลิกการเลือก</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/track.c:329</name>
-    <message>
-        <source>Unmute</source>
-        <translation type="vanished">ยกเลิกปิดเสียง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/track.c:333</name>
-    <message>
-        <source>Mute</source>
-        <translation type="vanished">ปิดเสียง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/track.c:826</name>
-    <message>
-        <source>Inherit</source>
-        <translation type="vanished">ค่าเริ่มต้น</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/track_properties_expander.c:94</name>
-    <message>
-        <source>Instrument</source>
-        <translation type="vanished">ดนตรี</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/tracklist.c:74</name>
-    <message>
-        <source>Import File...</source>
-        <translation type="obsolete">ตัวชิ้กำลัง</translation>
-    </message>
-</context>
-<context>
-    <name>src/gui/widgets/velocity_settings.c:64</name>
-    <message>
-        <source>Velocity</source>
-        <translation type="vanished">ความเร็ว</translation>
-    </message>
-</context>
-<context>
-    <name>src/project/project_init_flow_manager.c:574</name>
-    <message>
-        <source>Master</source>
-        <translation type="vanished">หลัก</translation>
-    </message>
-</context>
-<context>
-    <name>src/settings/chord_preset.c:107</name>
-    <message>
-        <source>_Delete</source>
-        <translation type="vanished">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>src/settings/chord_preset_pack.c:121</name>
-    <message>
-        <source>_Delete</source>
-        <translation type="vanished">_ลบ</translation>
-    </message>
-</context>
-<context>
-    <name>zrythm::dsp::MusicalScale</name>
-    <message>
-        <source>Chromatic</source>
-        <translation type="obsolete">โครมาติก</translation>
-    </message>
-    <message>
-        <source>Major</source>
-        <translation type="obsolete">เมเจอร์</translation>
-    </message>
-    <message>
-        <source>Minor</source>
-        <translation type="obsolete">ไมเนอร์</translation>
-    </message>
-    <message>
-        <source>Ionian</source>
-        <translation type="obsolete">ไอโอเนียน</translation>
-    </message>
-    <message>
-        <source>Dorian</source>
-        <translation type="obsolete">ดอเรียน</translation>
-    </message>
-    <message>
-        <source>Phrygian</source>
-        <translation type="obsolete">ฟรีเจียน</translation>
-    </message>
-    <message>
-        <source>Lydian</source>
-        <translation type="obsolete">ไดเดียน</translation>
-    </message>
-    <message>
-        <source>Mixolydian</source>
-        <translation type="obsolete">มิกโซเลเดียน</translation>
-    </message>
-    <message>
-        <source>Aeolian</source>
-        <translation type="obsolete">อีโอเลียน</translation>
-    </message>
-    <message>
-        <source>Locrian</source>
-        <translation type="obsolete">โลเครียน</translation>
-    </message>
-    <message>
-        <source>Melodic Minor</source>
-        <translation type="obsolete">เมโลดิกไมเนอร์</translation>
-    </message>
-    <message>
-        <source>Harmonic Minor</source>
-        <translation type="obsolete">ฮาร์โมนิกไมเนอร์</translation>
-    </message>
-    <message>
-        <source>Whole Tone</source>
-        <translation type="obsolete">โฮลโทน</translation>
-    </message>
-    <message>
-        <source>Major Pentatonic</source>
-        <translation type="obsolete">แพนตาโทนิกเมเจอร์</translation>
-    </message>
-    <message>
-        <source>Minor Pentatonic</source>
-        <translation type="obsolete">แพนตาโทนิกไมเนอร์</translation>
-    </message>
-    <message>
-        <source>Octatonic Half Whole</source>
-        <translation type="obsolete">ออคตาโทนิกครึ่งโฮล</translation>
-    </message>
-    <message>
-        <source>Octatonic Whole Half</source>
-        <translation type="obsolete">ออคตาโทนิกโฮลครึ่ง</translation>
-    </message>
-    <message>
-        <source>Acoustic</source>
-        <translation type="obsolete">อะคูสติก</translation>
-    </message>
-    <message>
-        <source>Harmonic Major</source>
-        <translation type="obsolete">เมเจอร์ฮาร์โมนิก</translation>
-    </message>
-    <message>
-        <source>Phrygian Dominant</source>
-        <translation type="obsolete">ฟรีเจียโดมิแนนต์</translation>
-    </message>
-    <message>
-        <source>Major Locrian</source>
-        <translation type="obsolete">เมเจอร์โลเครียน</translation>
-    </message>
-    <message>
-        <source>Algerian</source>
-        <translation type="obsolete">แอลจีเรียน</translation>
-    </message>
-    <message>
-        <source>Augmented</source>
-        <translation type="obsolete">อัคแมนต์</translation>
-    </message>
-    <message>
-        <source>Double Harmonic</source>
-        <translation type="obsolete">ฮาร์โมนิกคู่</translation>
-    </message>
-    <message>
-        <source>Chinese</source>
-        <translation type="obsolete">จีน</translation>
-    </message>
-    <message>
-        <source>Diminished</source>
-        <translation type="obsolete">ดิมินิชต์</translation>
-    </message>
-    <message>
-        <source>Dominant Diminished</source>
-        <translation type="obsolete">โดมิแนนต์ดิมินิชต์</translation>
-    </message>
-    <message>
-        <source>Egyptian</source>
-        <translation type="obsolete">อียิปต์</translation>
-    </message>
-    <message>
-        <source>Eight Tone Spanish</source>
-        <translation type="obsolete">สเปนแปดโทน</translation>
-    </message>
-    <message>
-        <source>Enigmatic</source>
-        <translation type="obsolete">อินิคมาติก</translation>
-    </message>
-    <message>
-        <source>Geez</source>
-        <translation type="obsolete">กีซ</translation>
-    </message>
-    <message>
-        <source>Hindu</source>
-        <translation type="obsolete">ฮินดู</translation>
-    </message>
-    <message>
-        <source>Hirajoshi</source>
-        <translation type="obsolete">ฮิราโจชิ</translation>
-    </message>
-    <message>
-        <source>Hungarian Gypsy</source>
-        <translation type="obsolete">ยิปซีฮังการี</translation>
-    </message>
-    <message>
-        <source>Insen</source>
-        <translation type="obsolete">อินเซ็น</translation>
-    </message>
-    <message>
-        <source>Neapolitan Major</source>
-        <translation type="obsolete">เนเปิลส์เมเจอร์</translation>
+        <location filename="../src/actions/file_importer.cpp" line="350"/>
+        <source>Failed to import MIDI track %1 (%2)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>zrythm::dsp::SnapGrid</name>
     <message>
-        <location filename="../src/dsp/snap_grid.cpp" line="88"/>
+        <location filename="../src/dsp/snap_grid.cpp" line="89"/>
         <source>Adaptive</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5523,25 +3804,6 @@ Support this project at {}
         <location filename="../src/dsp/note_type.cpp" line="35"/>
         <source>triplet</source>
         <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>zrythm::engine::session</name>
-    <message>
-        <source>None</source>
-        <translation type="obsolete">ไม่มี</translation>
-    </message>
-    <message>
-        <source>1 bar</source>
-        <translation type="obsolete">1 บาร์</translation>
-    </message>
-    <message>
-        <source>2 bars</source>
-        <translation type="obsolete">2 บาร์</translation>
-    </message>
-    <message>
-        <source>4 bars</source>
-        <translation type="obsolete">4 บาร์</translation>
     </message>
 </context>
 <context>
@@ -5622,42 +3884,42 @@ Support this project at {}
 <context>
     <name>zrythm::gui::ZrythmApplication</name>
     <message>
-        <location filename="../src/gui/backend/zrythm_application.cpp" line="201"/>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="234"/>
         <source>Project Loading Failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/backend/zrythm_application.cpp" line="403"/>
-        <source>Audio Device Error</source>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="121"/>
+        <source>Fatal Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/backend/zrythm_application.cpp" line="415"/>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="439"/>
         <source>Audio Device Initialization Failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/backend/zrythm_application.cpp" line="434"/>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="493"/>
         <source>Open project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/backend/zrythm_application.cpp" line="435"/>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="494"/>
         <source>Create new project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/backend/zrythm_application.cpp" line="437"/>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="496"/>
         <source>Create new project with template</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/backend/zrythm_application.cpp" line="440"/>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="499"/>
         <source>Use dummy audio/midi engine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/gui/backend/zrythm_application.cpp" line="445"/>
+        <location filename="../src/gui/backend/zrythm_application.cpp" line="504"/>
         <source>Project file (.zpj) or project directory to open</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5665,7 +3927,7 @@ Support this project at {}
 <context>
     <name>zrythm::plugins::ClapPlugin</name>
     <message>
-        <location filename="../src/plugins/clap_plugin.cpp" line="618"/>
+        <location filename="../src/plugins/clap_plugin.cpp" line="642"/>
         <source>Failed to load CLAP plugin from %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5673,23 +3935,23 @@ Support this project at {}
 <context>
     <name>zrythm::plugins::Lv2Plugin</name>
     <message>
-        <location filename="../src/plugins/lv2_plugin.cpp" line="1266"/>
+        <location filename="../src/plugins/lv2_plugin.cpp" line="1278"/>
         <source>LV2 descriptor has no path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/plugins/lv2_plugin.cpp" line="1275"/>
+        <location filename="../src/plugins/lv2_plugin.cpp" line="1287"/>
         <source>Failed to load LV2 plugin from %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/plugins/lv2_plugin.cpp" line="1304"/>
-        <location filename="../src/plugins/lv2_plugin.cpp" line="2845"/>
+        <location filename="../src/plugins/lv2_plugin.cpp" line="1316"/>
+        <location filename="../src/plugins/lv2_plugin.cpp" line="2859"/>
         <source>Instantiation failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/plugins/lv2_plugin.cpp" line="1332"/>
+        <location filename="../src/plugins/lv2_plugin.cpp" line="1344"/>
         <source>Cannot re-configure LV2 plugin during processing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5705,22 +3967,15 @@ Support this project at {}
 <context>
     <name>zrythm::plugins::Vst3Plugin</name>
     <message>
-        <location filename="../src/plugins/vst3_plugin.cpp" line="960"/>
+        <location filename="../src/plugins/vst3_plugin.cpp" line="962"/>
         <source>Failed to load VST3 plugin from %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/plugins/vst3_plugin.cpp" line="2446"/>
-        <location filename="../src/plugins/vst3_plugin.cpp" line="2461"/>
+        <location filename="../src/plugins/vst3_plugin.cpp" line="2448"/>
+        <location filename="../src/plugins/vst3_plugin.cpp" line="2463"/>
         <source>Program %1</source>
         <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>zrythm::utils</name>
-    <message>
-        <source>bar</source>
-        <translation type="obsolete">1 บาร์</translation>
     </message>
 </context>
 </TS>

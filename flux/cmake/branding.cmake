@@ -26,6 +26,26 @@ set(bug_report_api_endpoint "")
 set(latest_release_ver_url "")
 set(CHECK_UPDATES OFF)
 
+# Linux/Windows identity: freedesktop app id (desktop file, icon, metainfo,
+# MIME XML) and executable name. data/CMakeLists.txt and the launcher scripts
+# use these when they are set.
+set(app_id "io.github.flow_verse.Flux")
+if(WIN32 OR APPLE)
+  set(exe_name "Flux")
+else()
+  set(exe_name "flux")
+endif()
+# AppStream metadata (data/gen-appdata-xml.py)
+set(homepage_url "${main_repo_url}")
+set(release_tag_base_url "${main_repo_url}/releases/tag/")
+set(translate_url "${main_repo_url}")
+set(contact_url "${issue_tracker_url}")
+set(main_screenshot_url "https://raw.githubusercontent.com/flow-verse/flux-host/main/flux/branding/flux-splash.png")
+set(appdata_developer "Flux contributors")
+set(appdata_update_contact "flow-verse@users.noreply.github.com")
+set(appdata_color_light "#8FDDD5")
+set(appdata_color_dark "#2D3A8C")
+
 # Paths are unchanged (the files under them now hold Flux artwork); only the
 # generated bundle names change.
 set(ZRYTHM_ICNS_FILE_NAME "Flux.icns")

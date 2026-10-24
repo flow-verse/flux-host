@@ -45,4 +45,4 @@ gdb -q --batch \
   -ex "thread apply all backtrace full" \
   -ex "set logging off" \
   -ex "quit" \
-  --args @CMAKE_INSTALL_FULL_BINDIR@/@prog_name_lowercase@ "$@"
+  --args @CMAKE_INSTALL_FULL_BINDIR@/@exe_name@ "$@"

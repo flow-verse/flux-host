@@ -7,9 +7,19 @@
 add_subdirectory(rt)
 add_subdirectory(engine)
 
-# The macOS bundle is what users see in Finder and the Dock.
-if(APPLE AND TARGET zrythm)
-  set_target_properties(zrythm PROPERTIES
-    OUTPUT_NAME "${prog_name}"
-    MACOSX_BUNDLE_BUNDLE_NAME "${prog_name}")
+# The executable users run: Flux.app on macOS, Flux.exe on Windows, flux on
+# Linux (exe_name in flux/cmake/branding.cmake)
+if(TARGET zrythm)
+  set_target_properties(zrythm PROPERTIES OUTPUT_NAME "${exe_name}")
+  if(APPLE)
+    set_target_properties(zrythm PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "${prog_name}")
+  endif()
+endif()
+
+# Linux: the application icon the desktop file names (upstream installs none)
+if(UNIX AND NOT APPLE)
+  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/branding/flux.svg"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
+    RENAME "${app_id}.svg"
+    COMPONENT Runtime)
 endif()

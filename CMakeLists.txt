@@ -1109,6 +1109,9 @@ if(NOT XCODE)
     "${CMAKE_SOURCE_DIR}/src/gui/resources/icons/*"
     "${CMAKE_SOURCE_DIR}/LICENSES/*"
     "${CMAKE_SOURCE_DIR}/TRADEMARKS.md"
+    # Flux: legacy GTK sources that are no longer compiled
+    "${CMAKE_SOURCE_DIR}/src/gui/backend/gtk_widgets/*"
+    "${CMAKE_SOURCE_DIR}/src/gui/resources/ui/*"
   )
 endif()
 

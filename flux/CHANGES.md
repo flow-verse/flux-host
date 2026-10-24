@@ -19,12 +19,23 @@ Modified builds may not use the Zrythm name or logo (`TRADEMARKS.md`). The produ
 | `src/plugins/clap_plugin.cpp`, `vst3_plugin.cpp`, `clap_preset_discovery.cpp`, `plugin-scanner/plugin_scanner_subprocess.h` | Host name reported to plugins uses `PROGRAM_NAME` |
 | `src/gui/qml/Greeter.qml`, `components/AboutDialog.qml`, `components/MainMenuBar.qml`, `DemoView.qml` | User-visible strings use `Config.PROGRAM_NAME`; donation text points to the Flux project; About dialog states Flux is based on Zrythm and is not affiliated with it; "Zrythm Orange" theme renamed "Classic Orange" |
 
+| `CMakeLists.txt` | Legacy GTK sources (`src/gui/backend/gtk_widgets`, `src/gui/resources/ui`, no longer compiled) excluded from translation scanning |
+| `i18n/*.ts` | Obsolete entries dropped (`lupdate -no-obsolete`, about 460,000 lines); five unfinished machine guesses that said "Zrythm" blanked |
+| `data/CMakeLists.txt` | `app_id`, `exe_name` and the AppStream values (URLs, developer, contact, brand colours) are only defaulted when not set beforehand; launcher scripts are named after `exe_name`; the MIME XML is configured |
+| `data/zrythm.desktop.in`, `data/zrythm_launch.in`, `data/zrythm_gdb.in` | Executable and icon come from `@exe_name@` / `@app_id@` |
+| `data/gen-appdata-xml.py` | id, name, developer, description, contact, keywords, project group, launcher binary and brand colours come from CMake variables |
+| `data/org.zrythm.Zrythm-mime.xml` | File-type comments use `@prog_name@` (the `application/x-zrythm-project` type and `.zpj` glob are unchanged) |
+| `cmake/cpack_pre_build.cmake` | AppImage `AppRun` starts `bin/${CPACK_APPRUN_EXECUTABLE}` |
+| `src/gui/qml/ZrythmStyle/ZrythmTheme.qml`, `components/MainMenuBar.qml` | "Flux Teal" (`#1FB5A8`, from the logo) is the default accent and a menu choice |
+
+Flux values for all of these are in `flux/cmake/branding.cmake` and `flux/cmake/packaging.cmake`: executable `flux` (Linux), `Flux.exe` (Windows), `Flux.app` (macOS); app id `io.github.flow_verse.Flux`; the Linux icon is installed by `flux/CMakeLists.txt`.
+
 Deliberately unchanged (internal identifiers, or true factual references):
 
 - `prog_name_lowercase` stays `zrythm`: upstream hardcodes it in install and data paths (`src/utils/directory_manager.cpp`). The CMake target, QML module (`import Zrythm`), C++ namespaces and file-format identifiers (`.zpj`, "Zrythm Plugin Collections") are internal.
 - Messages such as "saved by an older version of Zrythm" and the "Zrythm License" / "Zrythm Trademark Policy" labels in the About dialog name Zrythm truthfully, which `TRADEMARKS.md` allows.
-- Linux/Windows executable and package file names (`bin/zrythm`, AppImage desktop file, Inno Setup) are not renamed yet; only the macOS bundle is (`flux/CMakeLists.txt`). Do this before the first Linux or Windows release.
-- Translations in `i18n/` still hold the old strings; the changed `qsTr()` source strings fall back to English until re-translated. The old entries are unreachable (no source string matches them) but are still compiled into the binary's `.qm` catalogues, so `strings` on the binary finds them. Running `lupdate -no-obsolete` would drop them, at the cost of touching all 50+ upstream `.ts` files; do it before the first public release.
+- The translation catalogues keep upstream's file names (`i18n/zrythm_*.ts`) and gettext domain; the changed `qsTr()` strings fall back to English until re-translated.
+- The legacy debug launchers `zrythm_valgrind.in` / `zrythm_lldb.in` still read upstream's old GSettings schema; they are developer tools, renamed with `exe_name` but otherwise untouched.
 
 ## Headless engine (flux/engine, P1/P2)
 

@@ -147,7 +147,7 @@ QtObject {
 
   property color pageColor: darkMode ? "#161616" : "#E3E3E3"
   property color placeholderTextColor: darkMode ? Qt.rgba(1, 1, 1, 0.5) : Qt.rgba(0, 0, 0, 0.5)
-  property color primaryColor: zrythmColor
+  property color primaryColor: fluxTealColor
 
   property color recordColor: darkMode ? "#D90368" : "#9E004A"
 
@@ -195,6 +195,8 @@ QtObject {
       "weight": Font.Normal
     })
   readonly property color zrythmColor: "#FFAE00"
+  // Flux: default accent, from the Flux logo (readable in light and dark mode)
+  readonly property color fluxTealColor: "#1FB5A8"
 
   function adjustColorForHoverOrVisualFocusOrDown(arg: color, hovered: bool, focused: bool, down: bool): color {
     if (!hovered && !focused && !down)
@@ -286,7 +288,7 @@ QtObject {
   function toggleDarkMode(): void {
     darkMode = !darkMode;
     if (darkMode && lightOnlyThemeColors.includes(primaryColor)) {
-      primaryColor = zrythmColor;
+      primaryColor = fluxTealColor;
     } else if (
     // fall back to a light-mode-compatible color when switching to light
     !darkMode && darkOnlyThemeColors.includes(primaryColor)) {

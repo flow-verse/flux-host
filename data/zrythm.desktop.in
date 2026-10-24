@@ -8,11 +8,11 @@ Version=1.0
 Comment=highly automated and intuitive digital audio workstation
 # Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
 Keywords=daw;audio;midi;music;
-Exec=zrythm %f
+Exec=@exe_name@ %f
 # Translators: Do NOT translate or transliterate this text (this is an icon file name)!
-Icon=org.zrythm.Zrythm
+Icon=@app_id@
 Type=Application
 StartupNotify=true
 Categories=AudioVideoEditing;Recorder;Music;AudioVideo;Audio;Sequencer;X-Sound;Midi;X-Jack;
 MimeType=application/x-zrythm-project;
-StartupWMClass=zrythm
+StartupWMClass=@exe_name@

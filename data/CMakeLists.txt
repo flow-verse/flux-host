@@ -1,7 +1,14 @@
 # SPDX-FileCopyrightText: © 2019-2022, 2024-2025 Alexandros Theodotou <alex@zrythm.org>
 # SPDX-License-Identifier: LicenseRef-ZrythmLicense
 
-set(app_id "org.zrythm.Zrythm")
+# Flux: app_id, exe_name and the appdata values below can be set beforehand
+# (flux/cmake/branding.cmake)
+if(NOT DEFINED app_id)
+  set(app_id "org.zrythm.Zrythm")
+endif()
+if(NOT DEFINED exe_name)
+  set(exe_name "${prog_name_lowercase}")
+endif()
 
 # Prepare icons
 if(APPLE)
@@ -107,17 +114,17 @@ if(OS_GNU)
   else()
     set(LD_LIBRARY_PATH_ENV "LD_LIBRARY_PATH")
   endif()
-  configure_file(zrythm_launch.in ${prog_name_lowercase}_launch @ONLY)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${prog_name_lowercase}_launch
+  configure_file(zrythm_launch.in ${exe_name}_launch @ONLY)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${exe_name}_launch
     TYPE BIN
     COMPONENT Runtime
   )
 
-  configure_file(zrythm_gdb.in ${prog_name_lowercase}_gdb @ONLY)
-  configure_file(zrythm_valgrind.in ${prog_name_lowercase}_valgrind @ONLY)
+  configure_file(zrythm_gdb.in ${exe_name}_gdb @ONLY)
+  configure_file(zrythm_valgrind.in ${exe_name}_valgrind @ONLY)
   install(PROGRAMS
-    ${CMAKE_CURRENT_BINARY_DIR}/${prog_name_lowercase}_gdb
-    ${CMAKE_CURRENT_BINARY_DIR}/${prog_name_lowercase}_valgrind
+    ${CMAKE_CURRENT_BINARY_DIR}/${exe_name}_gdb
+    ${CMAKE_CURRENT_BINARY_DIR}/${exe_name}_valgrind
     DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # Desktop entry (FIXME/TODO)
@@ -147,11 +154,24 @@ endif()
 
 # Appdata
 if(OS_GNU)
-  set(release_tag_base_url "https://gitlab.zrythm.org/zrythm/zrythm/-/tags/")
-  set(homepage_url "https://www.zrythm.org/en/index.html")
-  set(translate_url "https://hosted.weblate.org/engage/zrythm/")
-  set(contact_url "https://www.zrythm.org/en/community.html#contact")
-  set(main_screenshot_url "https://www.zrythm.org/static/images/screenshots/screenshot-20240208.png")
+  foreach(_var_default IN ITEMS
+      "release_tag_base_url=https://gitlab.zrythm.org/zrythm/zrythm/-/tags/"
+      "homepage_url=https://www.zrythm.org/en/index.html"
+      "translate_url=https://hosted.weblate.org/engage/zrythm/"
+      "contact_url=https://www.zrythm.org/en/community.html#contact"
+      "main_screenshot_url=https://www.zrythm.org/static/images/screenshots/screenshot-20240208.png"
+      "appdata_developer=The Zrythm project"
+      "appdata_update_contact=alex_at_zrythm.org"
+      "appdata_color_light=#FF8B73"
+      "appdata_color_dark=#B12408")
+    string(FIND "${_var_default}" "=" _eq)
+    string(SUBSTRING "${_var_default}" 0 ${_eq} _var)
+    math(EXPR _eq "${_eq} + 1")
+    string(SUBSTRING "${_var_default}" ${_eq} -1 _default)
+    if(NOT DEFINED ${_var})
+      set(${_var} "${_default}")
+    endif()
+  endforeach()
   configure_file(gen-appdata-xml.py gen-appdata-xml.py @ONLY)
   set(appdata_xml_filename "${app_id}.appdata.xml")
   set(_final_appdata_xml_filepath "${CMAKE_CURRENT_BINARY_DIR}/${appdata_xml_filename}")
@@ -233,7 +253,8 @@ add_subdirectory(icon-themes)
 
 if(OS_GNU)
   # Zrythm project MIME type
-  install(FILES org.zrythm.Zrythm-mime.xml
+  configure_file(org.zrythm.Zrythm-mime.xml "${CMAKE_CURRENT_BINARY_DIR}/${app_id}-mime.xml" @ONLY)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${app_id}-mime.xml"
     DESTINATION ${CMAKE_INSTALL_DATADIR}/mime/packages
     COMPONENT Runtime
   )
