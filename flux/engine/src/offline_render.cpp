@@ -10,7 +10,11 @@
 #include <stdexcept>
 
 #include "dsp/graph_pruner.h"
+#include "dsp/audio_port.h"
 #include "dsp/graph_renderer.h"
+#include "dsp/graph_scheduler.h"
+#include "dsp/processor_base.h"
+#include "dsp/transport.h"
 #include "plugins/clap_plugin.h"
 #include "structure/project/project.h"
 #include "structure/project/project_graph_builder.h"
@@ -23,7 +27,12 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 
 #include "engine_host.h"
+#include "loudness_meter.h"
 #include "musical_time.h"
+
+#include <QtConcurrentRun>
+#include <atomic>
+#include <exception>
 
 namespace flux::engine
 {
@@ -53,14 +62,14 @@ lowercase_extension (const std::filesystem::path &path)
   return ext;
 }
 
-void
-write_audio_file (
-  const std::filesystem::path   &path,
-  const juce::AudioSampleBuffer &buffer,
-  const std::string             &format,
-  int                            bits,
-  int                            sample_rate,
-  const QString                 &title)
+std::unique_ptr<juce::AudioFormatWriter>
+open_writer (
+  const std::filesystem::path &path,
+  const std::string           &format,
+  int                          bits,
+  int                          sample_rate,
+  int                          channels,
+  const QString               &title)
 {
   const auto file = juce::File (juce::String::fromUTF8 (path.string ().c_str ()));
   if (!file.getParentDirectory ().createDirectory ())
@@ -85,19 +94,20 @@ write_audio_file (
   auto writer_options =
     juce::AudioFormatWriterOptions{}
       .withSampleRate (sample_rate)
-      .withNumChannels (buffer.getNumChannels ())
+      .withNumChannels (channels)
       .withBitsPerSample (bits)
       .withSampleFormat (
         bits == 32
           ? juce::AudioFormatWriterOptions::SampleFormat::floatingPoint
           : juce::AudioFormatWriterOptions::SampleFormat::integral)
       .withQualityOptionIndex (0);
-  // WAV metadata (BWF/INFO); the FLAC writer takes none
+  // WAV metadata (BWF/INFO); the FLAC writer takes none. JUCE's WAV writer
+  // switches to RF64 by itself past 4 GB
   if (format == "wav")
     writer_options = writer_options.withMetadataValues (metadata);
 
   std::unique_ptr<juce::OutputStream> stream =
-    std::make_unique<juce::FileOutputStream> (file);
+    std::make_unique<juce::FileOutputStream> (file, 1 << 20);
   if (!dynamic_cast<juce::FileOutputStream &> (*stream).openedOk ())
     throw std::runtime_error (fmt::format ("cannot open {}", path.string ()));
   auto writer = audio_format->createWriterFor (stream, writer_options);
@@ -107,18 +117,33 @@ write_audio_file (
         "cannot create a {} writer ({} bit) for {}", format, bits,
         path.string ()));
     }
-  if (!writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples ()))
-    throw std::runtime_error (fmt::format ("failed writing {}", path.string ()));
+  return writer;
 }
 
+/** Result of one streamed render pass. */
+struct StreamStats
+{
+  int64_t frames = 0;
+  int64_t latency_trimmed = 0;
+};
+
 /**
- * @brief Renders the project's graph pruned to @p terminal_port.
+ * @brief Renders the project's graph pruned to @p terminal_port, block by
+ * block, handing each block to @p sink as soon as it is produced.
+ *
+ * A streaming copy of dsp::GraphRenderer::render: memory stays at one block
+ * whatever the length. The plugin-latency preroll (the frames processed while
+ * the transport waits for the longest route's latency) is not passed to the
+ * sink, so the output is exactly the range, aligned like live playback.
+ * @p progress gets the frames delivered so far (on the render thread).
  */
-juce::AudioSampleBuffer
-render_to_buffer (
-  structure::project::Project &project,
-  const dsp::graph::IProcessable     &terminal_port,
-  dsp::GraphRenderer::SampleRange range)
+StreamStats
+render_stream (
+  structure::project::Project                                    &project,
+  const dsp::graph::IProcessable                                 &terminal_port,
+  dsp::GraphRenderer::SampleRange                                 range,
+  const std::function<void (const juce::AudioSampleBuffer &, int)> &sink,
+  const std::function<void (int64_t)>                            &progress)
 {
   structure::project::ProjectGraphBuilder builder (
     project, project.metronome (), project.monitor_fader ());
@@ -132,40 +157,117 @@ render_to_buffer (
   terminals.emplace_back (*node);
   dsp::graph::GraphPruner::prune_graph_to_terminals (graph, terminals);
 
-  dsp::GraphRenderer::RenderOptions options{
-    .sample_rate_ = project.engine ()->sample_rate (),
-    .block_length_ = units::samples (
-      static_cast<int64_t> (
-        project.engine ()->block_length ().in (units::samples)))
-  };
-  auto future = dsp::GraphRenderer::render_async (
-    options, graph.steal_nodes (),
-    [context = &project] (std::function<void ()> func) {
-      QMetaObject::invokeMethod (context, func, Qt::BlockingQueuedConnection);
-    },
-    range, project.tempo_map ());
+  const auto sample_rate = project.engine ()->sample_rate ();
+  const auto block_length = units::samples (static_cast<int64_t> (
+    project.engine ()->block_length ().in (units::samples)));
+  const unsigned num_threads =
+    std::max (5u, std::thread::hardware_concurrency ()) - 4;
+  const dsp::TempoMap &tempo_map = project.tempo_map ();
+
+  std::atomic<bool>  done{ false };
+  std::exception_ptr error;
+  StreamStats        stats;
+  auto               nodes = graph.steal_nodes ();
+  auto future = QtConcurrent::run ([&] () {
+    try
+      {
+        dsp::graph::GraphScheduler scheduler (
+          [context = &project] (std::function<void ()> func) {
+            QMetaObject::invokeMethod (context, func, Qt::BlockingQueuedConnection);
+          },
+          sample_rate, block_length, false);
+        scheduler.rechain_from_node_collection (std::move (nodes), sample_rate, block_length);
+        scheduler.start_threads (num_threads);
+
+        // Processors trade latency for determinism while offline (see GraphRenderer)
+        std::vector<dsp::ProcessorBase *> offline;
+        for (const auto &n : scheduler.get_nodes ().graph_nodes_)
+          if (auto * proc = dynamic_cast<dsp::ProcessorBase *> (&n->get_processable ()))
+            {
+              proc->set_offline_mode (true);
+              offline.push_back (proc);
+            }
+        struct Restore
+        {
+          std::vector<dsp::ProcessorBase *> &procs;
+          ~Restore ()
+          {
+            for (auto * proc : procs)
+              proc->set_offline_mode (false);
+          }
+        } restore{ offline };
+
+        scheduler.get_nodes ().update_latencies ();
+        auto latency = units::samples (static_cast<int64_t> (
+          scheduler.get_nodes ().get_max_route_playback_latency ().in (units::samples)));
+        stats.latency_trimmed = latency.in (units::samples);
+
+        dsp::Transport::TransportSnapshot snapshot{
+          std::make_pair (units::samples (0), units::samples (0)),
+          std::make_pair (units::samples (0), units::samples (0)),
+          range.first,
+          units::samples (0),
+          units::samples (0),
+          dsp::ITransport::PlayState::Rolling,
+          false,
+          false,
+          false
+        };
+        juce::AudioSampleBuffer block (2, block_length.in<int> (units::samples));
+        auto                    pos = range.first;
+        while (pos < range.second)
+          {
+            const auto remaining = range.second - pos;
+            auto       nframes = std::min (remaining, block_length);
+            if (latency > units::samples (0))
+              nframes = std::min (latency, nframes);
+            const auto info =
+              dsp::graph::ProcessBlockInfo::from_position_and_nframes (pos, nframes);
+            const bool in_preroll = latency > units::samples (0);
+            if (!in_preroll)
+              snapshot.set_position (pos);
+            scheduler.run_cycle (info, latency, snapshot, tempo_map);
+            const int n = nframes.in<int> (units::samples);
+            if (in_preroll)
+              {
+                latency = latency - nframes;
+                continue;
+              }
+            block.clear ();
+            for (const auto &t : scheduler.get_nodes ().terminal_nodes_)
+              if (auto * port = dynamic_cast<dsp::AudioPort *> (&t.get ().get_processable ()))
+                for (int ch = 0; ch < std::min (2, static_cast<int> (port->num_channels ())); ++ch)
+                  block.addFrom (ch, 0, *port->buffers (), ch, 0, n);
+            sink (block, n);
+            pos += nframes;
+            stats.frames += n;
+            if (progress)
+              progress (stats.frames);
+          }
+      }
+    catch (...)
+      {
+        error = std::current_exception ();
+      }
+    done.store (true);
+  });
 
   // Node preparation runs on this (main) thread via blocking invocations,
   // so keep processing events while the render thread works
-  process_events_until ([&future] () { return future.isFinished (); }, 24h);
-  if (!future.isFinished ())
+  process_events_until ([&done] () { return done.load (); }, 24h);
+  future.waitForFinished ();
+  if (error)
     {
-      future.cancel ();
-      future.waitForFinished ();
-      throw std::runtime_error ("render timed out");
+      try
+        {
+          std::rethrow_exception (error);
+        }
+      catch (const std::exception &e)
+        {
+          throw std::runtime_error (fmt::format ("render failed: {}", e.what ()));
+        }
     }
-  try
-    {
-      // Rethrows an exception stored by the renderer
-      future.waitForFinished ();
-    }
-  catch (const std::exception &e)
-    {
-      throw std::runtime_error (fmt::format ("render failed: {}", e.what ()));
-    }
-  if (future.isCanceled () || future.resultCount () < 1)
-    throw std::runtime_error ("render was cancelled");
-  return future.takeResult ();
+  return stats;
 }
 
 } // namespace
@@ -223,8 +325,10 @@ RenderResult::to_json () const
   for (const auto &f : files)
     {
       nlohmann::json fj{
-        { "path",      f.path.string () },
-        { "peak_dbfs", peak_to_dbfs_json (f.peak) },
+        { "path",           f.path.string () },
+        { "peak_dbfs",      peak_to_dbfs_json (f.peak) },
+        { "true_peak_dbtp", peak_to_dbfs_json (static_cast<float> (f.true_peak)) },
+        { "lufs",           f.lufs ? nlohmann::json (round_decimals (*f.lufs, 2)) : nlohmann::json (nullptr) },
       };
       if (!f.track_id.empty ())
         {
@@ -243,6 +347,9 @@ RenderResult::to_json () const
     { "duration_sec",         duration_sec                                    },
     { "frames",               frames                                          },
     { "peak_dbfs",            peak_to_dbfs_json (peak)                        },
+    { "true_peak_dbtp",       peak_to_dbfs_json (static_cast<float> (true_peak)) },
+    { "lufs",                 lufs ? nlohmann::json (round_decimals (*lufs, 2)) : nlohmann::json (nullptr) },
+    { "latency_trimmed_frames", latency_trimmed_frames                        },
     { "wall_sec",             wall_sec                                        },
     { "speed_factor",         round_decimals (speed_factor, 2)      },
     { "clap_offline_plugins", clap_offline_plugins                            },
@@ -351,7 +458,7 @@ render_project (
         static_cast<double> (start_frames) / engine_sr,
         static_cast<double> (end_frames) / engine_sr));
     }
-  if (end_frames - start_frames > std::numeric_limits<int>::max ())
+  if (end_frames - start_frames > static_cast<int64_t> (engine_sr) * 3600 * 48)
     throw std::invalid_argument ("render range too long");
   const dsp::GraphRenderer::SampleRange range{
     units::samples (start_frames), units::samples (end_frames)
@@ -451,8 +558,11 @@ render_project (
 
   try
     {
-      double total_audio_sec = 0;
-      bool first = true;
+      double        total_audio_sec = 0;
+      bool          first = true;
+      const int64_t range_frames = end_frames - start_frames;
+      const int64_t total_frames = range_frames * static_cast<int64_t> (targets.size ());
+      int64_t       frames_before = 0;
       for (const auto &target : targets)
         {
           if (!first)
@@ -464,27 +574,54 @@ render_project (
               project.engine ()->graph_dispatcher ().recalc_graph (false);
             }
           first = false;
-          auto buffer = render_to_buffer (project, *target.port, range);
-          const float peak =
-            buffer.getMagnitude (0, buffer.getNumSamples ());
-          write_audio_file (
-            target.path, buffer, format, options.bits, engine_sr,
-            options.title);
+          auto          writer = open_writer (
+            target.path, format, options.bits, engine_sr, 2, options.title);
+          LoudnessMeter meter (engine_sr, 2);
+          bool          write_ok = true;
+          const auto    sink = [&] (const juce::AudioSampleBuffer &block, int n) {
+            meter.process (block.getArrayOfReadPointers (), n);
+            write_ok = write_ok && writer->writeFromAudioSampleBuffer (block, 0, n);
+          };
+          const auto report = [&] (int64_t frames) {
+            if (options.progress)
+              options.progress (frames_before + frames, total_frames, target.track_name);
+          };
+          StreamStats stats;
+          try
+            {
+              stats = render_stream (project, *target.port, range, sink, report);
+            }
+          catch (...)
+            {
+              writer.reset ();
+              std::error_code ec;
+              std::filesystem::remove (target.path, ec);
+              throw;
+            }
+          writer.reset (); // flushes and closes the file
+          if (!write_ok)
+            throw std::runtime_error (fmt::format ("failed writing {}", target.path.string ()));
+          frames_before += range_frames;
           RenderedFile file{
             .path = std::filesystem::absolute (target.path),
             .track_id = target.track_id,
             .track_name = target.track_name,
-            .peak = peak,
+            .peak = static_cast<float> (meter.sample_peak ()),
+            .true_peak = meter.true_peak (),
+            .lufs = meter.integrated_lufs (),
           };
           if (target.track_id.empty ())
             {
-              result.frames = buffer.getNumSamples ();
+              result.frames = stats.frames;
               result.duration_sec =
                 static_cast<double> (result.frames) / engine_sr;
               result.peak = file.peak;
+              result.true_peak = file.true_peak;
+              result.lufs = file.lufs;
+              result.latency_trimmed_frames = stats.latency_trimmed;
             }
           total_audio_sec +=
-            static_cast<double> (buffer.getNumSamples ()) / engine_sr;
+            static_cast<double> (stats.frames) / engine_sr;
           result.files.push_back (std::move (file));
         }
       result.wall_sec =

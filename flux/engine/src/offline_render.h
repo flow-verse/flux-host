@@ -4,6 +4,7 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -53,6 +54,12 @@ struct RenderOptions
 
   /** Metadata title written into the file. */
   QString title;
+  /**
+   * Called on the render thread as blocks are written: frames done and total
+   * over all files (mix and stems), and the stem's track name (empty for the
+   * mix). Not set from JSON.
+   */
+  std::function<void (int64_t done, int64_t total, const std::string &track)> progress;
 
   /** Parses the JSON form used by the agent API (see API.md). */
   static RenderOptions from_json (const nlohmann::json &j);
@@ -66,6 +73,10 @@ struct RenderedFile
   std::string           track_name;
   /** Linear sample peak (1.0 = 0 dBFS). */
   float                 peak = 0.f;
+  /** Linear 4x-oversampled true peak. */
+  double                true_peak = 0.0;
+  /** BS.1770-4 integrated loudness; empty if gated out or shorter than 400 ms. */
+  std::optional<double> lufs;
 };
 
 struct RenderResult
@@ -80,6 +91,11 @@ struct RenderResult
   std::string               format;
   /** Linear sample peak of the mix (1.0 = 0 dBFS). */
   float peak = 0.f;
+  /** Linear true peak and integrated loudness of the mix. */
+  double                true_peak = 0.0;
+  std::optional<double> lufs;
+  /** Plugin-latency preroll frames processed but not written. */
+  int64_t latency_trimmed_frames = 0;
   double wall_sec = 0;
   /** Audio seconds rendered per wall-clock second, over all files. */
   double speed_factor = 0;

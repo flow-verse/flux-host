@@ -38,12 +38,19 @@ ENGINE_PID=$!
 exec 3>"$WORK/in"
 exec 4<"$WORK/out"
 
-# Reads one line from the engine (60 s timeout)
+# Reads one line from the engine (60 s timeout), skipping progress
+# notifications (they carry no id and may come before a render's response)
 recv () {
   local line
-  if ! IFS= read -r -t 60 line <&4; then
-    fail "no response from the engine"
-  fi
+  while :; do
+    if ! IFS= read -r -t 60 line <&4; then
+      fail "no response from the engine"
+    fi
+    case "$line" in
+      *'"method":"progress"'*) ;;
+      *) break ;;
+    esac
+  done
   printf '%s' "$line"
 }
 
@@ -125,6 +132,7 @@ esac
 RENDER=$(call render "{\"out\":\"$WORK/out.wav\"}")
 case "$RENDER" in
   *'"peak_dbfs":null'*) fail "render is silent: $RENDER" ;;
+  *'"lufs":null'*) fail "render has no loudness: $RENDER" ;;
 esac
 [ -s "$WORK/out.wav" ] || fail "no output file"
 echo "     $RENDER" >&2

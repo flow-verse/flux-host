@@ -538,6 +538,7 @@ AgentApi::handle_one (const json &request, bool &is_notification)
   if (!request.contains ("method") || !request["method"].is_string ())
     return error (rpc_error::kInvalidRequest, "'method' must be a string");
   is_notification = !request.contains ("id");
+  current_id_ = id;
 
   json params = json::object ();
   if (request.contains ("params"))
@@ -2016,6 +2017,28 @@ AgentApi::render (const json &p)
     {
       warm_up_plugins (s.project ());
       plugin_state_dirty_ = false;
+    }
+  if (notify_)
+    {
+      // At most one notification per percent (and always the last block)
+      auto last = std::make_shared<int> (-1);
+      opts.progress = [notify = notify_, id = current_id_, last] (
+                        int64_t done, int64_t total, const std::string &track) {
+        const int pct = total > 0 ? static_cast<int> (done * 100 / total) : 100;
+        if (pct == *last)
+          return;
+        *last = pct;
+        notify (json{
+          { "jsonrpc", "2.0" },
+          { "method", "progress" },
+          { "params",
+            { { "request", id },
+              { "op", "render" },
+              { "fraction", total > 0 ? round6 (static_cast<double> (done) / static_cast<double> (total)) : 1.0 },
+              { "frames", done },
+              { "total_frames", total },
+              { "track", track.empty () ? json (nullptr) : json (track) } } } });
+      };
     }
   return render_project (s.project (), opts).to_json ();
 }

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -75,6 +76,15 @@ public:
 
   EngineSession * session () { return session_.get (); }
 
+  /**
+   * Sends a JSON-RPC notification to the client (thread-safe if the sink is).
+   * flux-engine serve uses it for render progress.
+   */
+  void set_notifier (std::function<void (const nlohmann::json &)> notify)
+  {
+    notify_ = std::move (notify);
+  }
+
   /** True once a "shutdown" request has been handled. */
   bool shutdown_requested () const { return shutdown_requested_; }
 
@@ -120,6 +130,9 @@ private:
   };
   std::optional<Turn> turn_;
   bool                shutdown_requested_ = false;
+  std::function<void (const nlohmann::json &)> notify_;
+  /** id of the request being handled (for progress notifications). */
+  nlohmann::json      current_id_;
   /** Plugin state changed since the last render (see warm_up_plugins). */
   bool                plugin_state_dirty_ = true;
 };

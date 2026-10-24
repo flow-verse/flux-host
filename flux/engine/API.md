@@ -179,7 +179,14 @@ Sets the transport loop range; `enabled` defaults to true.
 
 ### `render {out, start_bar?, end_bar?, start_sec?, end_sec?, format?, bits?, sr?, stems?}`
 
-Same options and result as `flux-engine render --json` (see README): range in bars or seconds (default: start/end markers), `format` `"wav"`/`"flac"` (default from the extension), `bits` `16`, `24` (default) or `"32f"`, `stems: true` for per-track files. `sr` must equal the engine's sample rate (start the engine with `--sr` to change it). Rendering is not an edit and may run inside an agent turn.
+Same options and result as `flux-engine render --json` (see README). The result adds `lufs` and `true_peak_dbtp` for the mix (and per file in `outputs`), and `latency_trimmed_frames`. While it renders, the engine sends notifications with no `id`, at most one per percent; clients must skip them while waiting for the response:
+
+```json
+← {"jsonrpc":"2.0","method":"progress","params":{"request":9,"op":"render","fraction":0.42,
+   "frames":403200,"total_frames":960000,"track":null}}
+```
+
+`total_frames` covers the mix and every stem; `track` names the stem being rendered (null for the mix).: range in bars or seconds (default: start/end markers), `format` `"wav"`/`"flac"` (default from the extension), `bits` `16`, `24` (default) or `"32f"`, `stems: true` for per-track files. `sr` must equal the engine's sample rate (start the engine with `--sr` to change it). Rendering is not an edit and may run inside an agent turn.
 
 ```json
 → {"jsonrpc":"2.0","id":9,"method":"render","params":{"out":"/tmp/song.wav","start_bar":1,"end_bar":9}}

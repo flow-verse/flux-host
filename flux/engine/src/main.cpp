@@ -16,6 +16,7 @@
 #include <atomic>
 #include <cstdio>
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -84,7 +85,10 @@ public:
 
   void write_line (const std::string &line)
   {
-    std::string data = line;
+    // Responses come from the reader thread, progress notifications from the
+    // render thread
+    std::lock_guard lock (mutex_);
+    std::string     data = line;
     data.push_back ('\n');
 #ifndef _WIN32
     if (fd_ >= 0)
@@ -107,7 +111,8 @@ public:
   }
 
 private:
-  int fd_ = -1;
+  int        fd_ = -1;
+  std::mutex mutex_;
 };
 
 std::string
@@ -302,6 +307,8 @@ run_serve (QCoreApplication &app, const Args &args, ProtocolOut &out)
           return 1;
         }
     }
+
+  api.set_notifier ([&out] (const json &n) { out.write_line (dump (n)); });
 
   // Announce readiness (a JSON-RPC notification)
   out.write_line (dump (

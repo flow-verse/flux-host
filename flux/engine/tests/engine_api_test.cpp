@@ -517,4 +517,88 @@ TEST_F (EngineApiTest, WriteNotesCarriesChannelsAndControlEvents)
   EXPECT_FALSE (d["tracks"].empty ());
 }
 
+namespace
+{
+/** Index of the first sample above -60 dBFS in a rendered file, or -1. */
+long long
+onset_frame (const std::string &path, int from = 0)
+{
+  juce::AudioFormatManager fm;
+  fm.registerBasicFormats ();
+  std::unique_ptr<juce::AudioFormatReader> r (fm.createReaderFor (juce::File (juce::String (path))));
+  if (!r)
+    return -2;
+  juce::AudioSampleBuffer buf (static_cast<int> (r->numChannels), static_cast<int> (r->lengthInSamples));
+  r->read (&buf, 0, buf.getNumSamples (), 0, true, true);
+  // Skip the tail of the previous note: find the first quiet stretch, then the attack
+  int i = from;
+  while (i < buf.getNumSamples () && std::abs (buf.getSample (0, i)) > 0.001f)
+    ++i;
+  for (; i < buf.getNumSamples (); ++i)
+    for (int ch = 0; ch < buf.getNumChannels (); ++ch)
+      if (std::abs (buf.getSample (ch, i)) > 0.001f)
+        return i;
+  return -1;
+}
+} // namespace
+
+TEST_F (EngineApiTest, RenderStreamsMetersAndTrimsLatency)
+{
+  std::vector<json> progress;
+  api_->set_notifier ([&progress] (const json &n) { progress.push_back (n); });
+  const auto synth = find_test_synth_id ();
+  std::string latency_id;
+  for (const auto &pl : call ("list_plugins", { { "query", "Test Latency" } })["plugins"])
+    latency_id = pl["id"];
+  ASSERT_FALSE (latency_id.empty ()) << "Test Latency CLAP not found";
+
+  const auto make = [&] (const std::string &dir, bool with_latency) {
+    call ("create_project", { { "dir", (root_ / dir).string () }, { "bpm", 120 } });
+    const std::string t = call (
+      "add_track", { { "type", "instrument" }, { "name", "S" }, { "plugin_id", synth } })["track"];
+    call ("write_notes", { { "track", t }, { "start_bar", 1 }, { "length_bars", 2 },
+                           { "notes", one_note_per_beat (2) } });
+    if (with_latency)
+      {
+        const std::string fx =
+          call ("add_track", { { "type", "audio" }, { "name", "FX" } })["track"];
+        call ("load_plugin", { { "track", fx }, { "plugin_id", latency_id } });
+      }
+    call ("set_range", { { "start_bar", 1 }, { "end_bar", 3 } });
+  };
+
+  make ("plain", false);
+  progress.clear ();
+  const auto plain = call ("render", { { "out", (root_ / "plain.wav").string () }, { "bits", "32f" } });
+  EXPECT_EQ (plain["frames"], 4 * 48000) << "2 bars at 120 BPM, nothing added";
+  EXPECT_EQ (plain["latency_trimmed_frames"], 0);
+  ASSERT_TRUE (plain["lufs"].is_number ());
+  ASSERT_TRUE (plain["true_peak_dbtp"].is_number ());
+  EXPECT_GE (plain["true_peak_dbtp"].get<double> () + 1e-6, plain["peak_dbfs"].get<double> ());
+  EXPECT_LT (plain["lufs"].get<double> (), plain["peak_dbfs"].get<double> ());
+  ASSERT_FALSE (progress.empty ());
+  double prev = -1;
+  for (const auto &n : progress)
+    {
+      EXPECT_EQ (n["method"].get<std::string> (), "progress");
+      const double f = n["params"]["fraction"];
+      EXPECT_GT (f, prev);
+      prev = f;
+    }
+  EXPECT_DOUBLE_EQ (prev, 1.0);
+  EXPECT_LE (progress.size (), 101u) << "at most one notification per percent";
+
+  make ("latent", true);
+  const auto latent = call ("render", { { "out", (root_ / "latent.wav").string () }, { "bits", "32f" } });
+  EXPECT_EQ (latent["latency_trimmed_frames"], 256);
+  EXPECT_EQ (latent["frames"], 4 * 48000) << "the preroll is not written";
+  // Plugin delay compensation keeps notes where they are without the latent
+  // plugin. Compare from the second beat: an event exactly at the range start
+  // is already sent to instruments during the preroll (upstream scheduler
+  // behaviour), so the first note's attack differs
+  EXPECT_EQ (
+    onset_frame ((root_ / "latent.wav").string (), 24000),
+    onset_frame ((root_ / "plain.wav").string (), 24000));
+}
+
 } // namespace flux::engine::tests
