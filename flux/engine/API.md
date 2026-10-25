@@ -159,6 +159,10 @@ Creates one MIDI clip of `length_bars` bars at `start_bar` on a MIDI or instrume
    "changes":[{"op":"add_midi_clip","track":"bb4f…","start_bar":1.0,"length_bars":2.0,"notes":2}]}}
 ```
 
+### `write_automation {plugin, param, points, start_bar?, length_bars?, unit?}`
+
+Writes one automation clip for a plugin parameter, as one undo step (the parameter's automation track is created on first use, which is not undone). `param` is a parameter id, uuid or name (as in `set_params`); the parameter must be automatable (`list_params` says). `points` is a non-empty array of `{beat, value, unit?, curve?}`: `beat` counts from the clip start, `value` is normalised 0–1 unless `unit` (per point, or `unit` at the top level) is `"plain"`, and `curve` (-1..1, default 0 = linear) bends the segment that starts at the point. The clip starts at `start_bar` (default 1) and is `length_bars` long (default: the whole bars needed to hold the last point, at least one); a point beyond the clip is rejected. Between points the value is interpolated; before the first point and after the clip the parameter keeps its base value. Returns `{clip, automation_track, track, plugin, param, points, changes}` (the lane is not made visible in the GUI; it plays regardless). `describe_project` lists the parameters that have automation clips under each track's `automation` (`{id, param, name, clips: [{id, name, start_bar, end_bar, length_beats, point_count}]}`). The offline render follows automation like playback does.
+
 ### `import_audio {path, start_bar?, track?}` / `import_midi {path, start_bar?, track?}`
 
 Imports a file at `start_bar` (default 1). Without `track`, a new track of the right type is created and named after the file. Audio needs an audio track; MIDI a MIDI or instrument track. Returns the new `tracks` and `clips` ids.

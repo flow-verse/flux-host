@@ -618,6 +618,81 @@ TEST_F (EngineApiTest, RenderStreamsMetersAndTrimsLatency)
   EXPECT_EQ (best_lag (plain_audio, latent_audio, 24000, 96000, 512), 0);
 }
 
+TEST_F (EngineApiTest, WriteAutomationSweepsAParameterInTheRender)
+{
+  call ("create_project", { { "dir", (root_ / "auto").string () }, { "bpm", 120 } });
+  const auto        synth = find_test_synth_id ();
+  const auto        added = call (
+    "add_track", { { "type", "instrument" }, { "name", "S" }, { "plugin_id", synth } });
+  const std::string track = added["track"], plugin = added["plugin"]["id"];
+  call (
+    "write_notes",
+    { { "track", track }, { "start_bar", 1 }, { "length_bars", 4 }, { "notes", one_note_per_beat (4) } });
+  call ("set_range", { { "start_bar", 1 }, { "end_bar", 5 } });
+
+  // Validation
+  EXPECT_EQ (
+    call_error ("write_automation", { { "plugin", plugin }, { "param", "Level" }, { "points", json::array () } }),
+    rpc_error::kInvalidParams);
+  EXPECT_EQ (
+    call_error (
+      "write_automation",
+      { { "plugin", plugin }, { "param", "No Such" }, { "points", json::array ({ { { "beat", 0 }, { "value", 1 } } }) } }),
+    rpc_error::kNotFound);
+  EXPECT_EQ (
+    call_error (
+      "write_automation",
+      { { "plugin", plugin }, { "param", "Level" }, { "length_bars", 1 },
+        { "points", json::array ({ { { "beat", 9 }, { "value", 1 } } }) } }),
+    rpc_error::kInvalidParams)
+    << "a point outside the clip is refused";
+
+  // Quiet rendering first: level fixed low
+  call ("set_params", { { "plugin", plugin }, { "values", json::array ({ { { "name", "Level" }, { "value", 0.05 } } }) } });
+  const auto fixed = call ("render", { { "out", (root_ / "fixed.wav").string () }, { "bits", "32f" } });
+
+  // Then a sweep from silent to full over the 4 bars (the last point at beat 16 needs 4 bars: default length)
+  const auto r = call (
+    "write_automation",
+    { { "plugin", plugin }, { "param", "Level" }, { "start_bar", 1 },
+      { "points", json::array ({ { { "beat", 0 }, { "value", 0.0 } }, { { "beat", 16 }, { "value", 1.0 } } }) } });
+  EXPECT_EQ (r["points"], 2);
+  EXPECT_EQ (r["changes"][0]["end_bar"], 5);
+  const auto desc = call ("describe_project", json::object ());
+  bool       listed = false;
+  for (const auto &t : desc["tracks"])
+    for (const auto &a : t["automation"])
+      if (
+        a["name"].get<std::string> () == "Level" && a["clips"].size () == 1
+        && a["clips"][0]["point_count"].get<int> () == 2)
+        listed = true;
+  EXPECT_TRUE (listed) << desc.dump (2);
+
+  call ("render", { { "out", (root_ / "swept.wav").string () }, { "bits", "32f" } });
+  const auto swept = read_audio ((root_ / "swept.wav").string ());
+  ASSERT_GT (swept.getNumSamples (), 0);
+  const auto rms_of = [&] (const juce::AudioSampleBuffer &b, int from, int to) {
+    double acc = 0;
+    for (int i = from; i < to; ++i)
+      acc += b.getSample (0, i) * b.getSample (0, i);
+    return std::sqrt (acc / std::max (1, to - from));
+  };
+  const int bar = 2 * 48000; // 4 beats at 120 BPM
+  const double first = rms_of (swept, 0, bar), last = rms_of (swept, 3 * bar, 4 * bar);
+  EXPECT_GT (last, 4 * first) << "level automation 0 -> 1 should make bar 4 much louder than bar 1 ("
+                              << first << " vs " << last << ")";
+  const auto fixed_audio = read_audio ((root_ / "fixed.wav").string ());
+  EXPECT_GT (last, 2 * rms_of (fixed_audio, 3 * bar, 4 * bar)) << "and louder than the fixed low level";
+
+  // Undo removes the clip again
+  call ("undo", json::object ());
+  bool still = false;
+  for (const auto &t : call ("describe_project", json::object ())["tracks"])
+    if (!t["automation"].empty ())
+      still = true;
+  EXPECT_FALSE (still);
+}
+
 TEST_F (EngineApiTest, HistoryLabelsCloseProjectAndChangeNotifications)
 {
   std::vector<json> changed;

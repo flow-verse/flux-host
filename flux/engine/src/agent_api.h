@@ -108,6 +108,7 @@ private:
   nlohmann::json list_presets (const nlohmann::json &p);
   nlohmann::json load_preset (const nlohmann::json &p);
   nlohmann::json write_notes (const nlohmann::json &p);
+  nlohmann::json write_automation (const nlohmann::json &p);
   nlohmann::json import_file (const nlohmann::json &p, bool midi);
   nlohmann::json set_tempo (const nlohmann::json &p);
   nlohmann::json add_marker (const nlohmann::json &p);

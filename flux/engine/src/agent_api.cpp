@@ -12,6 +12,10 @@
 #include "commands/move_arranger_objects_command.h"
 #include "commands/rename_track_command.h"
 #include "plugins/plugin_group.h"
+#include "structure/arrangement/automation_clip.h"
+#include "structure/arrangement/automation_point.h"
+#include "structure/tracks/automation_track.h"
+#include "structure/tracks/automation_tracklist.h"
 #include "structure/tracks/track_all.h"
 
 #include <fmt/format.h>
@@ -611,6 +615,8 @@ AgentApi::dispatch (const std::string &method, const json &p)
     return load_preset (p);
   if (method == "write_notes")
     return write_notes (p);
+  if (method == "write_automation")
+    return write_automation (p);
   if (method == "import_audio")
     return import_file (p, false);
   if (method == "import_midi")
@@ -753,7 +759,7 @@ AgentApi::notify_changed (const std::string &method, const json &result)
   static const std::unordered_set<std::string> kChanging{
     "create_project", "open_project", "save_project", "close_project",
     "add_track", "load_plugin", "set_params", "load_preset", "write_notes",
-    "import_audio", "import_midi", "set_tempo", "add_marker",
+    "write_automation", "import_audio", "import_midi", "set_tempo", "add_marker",
     "set_loop_range", "set_range", "undo", "redo", "end_agent_turn",
   };
   if (!kChanging.contains (method))
@@ -949,6 +955,39 @@ AgentApi::describe_project (const json &p)
           clips.push_back (clip_common (clip, lane, "audio"));
         });
       tj["clips"] = clips;
+
+      // Automation: only the parameters that have clips (every automatable
+      // parameter owns an automation track, most of them empty)
+      json automation = json::array ();
+      if (auto * atl = track->automationTracklist ())
+        {
+          for (auto * at : atl->automation_tracks ())
+            {
+              auto aclips = at->structure::arrangement::ArrangerObjectOwner<
+                structure::arrangement::AutomationClip>::get_children_view ();
+              if (std::ranges::empty (aclips))
+                continue;
+              const auto * param = at->parameter ();
+              json aj{
+                { "id",    id_of (*at)                                                },
+                { "param", param != nullptr ? param_id (*param) : std::string{}         },
+                { "name",  param != nullptr ? param->label ().toStdString () : std::string{} },
+              };
+              json cl = json::array ();
+              for (auto * clip : aclips)
+                {
+                  auto cj = clip_common (*clip, 0, "automation");
+                  cj.erase ("lane");
+                  cj["point_count"] = std::ranges::distance (
+                    clip->structure::arrangement::ArrangerObjectOwner<
+                      structure::arrangement::AutomationPoint>::get_children_view ());
+                  cl.push_back (cj);
+                }
+              aj["clips"] = cl;
+              automation.push_back (aj);
+            }
+        }
+      tj["automation"] = automation;
       tracks.push_back (tj);
     }
   out["tracks"] = tracks;
@@ -1864,6 +1903,258 @@ AgentApi::write_notes (const json &p)
     { "clip",    id_of (*clip)            },
     { "track",   id_of (*track)           },
     { "changes", json::array ({ change }) },
+  };
+}
+
+json
+AgentApi::write_automation (const json &p)
+{
+  auto &s = require_session ();
+  auto [plugin, track] = find_plugin (s, get_string (p, "plugin"));
+
+  // The parameter: id, uuid or (case-insensitive) name, as in set_params
+  const auto                spec = get_string (p, "param");
+  const auto                params = plugin_params (*plugin);
+  dsp::ProcessorParameter * param = nullptr;
+  for (auto * cand : params)
+    if (param_id (*cand) == spec || id_of (*cand) == spec)
+      param = cand;
+  if (param == nullptr)
+    {
+      const auto want = lower (spec);
+      for (auto * cand : params)
+        if (lower (cand->label ().toStdString ()) == want)
+          {
+            param = cand;
+            break;
+          }
+    }
+  if (param == nullptr)
+    {
+      throw RpcError (
+        rpc_error::kNotFound,
+        fmt::format ("plugin has no parameter '{}' (see list_params)", spec));
+    }
+  if (!param->automatable ())
+    {
+      throw RpcError (
+        rpc_error::kWrongType,
+        fmt::format ("parameter '{}' is not automatable", param->label ().toStdString ()));
+    }
+  // Points: {beat, value, unit?, curve?}; beats from the clip start
+  const auto &pts = require (p, "points");
+  if (!pts.is_array () || pts.empty ())
+    invalid ("'points' must be a non-empty array of {beat, value, unit?, curve?}");
+  std::string default_unit = "normalized";
+  if (p.contains ("unit"))
+    {
+      if (!p["unit"].is_string ())
+        invalid ("'unit' must be \"normalized\" or \"plain\"");
+      default_unit = p["unit"].get<std::string> ();
+    }
+  const auto &range = param->range ();
+  struct PointSpec
+  {
+    double                beat;
+    float                 normalized;
+    std::optional<double> curve;
+  };
+  std::vector<PointSpec> specs;
+  specs.reserve (pts.size ());
+  double last_beat = 0.0;
+  for (size_t i = 0; i < pts.size (); ++i)
+    {
+      const auto &pt = pts[i];
+      const auto  where = fmt::format ("points[{}]", i);
+      if (!pt.is_object ())
+        invalid (fmt::format ("{} must be an object", where));
+      const auto num = [&] (const char * key) {
+        if (!pt.contains (key) || !pt[key].is_number ())
+          invalid (fmt::format ("{}.{} must be a number", where, key));
+        const auto d = pt[key].get<double> ();
+        if (!std::isfinite (d))
+          invalid (fmt::format ("{}.{} must be finite", where, key));
+        return d;
+      };
+      const double beat = num ("beat");
+      if (beat < 0)
+        invalid (fmt::format ("{}.beat must be >= 0, got {}", where, beat));
+      std::string unit = default_unit;
+      if (pt.contains ("unit"))
+        {
+          if (!pt["unit"].is_string ())
+            invalid (fmt::format ("{}.unit must be \"normalized\" or \"plain\"", where));
+          unit = pt["unit"].get<std::string> ();
+        }
+      const double d = num ("value");
+      float        normalized = 0.f;
+      if (unit == "normalized")
+        {
+          if (d < 0.0 || d > 1.0)
+            {
+              invalid (fmt::format (
+                "{}: normalized value {} for '{}' is outside 0..1 (use unit \"plain\" "
+                "for values in {}..{})",
+                where, d, param->label ().toStdString (), range.convertFrom0To1 (0.f),
+                range.convertFrom0To1 (1.f)));
+            }
+          normalized = static_cast<float> (d);
+        }
+      else if (unit == "plain")
+        {
+          const auto a = range.convertFrom0To1 (0.f);
+          const auto b = range.convertFrom0To1 (1.f);
+          const auto lo = std::min (a, b);
+          const auto hi = std::max (a, b);
+          const auto tol = 1e-6 * std::max (1.0, static_cast<double> (hi - lo));
+          if (d < lo - tol || d > hi + tol)
+            {
+              invalid (fmt::format (
+                "{}: plain value {} for '{}' is outside its range {}..{}", where, d,
+                param->label ().toStdString (), lo, hi));
+            }
+          normalized = range.convertTo0To1 (static_cast<float> (d));
+        }
+      else
+        invalid (fmt::format ("{}.unit must be \"normalized\" or \"plain\", got \"{}\"", where, unit));
+      std::optional<double> curve;
+      if (pt.contains ("curve"))
+        {
+          const double c = num ("curve");
+          if (c < -1.0 || c > 1.0)
+            invalid (fmt::format ("{}.curve must be -1..1, got {}", where, c));
+          curve = c;
+        }
+      specs.push_back ({ beat, std::clamp (normalized, 0.f, 1.f), curve });
+      last_beat = std::max (last_beat, beat);
+    }
+  std::ranges::stable_sort (specs, {}, &PointSpec::beat);
+
+  // Clip placement: start_bar (default 1) and length_bars (default: the
+  // whole bars needed to hold the last point, at least one)
+  const double start_bar = check_bar (opt_number (p, "start_bar").value_or (1.0), "start_bar");
+  const auto  &tm = s.project ().tempo_map ();
+  const double clip_start = bar_to_ticks (tm, start_bar);
+  const double ticks_per_beat = ticks_per_beat_at (tm, clip_start);
+  const double bar_ticks = bar_to_ticks (tm, start_bar + 1) - clip_start;
+  double       length_bars = 0.0;
+  if (const auto lb = opt_number (p, "length_bars"))
+    {
+      length_bars = *lb;
+      if (length_bars <= 0.0 || length_bars > 10000.0)
+        invalid (fmt::format ("'length_bars' must be > 0 and <= 10000, got {}", length_bars));
+    }
+  else
+    {
+      length_bars = std::max (1.0, std::ceil (last_beat * ticks_per_beat / bar_ticks - 1e-9));
+    }
+  const double clip_end = bar_to_ticks (tm, start_bar + length_bars);
+  const double clip_len = clip_end - clip_start;
+  const double clip_beats = clip_len / ticks_per_beat;
+  for (const auto &sp : specs)
+    {
+      if (sp.beat > clip_beats + 1e-6)
+        {
+          invalid (fmt::format (
+            "a point at beat {} lies outside the clip ({} beats, {} bars)", sp.beat,
+            round6 (clip_beats), length_bars));
+        }
+    }
+
+  const json change{
+    { "op",          "write_automation"                   },
+    { "track",       id_of (*track)                       },
+    { "plugin",      id_of (*plugin)                      },
+    { "param",       param_id (*param)                    },
+    { "name",        param->label ().toStdString ()       },
+    { "start_bar",   start_bar                            },
+    { "end_bar",     start_bar + length_bars              },
+    { "points",      specs.size ()                        },
+    { "first_value", round6 (specs.front ().normalized)   },
+    { "last_value",  round6 (specs.back ().normalized)    },
+  };
+  if (is_dry_run (p))
+    return dry_run_result (json::array ({ change }));
+
+  // The parameter's automation track. Tracks generate them for their own
+  // fader and processor; a plugin parameter gets one on first use here (as
+  // the GUI does on demand). Creating it is not undoable; an empty automation
+  // track is harmless
+  auto * atl = track->automationTracklist ();
+  if (atl == nullptr)
+    {
+      throw RpcError (
+        rpc_error::kWrongType,
+        fmt::format ("track '{}' cannot hold automation", track->name ().toStdString ()));
+    }
+  auto &factory = *s.project ().arrangerObjectFactory ();
+  structure::tracks::AutomationTrack * at = nullptr;
+  for (auto * cand : atl->automation_tracks ())
+    if (cand->parameter () == param)
+      {
+        at = cand;
+        break;
+      }
+  if (at == nullptr)
+    {
+      for (const auto &ref : plugin->get_parameters ())
+        {
+          if (ref.get_object_as<dsp::ProcessorParameter> () != param)
+            continue;
+          auto at_ref = utils::create_object<structure::tracks::AutomationTrack> (
+            factory.registry (), *s.project ().getTempoMap (), factory.registry (), ref,
+            track->timebaseProvider ());
+          at = atl->add_automation_track (at_ref);
+          break;
+        }
+    }
+  if (at == nullptr)
+    {
+      throw RpcError (
+        rpc_error::kStateConflict,
+        fmt::format (
+          "track '{}' has no automation track for parameter '{}'",
+          track->name ().toStdString (), param->label ().toStdString ()));
+    }
+
+  auto clip_ref = factory.get_builder<structure::arrangement::AutomationClip> ()
+                    .with_start_ticks (units::ticks (clip_start))
+                    .build_in_registry ();
+  auto * clip = clip_ref.get_object_as<structure::arrangement::AutomationClip> ();
+  for (const auto &sp : specs)
+    {
+      auto ap_ref = factory.get_builder<structure::arrangement::AutomationPoint> ()
+                      .with_start_ticks (units::ticks (
+                        std::min (sp.beat * ticks_per_beat, clip_len)))
+                      .with_automatable_value (sp.normalized)
+                      .build_in_registry ();
+      if (sp.curve)
+        {
+          auto * ap = ap_ref.get_object_as<structure::arrangement::AutomationPoint> ();
+          ap->curveOpts ()->setCurviness (*sp.curve);
+        }
+      clip->structure::arrangement::ArrangerObjectOwner<
+        structure::arrangement::AutomationPoint>::add_object (ap_ref);
+    }
+  clip->set_loop_range (
+    dsp::ContentTick (units::ticks (0.0)), dsp::ContentTick (units::ticks (0.0)),
+    dsp::ContentTick (units::ticks (clip_len)));
+  clip->length ()->setTicks (clip_len);
+  clip->setTrackBounds (true);
+  clip->name ()->setName (track->generate_name_for_clip (*clip, at).to_qstring ());
+
+  s.undo_stack ().push (
+    new commands::AddArrangerObjectCommand<structure::arrangement::AutomationClip> (
+      commands::make_owner_ref (*at, factory.registry ()), clip_ref));
+
+  return {
+    { "clip",             id_of (*clip)            },
+    { "automation_track", id_of (*at)              },
+    { "track",            id_of (*track)           },
+    { "plugin",           id_of (*plugin)          },
+    { "param",            param_id (*param)        },
+    { "points",           specs.size ()            },
+    { "changes",          json::array ({ change }) },
   };
 }
 
