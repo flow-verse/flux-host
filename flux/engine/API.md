@@ -147,6 +147,8 @@ Loads a preset as one undo step (undo restores the plugin's previous state). `pr
 
 ## Arrangement
 
+`preset` may also be an **absolute path** to a preset file the plugin reads (Surge XT: a `.fxp` patch, which may carry an embedded Scala tuning in its `patchTuning` element; Surge applies it only when its user default `overrideTuningOnPatchLoad` is 1 in `SurgeXTUserDefaults.xml`). The file need not be in the plugin's catalogue; it is loaded through CLAP preset-load from a file location, as one undo step. Result: `{plugin, preset: {name, path, source: "file"}, changes}`; a missing file is -32001, a file the plugin cannot load -32002.
+
 ### `write_notes {track, start_bar, length_bars, notes, events?, name?}`
 
 Creates one MIDI clip of `length_bars` bars at `start_bar` on a MIDI or instrument track and fills it, as one undo step. Each note is `{pitch 0–127, start_beat >= 0, length_beats > 0, velocity 1–127 (default 100), channel 0–15 (default 0)}`. Optional `events` are channel events in the same clip: `{type: "pitch_bend", beat, value -1..1, channel?}` (a fraction of the instrument's bend range; Surge XT's default range is ±2 semitones, so 0.25 is a quarter tone up) and `{type: "cc", beat, controller 0–127, value 0–127, channel?}`. Many instruments, Surge XT included unless MPE is on, apply a pitch bend to all their voices, whatever the channel. A note that ends after the clip is rejected (bars are never silently shifted or truncated). An empty `notes` list makes an empty clip.

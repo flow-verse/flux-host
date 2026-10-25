@@ -11,6 +11,7 @@
 #include "commands/change_qobject_property_command.h"
 #include "commands/move_arranger_objects_command.h"
 #include "commands/rename_track_command.h"
+#include "plugins/clap_preset_discovery.h"
 #include "plugins/plugin_group.h"
 #include "structure/arrangement/automation_clip.h"
 #include "structure/arrangement/automation_point.h"
@@ -1582,6 +1583,53 @@ AgentApi::load_preset (const json &p)
 {
   auto &s = require_session ();
   auto [plugin, track] = find_plugin (s, get_string (p, "plugin"));
+
+  // A preset file addressed by absolute path (CLAP preset-load from a file
+  // location); it need not be in the plugin's catalogue
+  if (p.contains ("preset") && p["preset"].is_string ())
+    {
+      const auto text = p["preset"].get<std::string> ();
+      if (!text.empty () && text.front () == '/')
+        {
+          const auto path = std::filesystem::path (text);
+          if (!std::filesystem::is_regular_file (path))
+            {
+              throw RpcError (
+                rpc_error::kNotFound, fmt::format ("preset file not found: {}", path.string ()));
+            }
+          zrythm::plugins::clap_preset_discovery::PresetLocation loc;
+          loc.kind = CLAP_PRESET_DISCOVERY_LOCATION_FILE;
+          loc.location = std::filesystem::absolute (path).string ();
+          const auto pid = zrythm::plugins::Plugin::PresetId{ zrythm::plugins::clap_preset_discovery::encode_preset_id (loc) };
+          const auto label = QString::fromStdString (path.stem ().string ());
+          json       change{
+            { "op",     "load_preset"   },
+            { "plugin", id_of (*plugin) },
+            { "path",   loc.location    },
+          };
+          if (is_dry_run (p))
+            return dry_run_result (json::array ({ change }));
+          auto * cmd = new LoadPresetIdCommand (*plugin, pid, label);
+          s.undo_stack ().push (cmd);
+          if (!cmd->applied ())
+            {
+              s.undo_stack ().undo ();
+              throw RpcError (
+                rpc_error::kWrongType,
+                fmt::format (
+                  "plugin '{}' could not load the preset file {} (CLAP preset-load from a file "
+                  "location; the file must be a preset this plugin reads)",
+                  plugin->get_name ().str (), loc.location));
+            }
+          plugin_state_dirty_ = true;
+          return {
+            { "plugin",  id_of (*plugin)                                                   },
+            { "preset",  { { "name", label.toStdString () }, { "path", loc.location }, { "source", "file" } } },
+            { "changes", json::array ({ change })                                          },
+          };
+        }
+    }
+
   const auto entries = plugin->presetEntries ();
   if (entries.empty ())
     {

@@ -178,6 +178,26 @@ public:
   void setPresetIndex (int index);
 
   /**
+   * @brief Applies a preset by its durable id even when it is not one of
+   * presetEntries() (for example a preset file addressed by path).
+   *
+   * @return Whether the plugin applied it; on failure the previous selection
+   * is kept.
+   */
+  bool apply_preset_id (const PresetId &id)
+  {
+    const auto previous = selected_preset_id_;
+    selected_preset_id_ = id;
+    const bool applied = apply_preset_impl (id);
+    if (applied)
+      set_preset_dirty (false);
+    else
+      selected_preset_id_ = previous;
+    Q_EMIT presetIndexChanged (presetIndex ());
+    return applied;
+  }
+
+  /**
    * @brief Emitted when the selected preset changed (in either direction).
    */
   Q_SIGNAL void presetIndexChanged (int index);

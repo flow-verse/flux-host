@@ -64,4 +64,47 @@ private:
   bool                              applied_ = false;
 };
 
+/**
+ * @brief Loads a preset by its durable id (a file path encoded as a preset
+ * location) as one undo step; undo restores the plugin state saved before.
+ */
+class LoadPresetIdCommand final : public QUndoCommand
+{
+public:
+  LoadPresetIdCommand (
+    zrythm::plugins::Plugin           &plugin,
+    zrythm::plugins::Plugin::PresetId  id,
+    const QString                     &label)
+      : QUndoCommand (QObject::tr ("Load preset %1").arg (label)),
+        plugin_ (&plugin), id_ (std::move (id)),
+        previous_index_ (plugin.presetIndex ()),
+        previous_state_ (plugin.save_state ())
+  {
+  }
+
+  void redo () override
+  {
+    if (plugin_ != nullptr)
+      applied_ = plugin_->apply_preset_id (id_);
+  }
+
+  void undo () override
+  {
+    if (plugin_ == nullptr)
+      return;
+    plugin_->load_state (previous_state_);
+    if (previous_index_ != plugin_->presetIndex ())
+      plugin_->setPresetIndex (previous_index_);
+  }
+
+  bool applied () const { return applied_; }
+
+private:
+  QPointer<zrythm::plugins::Plugin> plugin_;
+  zrythm::plugins::Plugin::PresetId id_;
+  int                               previous_index_;
+  std::string                       previous_state_;
+  bool                              applied_ = false;
+};
+
 } // namespace flux::engine

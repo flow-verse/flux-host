@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <filesystem>
+#include <fstream>
 
 #include <QCoreApplication>
 #include <QTemporaryDir>
@@ -691,6 +692,55 @@ TEST_F (EngineApiTest, WriteAutomationSweepsAParameterInTheRender)
     if (!t["automation"].empty ())
       still = true;
   EXPECT_FALSE (still);
+}
+
+TEST_F (EngineApiTest, LoadPresetFromAFilePath)
+{
+  call ("create_project", { { "dir", (root_ / "pf").string () } });
+  const auto        synth = find_test_synth_id ();
+  const auto        added = call (
+    "add_track", { { "type", "instrument" }, { "name", "S" }, { "plugin_id", synth } });
+  const std::string plugin = added["plugin"]["id"];
+  EXPECT_EQ (
+    call_error ("load_preset", { { "plugin", plugin }, { "preset", (root_ / "missing.fxp").string () } }),
+    rpc_error::kNotFound);
+  {
+    std::ofstream f (root_ / "not-a-preset.fxp");
+    f << "nope";
+  }
+  const auto code = call_error (
+    "load_preset", { { "plugin", plugin }, { "preset", (root_ / "not-a-preset.fxp").string () } });
+  EXPECT_TRUE (code == rpc_error::kWrongType || code == rpc_error::kInternalError) << code;
+
+  // With Surge XT installed, a factory patch loads from its path and changes the parameters
+  std::string surge;
+  for (const auto &pl : call ("list_plugins", { { "instruments_only", true } })["plugins"])
+    if (pl["name"].get<std::string> () == "Surge XT")
+      surge = pl["id"].get<std::string> ();
+  const char * home = std::getenv ("HOME");
+  const auto   fxp = std::filesystem::path (home ? home : "")
+                   / "Library/Application Support/Surge XT/patches_factory/Basses/Deep End.fxp";
+  if (surge.empty () || !std::filesystem::exists (fxp))
+    GTEST_SKIP () << "Surge XT or its factory patches are not installed";
+  const auto        st = call ("add_track", { { "type", "instrument" }, { "name", "Surge" }, { "plugin_id", surge } });
+  const std::string sp = st["plugin"]["id"];
+  const auto        before = call ("list_params", { { "plugin", sp } })["params"];
+  const auto        r = call ("load_preset", { { "plugin", sp }, { "preset", fxp.string () } });
+  EXPECT_EQ (r["preset"]["source"].get<std::string> (), "file");
+  EXPECT_EQ (r["preset"]["name"].get<std::string> (), "Deep End");
+  const auto after = call ("list_params", { { "plugin", sp } })["params"];
+  int        changed = 0;
+  for (size_t i = 0; i < before.size () && i < after.size (); ++i)
+    if (before[i]["value"] != after[i]["value"])
+      ++changed;
+  EXPECT_GT (changed, 0) << "loading the patch should move parameters away from the init patch";
+  call ("undo", json::object ());
+  const auto restored = call ("list_params", { { "plugin", sp } })["params"];
+  int        still = 0;
+  for (size_t i = 0; i < before.size () && i < restored.size (); ++i)
+    if (before[i]["value"] != restored[i]["value"])
+      ++still;
+  EXPECT_EQ (still, 0) << "undo restores the previous plugin state";
 }
 
 TEST_F (EngineApiTest, HistoryLabelsCloseProjectAndChangeNotifications)
